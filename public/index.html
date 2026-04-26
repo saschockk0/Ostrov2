@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Парусный Клуб «Остров» — Рассчитать стоимость</title>
+    <meta
+      name="description"
+      content="Парусный отдых на острове: флот, мероприятия, калькулятор стоимости и удобная заявка."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <div class="brand">Парусный Клуб «Остров»</div>
+        <button class="btn btn-primary js-open-wizard">Рассчитать стоимость</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero container">
+        <div class="hero__content">
+          <h1>Отдых под парусом на острове</h1>
+          <p>
+            Регаты, музыка, комфортный лагерь и живые эмоции. Подберем формат отдыха для семьи,
+            компании друзей или небольшого корпоратива.
+          </p>
+          <button class="btn btn-primary js-open-wizard">Рассчитать стоимость</button>
+        </div>
+        <div class="hero__video">
+          <video controls preload="metadata" poster="">
+            <source src="" type="video/mp4" />
+            Ваш браузер не поддерживает видео.
+          </video>
+          <small>Замените источник видео на смонтированный ролик с острова.</small>
+        </div>
+      </section>
+
+      <section class="section container">
+        <h2>О лагере</h2>
+        <p>
+          Базовый лагерь находится на острове. Формат рассчитан на новичков и гостей с опытом:
+          проживание, выходы на воду, вечерние активности и гибкий подбор услуг.
+        </p>
+      </section>
+
+      <section class="section container">
+        <h2>Наш флот</h2>
+        <div class="grid grid-4">
+          <article class="card"><h3>Катамараны (вид 1)</h3><p>Устойчивые и удобные для обучения.</p></article>
+          <article class="card"><h3>Катамараны (вид 2)</h3><p>Для уверенных выходов и регат.</p></article>
+          <article class="card"><h3>Лодка</h3><p>Сопровождение и трансферы по воде.</p></article>
+          <article class="card"><h3>Плот</h3><p>Прогулки и атмосферный формат отдыха.</p></article>
+        </div>
+      </section>
+
+      <section class="section container">
+        <h2>Мероприятия</h2>
+        <div class="grid grid-2">
+          <article class="card">
+            <h3>Регаты</h3>
+            <p>Командный формат с эмоциями соревнования и поддержкой инструкторов.</p>
+          </article>
+          <article class="card">
+            <h3>Музыкальные вечера</h3>
+            <p>Теплая атмосфера на природе с программой для гостей разного возраста.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container">
+        <div class="section__title-row">
+          <h2>Мини-прайс</h2>
+          <button class="btn btn-outline js-open-wizard">Рассчитать стоимость</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Услуга</th><th>Выходные</th><th>Будни</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Май, сентябрь (с чел./день)</td><td>3000 ₽</td><td>1300 ₽</td></tr>
+              <tr><td>Июнь (с чел./день)</td><td>4100 ₽</td><td>1300 ₽</td></tr>
+              <tr><td>Июль, август (с чел./день)</td><td>4700 ₽</td><td>1300 ₽</td></tr>
+              <tr><td>Дети 7-14 (с чел./день)</td><td>1500 ₽</td><td>700 ₽</td></tr>
+              <tr><td>Палатка 2-местная (в сутки)</td><td>700 ₽</td><td>350 ₽</td></tr>
+              <tr><td>Кухня-шатер "Эверест" (в сутки)</td><td>10000 ₽</td><td>4000 ₽</td></tr>
+              <tr><td>SUP (час)</td><td colspan="2">600 ₽</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <small>Выходные дни в расчетах: пятница, суббота, воскресенье.</small>
+      </section>
+
+      <section class="section container" id="calculator">
+        <h2>Калькулятор стоимости</h2>
+        <form id="quickCalc" class="calc">
+          <label>Взрослые <input type="number" min="1" name="adults" value="2" required /></label>
+          <label>Дети 7-14 <input type="number" min="0" name="children" value="0" /></label>
+          <label>Дата заезда <input type="date" name="arrivalDate" required /></label>
+          <label>Дата выезда <input type="date" name="departureDate" required /></label>
+          <button class="btn btn-primary" type="submit">Рассчитать</button>
+        </form>
+        <div id="quickCalcResult" class="result hidden"></div>
+      </section>
+
+      <section class="section container">
+        <h2>FAQ</h2>
+        <div class="faq">
+          <details><summary>Кому подходит формат?</summary><p>Семьям, друзьям и небольшим корпоративным группам.</p></details>
+          <details><summary>Можно приехать со своим снаряжением?</summary><p>Да, и в опроснике можно выбрать только нужные доп.услуги.</p></details>
+          <details><summary>Как быстро вы подтверждаете заявку?</summary><p>Обычно в течение 15 минут в рабочее время.</p></details>
+        </div>
+      </section>
+
+      <section class="section container">
+        <h2>Фото, видео и отзывы</h2>
+        <div class="grid grid-3">
+          <article class="card media">Фото 1</article>
+          <article class="card media">Фото 2</article>
+          <article class="card media">Видео</article>
+        </div>
+        <div class="grid grid-2">
+          <blockquote class="card">«Отличная организация и очень атмосферный отдых.»</blockquote>
+          <blockquote class="card">«Дети в восторге, обязательно приедем снова.»</blockquote>
+        </div>
+      </section>
+
+      <section class="section container">
+        <h2>Как добраться</h2>
+        <p>Ориентир: Конаково, ул. Пригородная 34А. Рекомендуем предупредить о прибытии заранее.</p>
+        <p>Парковка: перед отелем «Конаково Ривер Клаб» или охраняемая на Юбилейной 6.</p>
+        <div class="map-wrap">
+          <iframe
+            title="Карта проезда"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=36.733%2C56.71%2C36.79%2C56.76&layer=mapnik"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </section>
+    </main>
+
+    <div id="wizardModal" class="modal hidden" aria-hidden="true">
+      <div class="modal__dialog">
+        <button class="modal__close" id="closeWizard" aria-label="Закрыть">×</button>
+        <h2>Опросник заявки</h2>
+        <div class="progress"><div id="progressBar"></div></div>
+
+        <form id="applicationForm">
+          <input type="text" name="website" id="website" class="honeypot" tabindex="-1" autocomplete="off" />
+
+          <section class="step" data-step="1">
+            <h3>1. Сколько вас будет?</h3>
+            <div class="grid grid-2">
+              <label>Взрослые <input type="number" name="adults" min="1" value="2" required /></label>
+              <label>Дети 7-14 <input type="number" name="children" min="0" value="0" /></label>
+            </div>
+          </section>
+
+          <section class="step hidden" data-step="2">
+            <h3>2. Даты отдыха</h3>
+            <div class="grid grid-2">
+              <label>Заезд <input type="date" name="arrivalDate" required /></label>
+              <label>Выезд <input type="date" name="departureDate" required /></label>
+            </div>
+          </section>
+
+          <section class="step hidden" data-step="3">
+            <h3>3. Проживание и снаряжение</h3>
+            <label class="row"><input type="checkbox" name="hasOwnCamping" /> У нас свое снаряжение для проживания</label>
+            <div id="campingBlock">
+              <div class="grid grid-2">
+                <label>Палатка 1-местная <input type="number" min="0" name="tent1" value="0" /></label>
+                <label>Палатка 2-местная <input type="number" min="0" name="tent2" value="0" /></label>
+                <label>Палатка 3-местная <input type="number" min="0" name="tent3" value="0" /></label>
+                <label>Спальные комплекты <input type="number" min="0" name="sleepingSet" value="0" /></label>
+              </div>
+            </div>
+            <div class="grid grid-2">
+              <label>Плитка <input type="number" min="0" name="stove" value="0" /></label>
+              <label>Стол с табуретками <input type="number" min="0" name="tableSet" value="0" /></label>
+              <label>Газовые баллончики <input type="number" min="0" name="gasCanister" value="0" /></label>
+            </div>
+          </section>
+
+          <section class="step hidden" data-step="4">
+            <h3>4. Нужен ли шатер?</h3>
+            <label class="row"><input type="checkbox" name="needCanopy" /> Да, нужен шатер</label>
+            <div id="canopyBlock" class="hidden">
+              <label>
+                Вариант шатра
+                <select name="canopyType">
+                  <option value="canopySmall">Кухня малая (до 8 чел.)</option>
+                  <option value="canopyMedium">Кухня средняя</option>
+                  <option value="canopyLarge">Кухня большая (20-25 чел.)</option>
+                  <option value="canopyEverest">Кухня-шатер «Эверест»</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="step hidden" data-step="5">
+            <h3>5. Дополнительные услуги</h3>
+            <div class="grid grid-2">
+              <label>Трансфер на остров и обратно (кол-во)</label>
+              <input type="number" name="transfer" min="0" value="0" />
+              <label>Поездка в магазин (человек)</label>
+              <input type="number" name="storeTripPeople" min="0" value="0" />
+              <label>Регата (экипажи)</label>
+              <input type="number" name="regattaCrew" min="0" value="0" />
+              <label>SUP (часы)</label>
+              <input type="number" name="supHour" min="0" value="0" />
+              <label>Байдарка (часы)</label>
+              <input type="number" name="kayakHour" min="0" value="0" />
+            </div>
+          </section>
+
+          <section class="step hidden" data-step="6">
+            <h3>6. Контакты</h3>
+            <div class="grid grid-2">
+              <label>Имя* <input type="text" name="name" required /></label>
+              <label>Телефон* <input type="tel" name="phone" required /></label>
+              <label>Мессенджер <input type="text" name="messenger" /></label>
+              <label>Email <input type="email" name="email" /></label>
+            </div>
+            <label>Тип клиента
+              <select name="clientType">
+                <option value="individual">Физлицо</option>
+                <option value="business">Юрлицо</option>
+              </select>
+            </label>
+            <label>Комментарий <textarea name="comment" rows="3"></textarea></label>
+            <div id="turnstileContainer" class="turnstile-placeholder"></div>
+          </section>
+
+          <section class="step hidden" data-step="7">
+            <h3>7. Подтверждение</h3>
+            <div id="reviewBlock" class="result"></div>
+          </section>
+
+          <div class="wizard-actions">
+            <button type="button" id="prevStep" class="btn btn-outline">Назад</button>
+            <button type="button" id="nextStep" class="btn btn-primary">Далее</button>
+            <button type="submit" id="submitApp" class="btn btn-primary hidden">Отправить заявку</button>
+          </div>
+          <p id="formMessage"></p>
+        </form>
+      </div>
+    </div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
