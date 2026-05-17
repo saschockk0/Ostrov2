@@ -8,6 +8,8 @@
       name="description"
       content="Парусный клуб «Остров»: катамаран бесплатно, оплата за проживание и снаряжение, быстрый калькулятор и удобная заявка."
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -46,6 +48,7 @@
           </div>
           <div class="hero-stats">
             <div><strong>0 ₽</strong><span>прокат катамарана</span></div>
+            <div><strong>1 300 ₽</strong><span>ночь в будни в мае</span></div>
             <div><strong>133 км</strong><span>от Москвы</span></div>
             <div><strong>с 1 мая</strong><span>старт сезона</span></div>
           </div>
@@ -61,6 +64,38 @@
           </div>
         </div>
       </section>
+
+      <div class="hero-ticker container">
+        <div class="hero-ticker__inner" aria-hidden="true">
+          <span class="hero-ticker__item">Свобода</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Ветер</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Мастерство</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Семья</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Дружба</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Вода</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Закаты</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Свобода</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Ветер</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Мастерство</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Семья</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Дружба</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Вода</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Закаты</span>
+        </div>
+      </div>
 
       <section class="section container" id="about">
         <h2>О лагере</h2>
@@ -81,20 +116,241 @@
       </section>
 
       <section class="section container" id="events">
-        <h2>События на острове</h2>
-        <div class="events-wrap">
-          <article class="event-highlight card">
-            <p class="meta">Ближайшая регата</p>
-            <h3>«Спасательный круг»</h3>
-            <p>Командная гонка в монотипе, благотворительный формат, набор экипажей открыт.</p>
-            <p><strong>Взнос: 1 000 ₽ с экипажа</strong></p>
+        <div class="section-head section-head--row">
+          <div>
+            <p class="eyebrow">Сезон 2026 · с 1 мая по 28 сентября</p>
+            <h2>Регаты, школа и сборы —<br><em>пять месяцев на воде</em></h2>
+          </div>
+          <div class="events-filters">
+            <div class="filter-tabs" role="tablist">
+              <button class="filter-tab is-active" data-filter="all" role="tab">Всё</button>
+              <button class="filter-tab" data-filter="regatta" role="tab">Регаты</button>
+              <button class="filter-tab" data-filter="school" role="tab">Школа</button>
+              <button class="filter-tab" data-filter="promo" role="tab">Акции</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="events-timeline">
+          <div class="timeline-label">
+            <div class="tl-caption">навигация</div>
+            <div class="tl-date">с 1 мая</div>
+          </div>
+          <div class="timeline-track">
+            <div class="timeline-track__bar"></div>
+            <div class="timeline-track__progress"></div>
+            <div class="timeline-track__now">
+              <span class="timeline-track__now-label">сейчас</span>
+              <span class="timeline-track__now-dot"></span>
+            </div>
+            <div class="timeline-months">
+              <div class="timeline-month">
+                <span class="timeline-month__roman">V</span>
+                <span class="timeline-month__dot is-past"></span>
+                <span class="timeline-month__name">Май</span>
+                <div class="timeline-month__events">
+                  <span class="timeline-month__ev-dot has-event"></span>
+                  <span class="timeline-month__ev-dot has-event"></span>
+                  <span class="timeline-month__ev-dot"></span>
+                </div>
+              </div>
+              <div class="timeline-month">
+                <span class="timeline-month__roman">VI</span>
+                <span class="timeline-month__dot is-past"></span>
+                <span class="timeline-month__name">Июнь</span>
+                <div class="timeline-month__events">
+                  <span class="timeline-month__ev-dot has-event"></span>
+                  <span class="timeline-month__ev-dot"></span>
+                  <span class="timeline-month__ev-dot"></span>
+                </div>
+              </div>
+              <div class="timeline-month">
+                <span class="timeline-month__roman">VII</span>
+                <span class="timeline-month__dot"></span>
+                <span class="timeline-month__name">Июль</span>
+                <div class="timeline-month__events">
+                  <span class="timeline-month__ev-dot has-event"></span>
+                  <span class="timeline-month__ev-dot has-event"></span>
+                  <span class="timeline-month__ev-dot"></span>
+                </div>
+              </div>
+              <div class="timeline-month">
+                <span class="timeline-month__roman">VIII</span>
+                <span class="timeline-month__dot"></span>
+                <span class="timeline-month__name">Август</span>
+                <div class="timeline-month__events">
+                  <span class="timeline-month__ev-dot has-event"></span>
+                  <span class="timeline-month__ev-dot"></span>
+                  <span class="timeline-month__ev-dot"></span>
+                </div>
+              </div>
+              <div class="timeline-month">
+                <span class="timeline-month__roman">IX</span>
+                <span class="timeline-month__dot"></span>
+                <span class="timeline-month__name">Сентябрь</span>
+                <div class="timeline-month__events">
+                  <span class="timeline-month__ev-dot has-event"></span>
+                  <span class="timeline-month__ev-dot has-event"></span>
+                  <span class="timeline-month__ev-dot"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="timeline-label" style="text-align:right">
+            <div class="tl-caption">закрытие</div>
+            <div class="tl-date">28 сент.</div>
+          </div>
+        </div>
+
+        <div class="events-grid">
+          <article class="event-featured">
+            <div class="event-featured__visual">
+              <span class="event-featured__badge">Ближайшая регата</span>
+              <div class="event-featured__date-block">
+                <span class="event-featured__day">19</span>
+                <div>
+                  <div class="event-featured__month-name">июля</div>
+                  <div class="event-featured__dow">суббота</div>
+                </div>
+              </div>
+              <span class="event-featured__crew">4 / 8 экипажей</span>
+            </div>
+            <div class="event-featured__body">
+              <div class="event-featured__kind">Регата · Благотворительная гонка в монотипе</div>
+              <h3 class="event-featured__title">Регата «Спасательный круг»</h3>
+              <p class="event-featured__desc">Два гоночных дня на катамаранах «Ветер». Сбор средств в фонд помощи детям. Прошлый год — 18 экипажей, в этом ждём минимум 20.</p>
+              <div class="event-featured__footer">
+                <div>
+                  <div class="event-featured__fee-label">взнос с экипажа</div>
+                  <div class="event-featured__fee">1 000 ₽</div>
+                </div>
+                <div class="event-featured__actions">
+                  <button class="btn btn-outline">Положение</button>
+                  <button class="btn btn-primary js-open-wizard">Записать экипаж →</button>
+                </div>
+              </div>
+            </div>
           </article>
-          <div class="events-list card">
-            <div class="event-row"><span>01 мая</span><span>Открытие сезона</span></div>
-            <div class="event-row"><span>июнь</span><span>Обучение на «Ветре»</span></div>
-            <div class="event-row"><span>июль</span><span>Регата «Спасательный круг»</span></div>
-            <div class="event-row"><span>август</span><span>Корпоративные регаты</span></div>
-            <div class="event-row"><span>сентябрь</span><span>«Осенние ветры»</span></div>
+
+          <div class="event-list-card">
+            <div class="event-list-card__header">
+              <div>
+                <span class="event-list-card__title">Календарь сезона</span>
+                <span class="event-list-card__count">7 событий</span>
+              </div>
+              <a class="event-list-card__link" href="#">Все события →</a>
+            </div>
+            <div id="eventsList">
+              <div class="event-item" data-kind="season">
+                <div>
+                  <div class="event-item__date-num">01</div>
+                  <div class="event-item__date-meta">мая · Чт</div>
+                </div>
+                <div>
+                  <div class="event-item__tags">
+                    <span class="event-tag event-tag--season">Сезон</span>
+                    <span class="event-item__spots">свободно</span>
+                  </div>
+                  <div class="event-item__name">Открытие сезона</div>
+                  <div class="event-item__sub">Спуск флота, поднятие флага</div>
+                </div>
+                <span class="event-item__arrow">→</span>
+              </div>
+              <div class="event-item" data-kind="promo">
+                <div>
+                  <div class="event-item__date-num">24</div>
+                  <div class="event-item__date-meta">мая · Сб</div>
+                </div>
+                <div>
+                  <div class="event-item__tags">
+                    <span class="event-tag event-tag--promo">Акция</span>
+                    <span class="event-item__spots">весь май</span>
+                  </div>
+                  <div class="event-item__name">Майские скидки</div>
+                  <div class="event-item__sub">Будни — 1 300 ₽ за ночь</div>
+                </div>
+                <span class="event-item__arrow">→</span>
+              </div>
+              <div class="event-item" data-kind="school">
+                <div>
+                  <div class="event-item__date-num">14</div>
+                  <div class="event-item__date-meta">июня · Сб</div>
+                </div>
+                <div>
+                  <div class="event-item__tags">
+                    <span class="event-tag event-tag--school">Школа</span>
+                    <span class="event-item__spots">2 места</span>
+                  </div>
+                  <div class="event-item__name">Обучение на «Ветре»</div>
+                  <div class="event-item__sub">Теория + час практики</div>
+                </div>
+                <span class="event-item__arrow">→</span>
+              </div>
+              <div class="event-item" data-kind="school">
+                <div>
+                  <div class="event-item__date-num">05</div>
+                  <div class="event-item__date-meta">июля · Сб</div>
+                </div>
+                <div>
+                  <div class="event-item__tags">
+                    <span class="event-tag event-tag--school">Школа</span>
+                    <span class="event-item__spots">3 места</span>
+                  </div>
+                  <div class="event-item__name">Группа выходного дня</div>
+                  <div class="event-item__sub">Старт в 10:00, до 3 чел.</div>
+                </div>
+                <span class="event-item__arrow">→</span>
+              </div>
+              <div class="event-item" data-kind="corp">
+                <div>
+                  <div class="event-item__date-num">16</div>
+                  <div class="event-item__date-meta">авг. · Сб</div>
+                </div>
+                <div>
+                  <div class="event-item__tags">
+                    <span class="event-tag event-tag--corp">Корп.</span>
+                    <span class="event-item__spots">по запросу</span>
+                  </div>
+                  <div class="event-item__name">Корпоративная регата</div>
+                  <div class="event-item__sub">Закрытое team-building</div>
+                </div>
+                <span class="event-item__arrow">→</span>
+              </div>
+              <div class="event-item" data-kind="school">
+                <div>
+                  <div class="event-item__date-num">05</div>
+                  <div class="event-item__date-meta">сент. · Сб</div>
+                </div>
+                <div>
+                  <div class="event-item__tags">
+                    <span class="event-tag event-tag--school">Сборы</span>
+                    <span class="event-item__spots">набор открыт</span>
+                  </div>
+                  <div class="event-item__name">Подготовка к «Осенним»</div>
+                  <div class="event-item__sub">Тренировки экипажей</div>
+                </div>
+                <span class="event-item__arrow">→</span>
+              </div>
+              <div class="event-item" data-kind="regatta">
+                <div>
+                  <div class="event-item__date-num">20</div>
+                  <div class="event-item__date-meta">сент. · Сб</div>
+                </div>
+                <div>
+                  <div class="event-item__tags">
+                    <span class="event-tag event-tag--regatta">Регата</span>
+                    <span class="event-item__spots">набор экипажей</span>
+                  </div>
+                  <div class="event-item__name">Регата «Осенние ветры»</div>
+                  <div class="event-item__sub">Закрытие сезона, банкет</div>
+                </div>
+                <span class="event-item__arrow">→</span>
+              </div>
+            </div>
+            <div class="event-list-card__footer">
+              <p>Анонсы выходят за 14 дней. Подпишитесь — пришлём расписание на месяц вперёд.</p>
+              <button class="btn btn-outline" style="flex-shrink:0">Подписаться</button>
+            </div>
           </div>
         </div>
       </section>
@@ -136,24 +392,127 @@
       </section>
 
       <section class="section container" id="faq">
-        <h2>Частые вопросы</h2>
-        <div class="faq">
-          <details><summary>А это правда остров?</summary><p>Да, лагерь расположен на острове в Видогощинском заливе.</p></details>
-          <details><summary>Можно приехать совсем без опыта?</summary><p>Да, мы объясняем базу и выдаем необходимое снаряжение.</p></details>
-          <details><summary>Что в штиль?</summary><p>Волейбол, барбекю, рыбалка, прогулки на плоту и красивые закаты.</p></details>
+        <div class="faq-layout">
+          <div>
+            <p class="eyebrow">Часто спрашивают</p>
+            <h2 style="margin-top:16px">Что нужно знать новичкам</h2>
+            <p style="margin-top:16px;font-size:15px;color:var(--ink-500);line-height:1.65">
+              Не нашли ответ — напишите в VK или на&nbsp;<a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>, ответим в рабочие часы.
+            </p>
+          </div>
+          <div class="faq">
+            <details open>
+              <summary>А это правда остров?</summary>
+              <p>Да, наш лагерь действительно расположен на острове, но на очень большом. По вечерам, при достаточном количестве желающих, организуем прогулки на плоту вокруг него. А при опыте и ветре — обход на катамаране.</p>
+            </details>
+            <details>
+              <summary>Можно ли приехать совсем без опыта?</summary>
+              <p>Да. К нам можно приехать абсолютно неподготовленным, сразу с работы или учёбы. Мы предоставляем в аренду всё необходимое — от надувной подушки до парусного катамарана.</p>
+            </details>
+            <details>
+              <summary>Как устроено обучение?</summary>
+              <p>Обучение проводится на катамаране «Ветер». Это 20–30 минут теории на берегу и один час практики на воде с инструктором. Дальше вы сами отрабатываете элементы управления. Максимум 3 человека в группе, оплата одинаковая — 2 000 ₽.</p>
+            </details>
+            <details>
+              <summary>Что взять с собой?</summary>
+              <p>Удобную одежду, ветровку, кепку, крем от солнца, личные вещи для кемпинга. Палатку и снаряжение можно взять у нас. Спасжилеты выдаём всем на воду.</p>
+            </details>
+            <details>
+              <summary>Что делать, если погода — штиль?</summary>
+              <p>Волейбол, барбекю, рыбалка — всё на берегу. Можно покататься на плоту «МАНА» вокруг острова или взять SUP. И, конечно, дождаться заката — они здесь всегда прекрасны.</p>
+            </details>
+          </div>
         </div>
       </section>
 
-      <section class="section container">
-        <h2>Фото, видео и отзывы</h2>
-        <div class="grid grid-3">
-          <article class="card media">Фото 1</article>
-          <article class="card media">Фото 2</article>
-          <article class="card media">Видео</article>
+      <section class="editorial" id="about-island">
+        <div class="editorial__visual">
+          <div class="editorial__visual-caption">Закат на Иваньковском · август · золотой парус</div>
         </div>
-        <div class="grid grid-2">
-          <blockquote class="card">«Отличная организация и очень атмосферный отдых.»</blockquote>
-          <blockquote class="card">«Дети в восторге, обязательно приедем снова.»</blockquote>
+        <div class="editorial__body">
+          <p class="editorial__eyebrow">С сайта клуба</p>
+          <blockquote class="editorial__quote">
+            «Какая бы погода ни было днём — <em>закаты здесь всегда прекрасны»</em>
+          </blockquote>
+          <p class="editorial__text">Когда ветра нет — играем в волейбол, жарим барбекю на берегу, ходим на рыбалку. По вечерам выпускаем плот «МАНА» с прогулками вокруг острова. На воде или на песке — закаты не подводят.</p>
+          <div class="editorial__items">
+            <span class="editorial__item">Волейбол</span>
+            <span class="editorial__item">Барбекю</span>
+            <span class="editorial__item">Рыбалка</span>
+            <span class="editorial__item">Прогулка на плоту</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section container" id="reviews">
+        <p class="eyebrow">Отзывы</p>
+        <div style="display:flex;align-items:flex-end;gap:36px;flex-wrap:wrap;margin-top:16px">
+          <div class="testimonials-stat">
+            <span class="testimonials-stat__num">11</span>
+            <span class="testimonials-stat__caption">лет на воде · возвращающихся семей больше, чем новых</span>
+          </div>
+        </div>
+        <div class="testimonials-grid">
+          <div class="testimonial-card">
+            <div class="testimonial-card__quote-mark">"</div>
+            <p class="testimonial-card__text">Дочки переросли «Бриз-Микро», теперь ходят на «Ветре». Мы — на «Ветре» с друзьями. Каждый август — на острове, неделю минимум.</p>
+            <div class="testimonial-card__author">
+              <div class="testimonial-card__avatar testimonial-card__avatar--blue">А</div>
+              <div>
+                <div class="testimonial-card__name">Анна и Кирилл</div>
+                <div class="testimonial-card__sub">клиенты с 2019, дочки 8 и 11</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-card__quote-mark">"</div>
+            <p class="testimonial-card__text">Шёл на гонку «попробовать» в смешанном экипаже. Победили во второй день. Главное на «Ветре» — слаженность, лодка одинаковая у всех.</p>
+            <div class="testimonial-card__author">
+              <div class="testimonial-card__avatar testimonial-card__avatar--green">М</div>
+              <div>
+                <div class="testimonial-card__name">Михаил</div>
+                <div class="testimonial-card__sub">регата «Спасательный круг» 2024</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-card__quote-mark">"</div>
+            <p class="testimonial-card__text">Дети 4 и 6 — спрашивают с понедельника, когда мы поедем «на остров». Барбекю, плот вокруг острова, паруса. Это всё, что нужно знать.</p>
+            <div class="testimonial-card__author">
+              <div class="testimonial-card__avatar testimonial-card__avatar--sun">И</div>
+              <div>
+                <div class="testimonial-card__name">Семья Ивановых</div>
+                <div class="testimonial-card__sub">выходные с детьми</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section container friends-section">
+        <div>
+          <div>
+            <p class="eyebrow">Наши друзья</p>
+            <h3 class="section h3" style="margin-top:16px;font-family:'Lora',Georgia,serif;font-weight:400;font-size:28px;line-height:1.1;letter-spacing:-0.02em">С кем мы рядом</h3>
+          </div>
+          <div class="friends-grid">
+            <div class="friend-card">
+              <div class="friend-card__abbr">МПТК</div>
+              <div class="friend-card__name">Московский парусно-туристический клуб</div>
+            </div>
+            <div class="friend-card">
+              <div class="friend-card__abbr">МАРИНС</div>
+              <div class="friend-card__name">Международная ассоциация рулевых многокорпусных разборных судов</div>
+            </div>
+            <div class="friend-card">
+              <div class="friend-card__abbr">СОЛ «Волга»</div>
+              <div class="friend-card__name">Спортивно-оздоровительный лагерь МИФИ</div>
+            </div>
+            <div class="friend-card">
+              <div class="friend-card__abbr">shtilu.net</div>
+              <div class="friend-card__name">Парусная мастерская Сергея Новицкого</div>
+            </div>
+          </div>
         </div>
       </section>
 
