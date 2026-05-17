@@ -3,76 +3,106 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Парусный Клуб «Остров» — Рассчитать стоимость</title>
+    <title>Парусный Клуб «Остров» — Оставить заявку</title>
     <meta
       name="description"
-      content="Парусный отдых на острове: флот, мероприятия, калькулятор стоимости и удобная заявка."
+      content="Парусный клуб «Остров»: катамаран бесплатно, оплата за проживание и снаряжение, быстрый калькулятор и удобная заявка."
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="container topbar__inner">
-        <div class="brand">Парусный Клуб «Остров»</div>
-        <button class="btn btn-primary js-open-wizard">Рассчитать стоимость</button>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="#top">
+          <img src="/assets/ostrov-logo.png" alt="Парусный клуб Остров" />
+        </a>
+        <nav class="main-nav">
+          <a href="#about">О лагере</a>
+          <a href="#fleet">Флот</a>
+          <a href="#pricing">Цены</a>
+          <a href="#events">Мероприятия</a>
+          <a href="#faq">FAQ</a>
+          <a href="#contacts">Контакты</a>
+        </nav>
+        <div class="header-actions">
+          <a class="phone-link" href="tel:+79037334243">+7 (903) 733-42-43</a>
+          <button class="btn btn-primary js-open-wizard">Оставить заявку</button>
+        </div>
       </div>
     </header>
 
-    <main>
-      <section class="hero container">
+    <main id="top">
+      <section class="hero container hero-split">
         <div class="hero__content">
-          <h1>Отдых под парусом на острове</h1>
+          <p class="eyebrow">Парусный клуб · Видогощи · Иваньковское водохранилище</p>
+          <h1>Платите за остров — парус и ветер включены</h1>
           <p>
-            Регаты, музыка, комфортный лагерь и живые эмоции. Подберем формат отдыха для семьи,
-            компании друзей или небольшого корпоратива.
+            Прокат катамаранов для гостей острова бесплатный. Оплачиваете проживание, снаряжение
+            и дополнительные активности: SUP, байдарку, трансфер и мероприятия.
           </p>
-          <button class="btn btn-primary js-open-wizard">Рассчитать стоимость</button>
+          <div class="hero-actions">
+            <button class="btn btn-primary js-open-wizard">Оставить заявку</button>
+            <a class="btn btn-outline" href="#calculator">Быстрый калькулятор</a>
+          </div>
+          <div class="hero-stats">
+            <div><strong>0 ₽</strong><span>прокат катамарана</span></div>
+            <div><strong>133 км</strong><span>от Москвы</span></div>
+            <div><strong>с 1 мая</strong><span>старт сезона</span></div>
+          </div>
         </div>
-        <div class="hero__video">
-          <video controls preload="metadata" poster="">
-            <source src="" type="video/mp4" />
-            Ваш браузер не поддерживает видео.
-          </video>
-          <small>Замените источник видео на смонтированный ролик с острова.</small>
+        <div class="hero-media">
+          <div class="video-card">
+            <video controls preload="metadata" poster="">
+              <source src="/assets/hero.mp4" type="video/mp4" />
+              Ваш браузер не поддерживает видео.
+            </video>
+            <div class="video-badge">Видео с острова</div>
+            <div class="video-note">Если файла пока нет, добавьте его в public/assets/hero.mp4.</div>
+          </div>
         </div>
       </section>
 
-      <section class="section container">
+      <section class="section container" id="about">
         <h2>О лагере</h2>
         <p>
-          Базовый лагерь находится на острове. Формат рассчитан на новичков и гостей с опытом:
-          проживание, выходы на воду, вечерние активности и гибкий подбор услуг.
+          К нам приезжают семьями, с друзьями и небольшими командами. Можно приехать без опыта и
+          без снаряжения: выдаем спасжилеты, объясняем базу и подбираем удобный формат отдыха.
         </p>
       </section>
 
-      <section class="section container">
-        <h2>Наш флот</h2>
+      <section class="section container" id="fleet">
+        <h2>Флот клуба</h2>
         <div class="grid grid-4">
-          <article class="card"><h3>Катамараны (вид 1)</h3><p>Устойчивые и удобные для обучения.</p></article>
-          <article class="card"><h3>Катамараны (вид 2)</h3><p>Для уверенных выходов и регат.</p></article>
-          <article class="card"><h3>Лодка</h3><p>Сопровождение и трансферы по воде.</p></article>
-          <article class="card"><h3>Плот</h3><p>Прогулки и атмосферный формат отдыха.</p></article>
+          <article class="card"><h3>«Ветер» ×10</h3><p>Основной парусный катамаран для проката и обучения.</p></article>
+          <article class="card"><h3>«Бриз-Микро» ×2</h3><p>Стабильный формат для спокойного старта и семейного отдыха.</p></article>
+          <article class="card"><h3>«СибКат»</h3><p>Дополнительный катамаран для уверенных выходов на воду.</p></article>
+          <article class="card"><h3>Плот «МАНА-12S»</h3><p>Трансфер и прогулки вокруг острова в штиль.</p></article>
         </div>
       </section>
 
-      <section class="section container">
-        <h2>Мероприятия</h2>
-        <div class="grid grid-2">
-          <article class="card">
-            <h3>Регаты</h3>
-            <p>Командный формат с эмоциями соревнования и поддержкой инструкторов.</p>
+      <section class="section container" id="events">
+        <h2>События на острове</h2>
+        <div class="events-wrap">
+          <article class="event-highlight card">
+            <p class="meta">Ближайшая регата</p>
+            <h3>«Спасательный круг»</h3>
+            <p>Командная гонка в монотипе, благотворительный формат, набор экипажей открыт.</p>
+            <p><strong>Взнос: 1 000 ₽ с экипажа</strong></p>
           </article>
-          <article class="card">
-            <h3>Музыкальные вечера</h3>
-            <p>Теплая атмосфера на природе с программой для гостей разного возраста.</p>
-          </article>
+          <div class="events-list card">
+            <div class="event-row"><span>01 мая</span><span>Открытие сезона</span></div>
+            <div class="event-row"><span>июнь</span><span>Обучение на «Ветре»</span></div>
+            <div class="event-row"><span>июль</span><span>Регата «Спасательный круг»</span></div>
+            <div class="event-row"><span>август</span><span>Корпоративные регаты</span></div>
+            <div class="event-row"><span>сентябрь</span><span>«Осенние ветры»</span></div>
+          </div>
         </div>
       </section>
 
-      <section class="section container">
+      <section class="section container" id="pricing">
         <div class="section__title-row">
           <h2>Мини-прайс</h2>
-          <button class="btn btn-outline js-open-wizard">Рассчитать стоимость</button>
+          <button class="btn btn-outline js-open-wizard">Оставить заявку</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -94,7 +124,7 @@
       </section>
 
       <section class="section container" id="calculator">
-        <h2>Калькулятор стоимости</h2>
+        <h2>Быстрый калькулятор</h2>
         <form id="quickCalc" class="calc">
           <label>Взрослые <input type="number" min="1" name="adults" value="2" required /></label>
           <label>Дети 7-14 <input type="number" min="0" name="children" value="0" /></label>
@@ -105,12 +135,12 @@
         <div id="quickCalcResult" class="result hidden"></div>
       </section>
 
-      <section class="section container">
-        <h2>FAQ</h2>
+      <section class="section container" id="faq">
+        <h2>Частые вопросы</h2>
         <div class="faq">
-          <details><summary>Кому подходит формат?</summary><p>Семьям, друзьям и небольшим корпоративным группам.</p></details>
-          <details><summary>Можно приехать со своим снаряжением?</summary><p>Да, и в опроснике можно выбрать только нужные доп.услуги.</p></details>
-          <details><summary>Как быстро вы подтверждаете заявку?</summary><p>Обычно в течение 15 минут в рабочее время.</p></details>
+          <details><summary>А это правда остров?</summary><p>Да, лагерь расположен на острове в Видогощинском заливе.</p></details>
+          <details><summary>Можно приехать совсем без опыта?</summary><p>Да, мы объясняем базу и выдаем необходимое снаряжение.</p></details>
+          <details><summary>Что в штиль?</summary><p>Волейбол, барбекю, рыбалка, прогулки на плоту и красивые закаты.</p></details>
         </div>
       </section>
 
@@ -127,24 +157,48 @@
         </div>
       </section>
 
-      <section class="section container">
-        <h2>Как добраться</h2>
-        <p>Ориентир: Конаково, ул. Пригородная 34А. Рекомендуем предупредить о прибытии заранее.</p>
-        <p>Парковка: перед отелем «Конаково Ривер Клаб» или охраняемая на Юбилейной 6.</p>
-        <div class="map-wrap">
+    </main>
+
+    <footer class="footer" id="contacts">
+      <div class="footer-top">
+        <div class="footer-map">
           <iframe
-            title="Карта проезда"
-            src="https://www.openstreetmap.org/export/embed.html?bbox=36.733%2C56.71%2C36.79%2C56.76&layer=mapnik"
+            title="Парусный клуб Остров на Яндекс Карте"
+            src="https://yandex.ru/map-widget/v1/?ll=36.6300%2C56.7300&z=10&pt=36.6300%2C56.7300%2Cpm2blm&l=map"
             loading="lazy"
           ></iframe>
+          <div class="map-card">
+            <h3>Тверская область, Видогощи</h3>
+            <p>Иваньковское водохранилище, 133 км от Москвы.</p>
+            <a class="btn btn-primary js-open-wizard">Оставить заявку</a>
+          </div>
         </div>
-      </section>
-    </main>
+        <div class="footer-contacts">
+          <img src="/assets/logo-light.svg" alt="Парусный клуб Остров" class="footer-logo" />
+          <div class="contact-card">
+            <span>Телефон и WhatsApp</span>
+            <a href="tel:+79037334243">+7 (903) 733-42-43</a>
+          </div>
+          <div class="contact-card">
+            <span>Почта</span>
+            <a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>
+          </div>
+          <div class="contact-card">
+            <span>ВКонтакте</span>
+            <a href="https://vk.com/ostrovparusa" target="_blank" rel="noreferrer">vk.com/ostrovparusa</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2014–2026 Парусный клуб «Остров»</span>
+        <span>Сезон с 1 мая · ostrov-parusa.ru</span>
+      </div>
+    </footer>
 
     <div id="wizardModal" class="modal hidden" aria-hidden="true">
       <div class="modal__dialog">
         <button class="modal__close" id="closeWizard" aria-label="Закрыть">×</button>
-        <h2>Опросник заявки</h2>
+        <h2>Оставить заявку</h2>
         <div class="progress"><div id="progressBar"></div></div>
 
         <form id="applicationForm">
