@@ -1,9 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { ApplicationWizard } from "../components/application-wizard";
 import { LogoMark } from "../components/logo-mark";
 import { QuickCalc } from "../components/quick-calc";
+import { HeroSectionGenerated } from "../generated/ui/HeroSection.generated";
+import media1 from "../content/IMG_0073.JPG";
+import media2 from "../content/IMG_0080.JPG";
+import media3 from "../content/IMG_0090.JPG";
 
 const FLEET = [
   { title: "Катамараны (вид 1)", text: "Стабильные и удобные для обучения и первых выходов." },
@@ -32,8 +37,38 @@ const FAQ = [
   },
 ];
 
+const MEDIA_ITEMS = [
+  { src: media1, alt: "Парусный отдых на острове" },
+  { src: media2, alt: "Флот и береговая зона клуба" },
+  { src: media3, alt: "Гости клуба на воде" },
+];
+
+const TESTIMONIALS = [
+  {
+    quote: "Сильные эмоции, отличная организация, хотим вернуться летом.",
+    name: "Елена Смирнова",
+    meta: "Гостья клуба",
+    avatar: "",
+  },
+  {
+    quote: "Очень комфортно для семьи: и активность, и спокойный отдых у воды.",
+    name: "Алексей Петров",
+    meta: "Семейный формат",
+    avatar: "",
+  },
+];
+
 export default function HomePage() {
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [mediaIndex, setMediaIndex] = useState(0);
+
+  function showPrevMedia() {
+    setMediaIndex((prev) => (prev - 1 + MEDIA_ITEMS.length) % MEDIA_ITEMS.length);
+  }
+
+  function showNextMedia() {
+    setMediaIndex((prev) => (prev + 1) % MEDIA_ITEMS.length);
+  }
 
   return (
     <>
@@ -47,25 +82,7 @@ export default function HomePage() {
       </header>
 
       <main>
-        <section className="hero container reveal">
-          <div className="hero__content">
-            <p className="eyebrow">Референс сохранен, стиль обновлен</p>
-            <h1>Современный парусный отдых на острове</h1>
-            <p>
-              Минималистичный интерфейс в фирменной синей гамме, быстрый путь к расчету и понятный
-              сценарий заявки без лишних шагов.
-            </p>
-            <div className="hero__actions">
-              <button className="btn btn-primary" onClick={() => setWizardOpen(true)}>
-                Рассчитать стоимость
-              </button>
-              <a className="btn btn-ghost" href="#calculator">
-                Быстрый калькулятор
-              </a>
-            </div>
-          </div>
-          <div className="hero__visual" role="img" aria-label="Паруса на воде" />
-        </section>
+        <HeroSectionGenerated onPrimaryClick={() => setWizardOpen(true)} />
 
         <section className="container section reveal">
           <div className="surface">
@@ -184,14 +201,45 @@ export default function HomePage() {
           <div className="section-head">
             <h2>Фото, видео и отзывы</h2>
           </div>
-          <div className="cards-grid cards-grid--3">
-            <article className="surface media">Фото 1</article>
-            <article className="surface media">Фото 2</article>
-            <article className="surface media">Видео</article>
+          <div className="surface media-carousel">
+            <Image className="media__img" src={MEDIA_ITEMS[mediaIndex].src} alt={MEDIA_ITEMS[mediaIndex].alt} />
+            <button className="carousel-btn carousel-btn--prev" type="button" onClick={showPrevMedia} aria-label="Предыдущее фото">
+              ‹
+            </button>
+            <button className="carousel-btn carousel-btn--next" type="button" onClick={showNextMedia} aria-label="Следующее фото">
+              ›
+            </button>
+            <div className="carousel-dots">
+              {MEDIA_ITEMS.map((item, index) => (
+                <button
+                  key={item.alt}
+                  type="button"
+                  className={`carousel-dot ${index === mediaIndex ? "carousel-dot--active" : ""}`}
+                  onClick={() => setMediaIndex(index)}
+                  aria-label={`Открыть фото ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
           <div className="cards-grid cards-grid--2 mt-12">
-            <blockquote className="surface">«Сильные эмоции, отличная организация, хотим вернуться летом.»</blockquote>
-            <blockquote className="surface">«Очень комфортно для семьи: и активность, и спокойный отдых у воды.»</blockquote>
+            {TESTIMONIALS.map((review) => (
+              <blockquote key={review.name} className="surface review-card">
+                <p>«{review.quote}»</p>
+                <footer className="review-author">
+                  <Image
+                    className="review-author__avatar"
+                    src={review.avatar || "/images/blank-avatar.svg"}
+                    alt={`Аватар: ${review.name}`}
+                    width={44}
+                    height={44}
+                  />
+                  <div className="review-author__text">
+                    <strong>{review.name}</strong>
+                    <small>{review.meta}</small>
+                  </div>
+                </footer>
+              </blockquote>
+            ))}
           </div>
         </section>
 

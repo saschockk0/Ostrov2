@@ -38,3 +38,12 @@ npm start
 
 - Если SMTP не настроен, заявка сохранится в БД, но email не отправится.
 - Telegram-отправка подготовлена архитектурно как следующий шаг.
+
+## Design-to-code система агентов
+
+- Документация пайплайна: `docs/design/agent-system-workflow.md`
+- Базовый аудит бренда: `docs/design/brand-audit.md`
+- Команды:
+  - `npm run design:qa`
+  - `npm run design:codegen`
+  - `npm run design:run`

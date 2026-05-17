@@ -1,9 +1,16 @@
 const path = require("path");
+const fs = require("fs");
 const sqlite3 = require("sqlite3");
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, "..", "data", "ostrov.sqlite");
+const DB_PATH = path.resolve(process.cwd(), process.env.DB_PATH || path.join("data", "ostrov.sqlite"));
+
+function ensureDbDirectory() {
+  const dir = path.dirname(DB_PATH);
+  fs.mkdirSync(dir, { recursive: true });
+}
 
 function openDb() {
+  ensureDbDirectory();
   return new sqlite3.Database(DB_PATH);
 }
 

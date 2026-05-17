@@ -1,14 +1,29 @@
+@import "../styles/design-tokens.css";
+@import "tailwindcss";
+
+@theme {
+  --color-ostrov-bg: var(--color-bg-default);
+  --color-ostrov-surface: var(--color-surface-elevated);
+  --color-ostrov-text: var(--color-text-primary);
+  --color-ostrov-muted: var(--color-text-muted);
+  --color-ostrov-primary: var(--color-brand-primary);
+  --color-ostrov-primary-dark: var(--color-brand-primary-dark);
+  --color-ostrov-line: var(--color-line-default);
+  --radius-ostrov-card: var(--radius-lg);
+  --shadow-ostrov-surface: var(--shadow-surface);
+}
+
 :root {
-  --bg: #f2f7ff;
-  --bg-deep: #0a2548;
-  --surface: rgba(255, 255, 255, 0.8);
-  --line: #d9e7fb;
-  --text: #132944;
-  --muted: #54708f;
-  --primary: #1f6fff;
-  --primary-dark: #1351c4;
-  --radius: 18px;
-  --shadow: 0 12px 40px rgba(8, 32, 66, 0.1);
+  --bg: var(--color-bg-default);
+  --bg-deep: var(--color-bg-deep);
+  --surface: var(--color-surface-default);
+  --line: var(--color-line-default);
+  --text: var(--color-text-primary);
+  --muted: var(--color-text-muted);
+  --primary: var(--color-brand-primary);
+  --primary-dark: var(--color-brand-primary-dark);
+  --radius: var(--radius-lg);
+  --shadow: var(--shadow-surface);
 }
 
 * {
@@ -254,12 +269,101 @@ summary {
 
 .media {
   min-height: 120px;
-  display: grid;
-  place-items: center;
-  color: #2f65a5;
+  padding: 0;
+  overflow: hidden;
   background:
     linear-gradient(155deg, rgba(22, 83, 173, 0.26), rgba(91, 184, 255, 0.2)),
     #f2f8ff;
+}
+
+.media__img {
+  width: 100%;
+  height: 330px;
+  object-fit: cover;
+  display: block;
+}
+
+.media-carousel {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  background: rgba(11, 36, 74, 0.72);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+.carousel-btn--prev {
+  left: 10px;
+}
+
+.carousel-btn--next {
+  right: 10px;
+}
+
+.carousel-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.carousel-dot--active {
+  background: #fff;
+}
+
+.review-card p {
+  margin: 0 0 12px;
+  color: var(--text);
+}
+
+.review-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-author__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid #d5e5fb;
+  background: #edf3ff;
+}
+
+.review-author__text {
+  display: grid;
+  line-height: 1.25;
+}
+
+.review-author__text small {
+  color: var(--muted);
 }
 
 .mt-12 {
