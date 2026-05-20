@@ -218,6 +218,28 @@ quickCalcForm.addEventListener("submit", async (event) => {
   }
 });
 
+// Events filter tabs
+const filterTabs = document.querySelectorAll(".filter-tab");
+const eventItems = document.querySelectorAll("#eventsList .event-item");
+
+filterTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    filterTabs.forEach((t) => t.classList.remove("is-active"));
+    tab.classList.add("is-active");
+
+    const filter = tab.dataset.filter;
+    eventItems.forEach((item) => {
+      const kind = item.dataset.kind;
+      const show =
+        filter === "all" ||
+        (filter === "regatta" && (kind === "regatta" || kind === "corp")) ||
+        (filter === "school" && kind === "school") ||
+        (filter === "promo" && kind === "promo");
+      item.style.display = show ? "" : "none";
+    });
+  });
+});
+
 fetch("/api/config")
   .then((r) => r.json())
   .then((cfg) => {
