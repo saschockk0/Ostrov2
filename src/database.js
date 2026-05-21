@@ -11,6 +11,13 @@ function initDb() {
   const db = openDb();
   db.serialize(() => {
     db.run(`
+      CREATE TABLE IF NOT EXISTS reviews_cache (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fetched_at TEXT NOT NULL,
+        reviews_json TEXT NOT NULL
+      )
+    `);
+    db.run(`
       CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at TEXT NOT NULL,

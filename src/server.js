@@ -8,6 +8,7 @@ const rateLimit = require("express-rate-limit");
 const { calculateQuote, PER_DAY_ITEMS, FIXED_ITEMS } = require("./pricing");
 const { initDb, insertApplication } = require("./database");
 const { sendApplicationEmail } = require("./email");
+const { fetchFromYandex } = require("./yandex-reviews");
 
 const app = express();
 const db = initDb();
@@ -116,6 +117,44 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
     console.error("Application submit error:", error);
     return res.status(500).json({ error: "Ошибка сервера. Попробуйте позже." });
   }
+});
+
+const REVIEWS_CACHE_TTL = 24 * 60 * 60 * 1000;
+
+app.get("/api/reviews", (req, res) => {
+  db.get(
+    "SELECT id, fetched_at, reviews_json FROM reviews_cache ORDER BY id DESC LIMIT 1",
+    async (err, row) => {
+      const isStale =
+        !row || Date.now() - new Date(row.fetched_at).getTime() > REVIEWS_CACHE_TTL;
+
+      if (!isStale) {
+        return res.json({ reviews: JSON.parse(row.reviews_json), source: "cache" });
+      }
+
+      try {
+        const reviews = await fetchFromYandex();
+        const now = new Date().toISOString();
+        db.run("INSERT INTO reviews_cache (fetched_at, reviews_json) VALUES (?, ?)", [
+          now,
+          JSON.stringify(reviews),
+        ]);
+        db.run(
+          "DELETE FROM reviews_cache WHERE id NOT IN (SELECT id FROM reviews_cache ORDER BY id DESC LIMIT 3)"
+        );
+        return res.json({ reviews, source: "fresh" });
+      } catch (fetchErr) {
+        console.error("Yandex reviews fetch error:", fetchErr.message);
+        if (row) {
+          return res.json({ reviews: JSON.parse(row.reviews_json), source: "cache_fallback" });
+        }
+        return res.status(503).json({
+          error: "Не удалось загрузить отзывы. Проверьте YANDEX_OAUTH_TOKEN в .env",
+          reviews: [],
+        });
+      }
+    }
+  );
 });
 
 app.use((req, res) => {

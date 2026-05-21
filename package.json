@@ -1,12 +1,11 @@
 {
   "name": "ostrov2",
   "version": "1.0.0",
-  "description": "Next.js landing and lead processing for Ostrov sailing club",
+  "description": "Express landing and lead processing for Ostrov sailing club",
   "main": "src/server.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
   },
   "keywords": [],
   "author": "",
@@ -16,10 +15,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
     "helmet": "^8.1.0",
-    "next": "^15.3.2",
     "nodemailer": "^8.0.5",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
     "sqlite3": "^6.0.1"
   }
 }
