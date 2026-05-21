@@ -108,10 +108,11 @@ pm2 save
 info "9. Проверка — сайт отвечает локально?"
 # =============================================================================
 sleep 2
-if curl -sf http://localhost:3000/api/config > /dev/null; then
-  info "Сервер запущен. /api/config отвечает."
+RESPONSE=$(curl -sf http://localhost:3000/api/config 2>/dev/null || true)
+if echo "$RESPONSE" | grep -q "perDayItems"; then
+  info "Сервер запущен — /api/config отвечает правильно."
 else
-  abort "Сервер не отвечает на localhost:3000. Проверьте: pm2 logs ostrov"
+  abort "Сервер не отвечает или отдаёт чужой контент. Проверьте: pm2 logs ostrov"
 fi
 
 # =============================================================================
