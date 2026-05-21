@@ -24,7 +24,7 @@ chown "$APP_USER":"$APP_USER" "$DB_DIR"
 
 echo "=== 5. Клонирование репозитория ==="
 # Замените URL на адрес вашего репозитория
-git clone https://github.com/YOURUSER/Ostrov2.git "$APP_DIR"
+git clone https://github.com/saschockk0/Ostrov2.git "$APP_DIR"
 cd "$APP_DIR"
 
 echo "=== 6. Зависимости ==="
