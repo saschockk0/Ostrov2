@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "vercel-build": "echo build done"
+    "vercel-build": "echo build done",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "keywords": [],
   "author": "",
@@ -20,5 +22,8 @@
     "helmet": "^8.1.0",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.5"
+  },
+  "devDependencies": {
+    "wrangler": "^4.94.0"
   }
 }
