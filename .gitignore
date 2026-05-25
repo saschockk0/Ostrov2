@@ -37,3 +37,9 @@ docs/
 # Uploaded media (large files)
 public/assets/hero.mp4
 public/images/uploads/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
