@@ -11,3 +11,28 @@ yarn-debug.log*
 
 data/*.sqlite
 data/*.sqlite-*
+
+# Claude / AI tooling
+.claude-flow/
+.claude/.agents/
+.claude/launch.json
+.claude/skills-lock.json
+.claude/worktrees/
+.swarm/
+
+# Generated / non-project
+agents/
+skills/
+artifacts/
+screenshots/
+app/
+components/
+styles/
+scripts/design/
+content/
+reference/
+docs/
+
+# Uploaded media (large files)
+public/assets/hero.mp4
+public/images/uploads/

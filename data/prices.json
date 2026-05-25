@@ -1,0 +1,33 @@
+{
+  "seasonalStayRates": {
+    "maySept": { "weekend": 3000, "weekday": 1300 },
+    "june":    { "weekend": 4100, "weekday": 1300 },
+    "julyAug": { "weekend": 4700, "weekday": 1300 },
+    "child":   { "weekend": 1500, "weekday": 700  }
+  },
+  "perDayItems": {
+    "instructor":    { "label": "Инструктор на воде",          "weekend": 2000, "weekday": 2000 },
+    "tent1":         { "label": "Палатка 1-местная",           "weekend": 500,  "weekday": 250  },
+    "tent2":         { "label": "Палатка 2-местная",           "weekend": 700,  "weekday": 350  },
+    "tent3":         { "label": "Палатка 3-местная",           "weekend": 900,  "weekday": 450  },
+    "sleepingSet":   { "label": "Спальный комплект",           "weekend": 600,  "weekday": 300  },
+    "canopyEverest": { "label": "Кухня-шатер «Эверест»",      "weekend": 10000,"weekday": 4000 },
+    "canopyLarge":   { "label": "Кухня большая",              "weekend": 7800, "weekday": 3000 },
+    "canopyMedium":  { "label": "Кухня средняя",              "weekend": 4500, "weekday": 1600 },
+    "canopySmall":   { "label": "Кухня малая",                "weekend": 1500, "weekday": 600  },
+    "tableSet":      { "label": "Стол с табуретками",         "weekend": 700,  "weekday": 300  },
+    "stove":         { "label": "Походная плитка",            "weekend": 600,  "weekday": 250  },
+    "gasCanister":   { "label": "Газовый баллончик",          "weekend": 250,  "weekday": 250  },
+    "transfer":      { "label": "Трансфер на остров и обратно","weekend": 0,   "weekday": 450  }
+  },
+  "fixedItems": {
+    "raftWalkPerPerson":   { "label": "Прогулка на плоту (с чел.)",     "price": 500  },
+    "raftRentHour":        { "label": "Аренда плота (час)",             "price": 6000 },
+    "boatAroundIsland":    { "label": "На катере вокруг острова",       "price": 4000 },
+    "boatChurchRoundtrip": { "label": "На катере к церкви и обратно",   "price": 4500 },
+    "regattaCrew":         { "label": "Регата (с экипажа)",             "price": 1000 },
+    "supHour":             { "label": "SUP (час)",                      "price": 600  },
+    "kayakHour":           { "label": "Байдарка (час)",                 "price": 600  },
+    "tshirt":              { "label": "Футболка",                       "price": 1500 }
+  }
+}

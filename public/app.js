@@ -729,6 +729,153 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// --- Mobile navigation ---
+(function initMobileNav() {
+  const burger = document.getElementById("navBurger");
+  const nav = document.getElementById("mainNav");
+  const backdrop = document.getElementById("navBackdrop");
+  if (!burger || !nav) return;
+
+  const open = () => {
+    nav.classList.add("is-open");
+    burger.setAttribute("aria-expanded", "true");
+    burger.setAttribute("aria-label", "Закрыть меню");
+    if (backdrop) backdrop.classList.add("is-visible");
+    document.body.style.overflow = "hidden";
+  };
+
+  const close = () => {
+    nav.classList.remove("is-open");
+    burger.setAttribute("aria-expanded", "false");
+    burger.setAttribute("aria-label", "Открыть меню");
+    if (backdrop) backdrop.classList.remove("is-visible");
+    document.body.style.overflow = "";
+  };
+
+  burger.addEventListener("click", () => {
+    nav.classList.contains("is-open") ? close() : open();
+  });
+
+  if (backdrop) backdrop.addEventListener("click", close);
+
+  nav.querySelectorAll("a[href^='#']").forEach((link) => {
+    link.addEventListener("click", close);
+  });
+
+  document.querySelectorAll(".js-open-wizard").forEach((btn) => {
+    btn.addEventListener("click", close);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+})();
+
+// --- Show-all events button ---
+document.querySelectorAll(".js-show-all-events").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const allTab = document.querySelector('.filter-tab[data-filter="all"]');
+    if (allTab) allTab.click();
+  });
+});
+
+// --- Dynamic season timeline ---
+(function updateTimeline() {
+  const SEASON_START = new Date(new Date().getFullYear(), 4, 1);  // 1 мая
+  const SEASON_END   = new Date(new Date().getFullYear(), 8, 28); // 28 сентября
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (today < SEASON_START || today > SEASON_END) return;
+
+  const total = SEASON_END - SEASON_START;
+  const elapsed = today - SEASON_START;
+  const pct = Math.min(100, Math.max(0, (elapsed / total) * 100)).toFixed(1);
+
+  const bar = document.querySelector(".timeline-track__progress");
+  const nowEl = document.querySelector(".timeline-track__now");
+  if (bar) bar.style.width = pct + "%";
+  if (nowEl) nowEl.style.left = pct + "%";
+
+  // Обновляем точки месяцев: прошедшие = is-past
+  const MONTH_INDICES = [4, 5, 6, 7, 8]; // май–сентябрь (0-indexed)
+  document.querySelectorAll(".timeline-month__dot").forEach((dot, i) => {
+    const monthEnd = new Date(today.getFullYear(), MONTH_INDICES[i] + 1, 0);
+    dot.classList.toggle("is-past", today > monthEnd);
+  });
+})();
+
+// --- Gallery photos + Lightbox ---
+(function initGallery() {
+  const section = document.getElementById('gallery');
+  const grid = document.getElementById('galleryGrid');
+  if (!section || !grid) return;
+
+  const lb       = document.getElementById('lightbox');
+  const lbImg    = document.getElementById('lightboxImg');
+  const lbCaption = document.getElementById('lightboxCaption');
+  const lbClose  = document.getElementById('lightboxClose');
+  const lbPrev   = document.getElementById('lightboxPrev');
+  const lbNext   = document.getElementById('lightboxNext');
+
+  let photos = [];
+  let current = 0;
+
+  function openLightbox(idx) {
+    current = (idx + photos.length) % photos.length;
+    lbImg.src = photos[current].url;
+    lbImg.alt = photos[current].caption || 'Фото';
+    if (lbCaption) lbCaption.textContent = photos[current].caption || '';
+    lb.classList.add('is-open');
+    lb.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lb.classList.remove('is-open');
+    lb.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  if (lbClose) lbClose.addEventListener('click', closeLightbox);
+  if (lbPrev)  lbPrev.addEventListener('click', () => openLightbox(current - 1));
+  if (lbNext)  lbNext.addEventListener('click', () => openLightbox(current + 1));
+  if (lb) lb.addEventListener('click', e => { if (e.target === lb) closeLightbox(); });
+
+  document.addEventListener('keydown', e => {
+    if (!lb || !lb.classList.contains('is-open')) return;
+    if (e.key === 'Escape')      closeLightbox();
+    if (e.key === 'ArrowLeft')   openLightbox(current - 1);
+    if (e.key === 'ArrowRight')  openLightbox(current + 1);
+  });
+
+  fetch('/api/gallery')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      photos = data;
+      if (!photos.length) { section.hidden = true; return; }
+      photos.forEach((photo, idx) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        const img = document.createElement('img');
+        img.src = photo.url;
+        img.alt = photo.caption || 'Фото с острова';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        item.appendChild(img);
+        if (photo.caption) {
+          const cap = document.createElement('span');
+          cap.className = 'gallery-item__caption';
+          cap.textContent = photo.caption;
+          item.appendChild(cap);
+        }
+        item.addEventListener('click', () => openLightbox(idx));
+        grid.appendChild(item);
+      });
+    })
+    .catch(() => { section.hidden = true; });
+})();
+
 // --- Yandex review photos ---
 (function loadReviewPhotos() {
   const container = document.getElementById("reviewPhotos");

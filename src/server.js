@@ -5,10 +5,14 @@ const express = require("express");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
-const { calculateQuote, PER_DAY_ITEMS, FIXED_ITEMS } = require("./pricing");
+const { calculateQuote, getPrices } = require("./pricing");
 const { initDb, insertApplication } = require("./database");
 const { sendApplicationEmail } = require("./email");
 const { fetchFromYandex } = require("./yandex-reviews");
+const { createAdminRouter } = require("./admin/router");
+const { listEvents } = require("./admin/events-db");
+const { getAllContent } = require("./admin/content-db");
+const { listPhotos } = require("./admin/gallery-db");
 
 const app = express();
 const db = initDb();
@@ -17,6 +21,8 @@ const port = Number(process.env.PORT || 3000);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "512kb" }));
 app.use(express.static(path.join(__dirname, "..", "public")));
+
+app.use('/ostrov-admin', createAdminRouter(db));
 
 app.use(
   "/api",
@@ -37,11 +43,27 @@ const submitLimiter = rateLimit({
 });
 
 app.get("/api/config", (req, res) => {
+  const prices = getPrices();
   res.json({
     turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || "",
-    perDayItems: PER_DAY_ITEMS,
-    fixedItems: FIXED_ITEMS,
+    perDayItems: prices.perDayItems,
+    fixedItems:  prices.fixedItems,
   });
+});
+
+app.get("/api/events", async (req, res) => {
+  try { res.json(await listEvents(db, true)); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get("/api/content", async (req, res) => {
+  try { res.json(await getAllContent(db)); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get("/api/gallery", async (req, res) => {
+  try { res.json(await listPhotos(db, true)); }
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post("/api/quote", (req, res) => {

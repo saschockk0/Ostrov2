@@ -29,7 +29,43 @@ function initDb() {
         comment TEXT,
         answers_json TEXT NOT NULL,
         quote_json TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'new'
+        status TEXT NOT NULL DEFAULT 'new',
+        manager_note TEXT DEFAULT ''
+      )
+    `);
+    // Migration: add manager_note to existing databases
+    db.run(`ALTER TABLE applications ADD COLUMN manager_note TEXT DEFAULT ''`, () => {});
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        date TEXT,
+        end_date TEXT,
+        image_url TEXT DEFAULT '',
+        active INTEGER NOT NULL DEFAULT 1,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS content_blocks (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS gallery_photos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        url TEXT NOT NULL,
+        caption TEXT DEFAULT '',
+        active INTEGER NOT NULL DEFAULT 1,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
       )
     `);
   });
