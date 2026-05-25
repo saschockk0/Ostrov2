@@ -1,3 +1,5 @@
+const { run, query } = require('../libsql-client');
+
 const DEFAULT_CONTENT = {
   hero_title:        'Платите за остров — парус и ветер включены',
   hero_subtitle:     'Прокат катамаранов для гостей острова бесплатный. Трансфер с причала Новомелково включён в выходные. Оплачиваете только проживание, снаряжение и дополнительные активности.',
@@ -22,36 +24,25 @@ const CONTENT_LABELS = {
   season_dates:      'Даты сезона',
 };
 
-function run(db, sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) { err ? reject(err) : resolve(this); });
-  });
-}
-function query(db, sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
-  });
-}
-
-async function getAllContent(db) {
-  const rows = await query(db, 'SELECT key, value, updated_at FROM content_blocks');
+async function getAllContent() {
+  const rows = await query("SELECT key, value, updated_at FROM content_blocks WHERE key NOT GLOB '_*'");
   const result = { ...DEFAULT_CONTENT };
   for (const row of rows) result[row.key] = row.value;
   return result;
 }
 
-async function setContent(db, key, value) {
+async function setContent(key, value) {
   const now = new Date().toISOString();
-  await run(db,
+  await run(
     `INSERT INTO content_blocks (key, value, updated_at) VALUES (?, ?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
     [key, value, now]
   );
 }
 
-async function setManyContent(db, updates) {
+async function setManyContent(updates) {
   for (const [key, value] of Object.entries(updates)) {
-    await setContent(db, key, value);
+    await setContent(key, value);
   }
 }
 

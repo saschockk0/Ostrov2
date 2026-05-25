@@ -11,6 +11,7 @@ yarn-debug.log*
 
 data/*.sqlite
 data/*.sqlite-*
+data/*.db
 
 # Claude / AI tooling
 .claude-flow/
