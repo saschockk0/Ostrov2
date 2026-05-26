@@ -6,23 +6,23 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 const { calculateQuote, getPrices } = require("./pricing");
-const { insertApplication } = require("./database");
+const { initDb, insertApplication } = require("./database");
 const { sendApplicationEmail } = require("./email");
 const { fetchFromYandex } = require("./yandex-reviews");
 const { createAdminRouter } = require("./admin/router");
 const { listEvents } = require("./admin/events-db");
 const { getAllContent } = require("./admin/content-db");
 const { listPhotos } = require("./admin/gallery-db");
-const { run, getOne } = require("./libsql-client");
 
 const app = express();
+const db = initDb();
 const port = Number(process.env.PORT || 3000);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "512kb" }));
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-app.use('/ostrov-admin', createAdminRouter());
+app.use('/ostrov-admin', createAdminRouter(db));
 
 app.use(
   "/api",
@@ -52,17 +52,17 @@ app.get("/api/config", (req, res) => {
 });
 
 app.get("/api/events", async (req, res) => {
-  try { res.json(await listEvents(true)); }
+  try { res.json(await listEvents(db, true)); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get("/api/content", async (req, res) => {
-  try { res.json(await getAllContent()); }
+  try { res.json(await getAllContent(db)); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get("/api/gallery", async (req, res) => {
-  try { res.json(await listPhotos(true)); }
+  try { res.json(await listPhotos(db, true)); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -115,7 +115,7 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
       return res.status(400).json({ error: "Проверка безопасности не пройдена." });
     }
 
-    const appId = await insertApplication({
+    const appId = await insertApplication(db, {
       clientType: payload.clientType,
       name: payload.name,
       phone: payload.phone,
@@ -143,57 +143,46 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
 
 const REVIEWS_CACHE_TTL = 24 * 60 * 60 * 1000;
 
-app.get("/api/reviews", async (req, res) => {
-  try {
-    const row = await getOne(
-      "SELECT id, fetched_at, reviews_json FROM reviews_cache ORDER BY id DESC LIMIT 1"
-    );
-    const isStale =
-      !row || Date.now() - new Date(row.fetched_at).getTime() > REVIEWS_CACHE_TTL;
+app.get("/api/reviews", (req, res) => {
+  db.get(
+    "SELECT id, fetched_at, reviews_json FROM reviews_cache ORDER BY id DESC LIMIT 1",
+    async (err, row) => {
+      const isStale =
+        !row || Date.now() - new Date(row.fetched_at).getTime() > REVIEWS_CACHE_TTL;
 
-    if (!isStale) {
-      return res.json({ reviews: JSON.parse(row.reviews_json), source: "cache" });
-    }
-
-    try {
-      const reviews = await fetchFromYandex();
-      const now = new Date().toISOString();
-      await run("INSERT INTO reviews_cache (fetched_at, reviews_json) VALUES (?, ?)", [
-        now, JSON.stringify(reviews),
-      ]);
-      await run(
-        "DELETE FROM reviews_cache WHERE id NOT IN (SELECT id FROM reviews_cache ORDER BY id DESC LIMIT 3)"
-      );
-      return res.json({ reviews, source: "fresh" });
-    } catch (fetchErr) {
-      console.error("Yandex reviews fetch error:", fetchErr.message);
-      if (row) {
-        return res.json({ reviews: JSON.parse(row.reviews_json), source: "cache_fallback" });
+      if (!isStale) {
+        return res.json({ reviews: JSON.parse(row.reviews_json), source: "cache" });
       }
-      return res.status(503).json({
-        error: "Не удалось загрузить отзывы. Проверьте YANDEX_OAUTH_TOKEN в .env",
-        reviews: [],
-      });
+
+      try {
+        const reviews = await fetchFromYandex();
+        const now = new Date().toISOString();
+        db.run("INSERT INTO reviews_cache (fetched_at, reviews_json) VALUES (?, ?)", [
+          now,
+          JSON.stringify(reviews),
+        ]);
+        db.run(
+          "DELETE FROM reviews_cache WHERE id NOT IN (SELECT id FROM reviews_cache ORDER BY id DESC LIMIT 3)"
+        );
+        return res.json({ reviews, source: "fresh" });
+      } catch (fetchErr) {
+        console.error("Yandex reviews fetch error:", fetchErr.message);
+        if (row) {
+          return res.json({ reviews: JSON.parse(row.reviews_json), source: "cache_fallback" });
+        }
+        return res.status(503).json({
+          error: "Не удалось загрузить отзывы. Проверьте YANDEX_OAUTH_TOKEN в .env",
+          reviews: [],
+        });
+      }
     }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  );
 });
 
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
-if (require.main === module) {
-  const { initSchema } = require("./database");
-  const { loadPricesFromDb } = require("./pricing");
-  (async () => {
-    await initSchema();
-    await loadPricesFromDb();
-    app.listen(port, () => {
-      console.log(`Ostrov app running on http://localhost:${port}`);
-    });
-  })();
-}
-
-module.exports = app;
+app.listen(port, () => {
+  console.log(`Ostrov app running on http://localhost:${port}`);
+});

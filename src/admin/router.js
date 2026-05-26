@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
 const {
   COOKIE_NAME, SESSION_TTL, createSession, destroySession,
@@ -18,35 +17,22 @@ const { getPrices, savePrices } = require('../pricing');
 const ADMIN_STATIC = path.join(__dirname, '..', '..', 'public', 'admin');
 const VALID_STATUSES = new Set(['new', 'in_progress', 'confirmed', 'rejected']);
 
+const UPLOADS_DIR = path.join(__dirname, '..', '..', 'public', 'images', 'uploads');
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination: UPLOADS_DIR,
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 7)}${ext}`);
+    },
+  }),
   limits: { fileSize: 6 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     cb(null, /image\/(jpeg|png|webp|gif)/.test(file.mimetype));
   },
 });
 
-async function uploadFile(file) {
-  const ext = path.extname(file.originalname).toLowerCase();
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}${ext}`;
-
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const { put } = require('@vercel/blob');
-    const blob = await put(`uploads/${filename}`, file.buffer, {
-      access: 'public',
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
-    return blob.url;
-  }
-
-  // Local fallback: save to disk
-  const uploadsDir = path.join(__dirname, '..', '..', 'public', 'images', 'uploads');
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  fs.writeFileSync(path.join(uploadsDir, filename), file.buffer);
-  return `/images/uploads/${filename}`;
-}
-
-function createAdminRouter() {
+function createAdminRouter(db) {
   const router = express.Router();
 
   // ── Public auth ────────────────────────────────────────────────────────
@@ -83,7 +69,7 @@ function createAdminRouter() {
   // ── Stats ──────────────────────────────────────────────────────────────
 
   router.get('/api/stats', async (req, res) => {
-    try { res.json(await getStats()); }
+    try { res.json(await getStats(db)); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
@@ -91,7 +77,7 @@ function createAdminRouter() {
 
   router.get('/api/applications/export.csv', async (req, res) => {
     try {
-      const apps = await listApplications({ status: req.query.status, search: req.query.search, limit: 10000 });
+      const apps = await listApplications(db, { status: req.query.status, search: req.query.search, limit: 10000 });
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', 'attachment; filename="applications.csv"');
       res.send('﻿' + generateCsv(apps));
@@ -100,7 +86,7 @@ function createAdminRouter() {
 
   router.get('/api/applications', async (req, res) => {
     try {
-      res.json(await listApplications({
+      res.json(await listApplications(db, {
         status: req.query.status, search: req.query.search,
         limit: Number(req.query.limit) || 100, offset: Number(req.query.offset) || 0,
       }));
@@ -109,7 +95,7 @@ function createAdminRouter() {
 
   router.get('/api/applications/:id', async (req, res) => {
     try {
-      const app = await getApplication(Number(req.params.id));
+      const app = await getApplication(db, Number(req.params.id));
       if (!app) return res.status(404).json({ error: 'Заявка не найдена' });
       res.json(app);
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -120,8 +106,8 @@ function createAdminRouter() {
       const { status, manager_note } = req.body || {};
       if (status !== undefined && !VALID_STATUSES.has(status))
         return res.status(400).json({ error: 'Недопустимый статус' });
-      await updateApplication(Number(req.params.id), { status, manager_note });
-      res.json(await getApplication(Number(req.params.id)));
+      await updateApplication(db, Number(req.params.id), { status, manager_note });
+      res.json(await getApplication(db, Number(req.params.id)));
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
@@ -130,32 +116,32 @@ function createAdminRouter() {
       const body = req.body || {};
       if (!body.name || !body.phone)
         return res.status(400).json({ error: 'Имя и телефон обязательны' });
-      const id = await insertManualApplication(body);
-      res.status(201).json(await getApplication(id));
+      const id = await insertManualApplication(db, body);
+      res.status(201).json(await getApplication(db, id));
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   // ── Events ─────────────────────────────────────────────────────────────
 
   router.get('/api/events', async (req, res) => {
-    try { res.json(await listEvents()); }
+    try { res.json(await listEvents(db)); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   router.post('/api/events', async (req, res) => {
     try {
       if (!req.body?.title) return res.status(400).json({ error: 'Название обязательно' });
-      res.status(201).json(await createEvent(req.body));
+      res.status(201).json(await createEvent(db, req.body));
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   router.patch('/api/events/:id', async (req, res) => {
-    try { res.json(await updateEvent(Number(req.params.id), req.body || {})); }
+    try { res.json(await updateEvent(db, Number(req.params.id), req.body || {})); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   router.delete('/api/events/:id', async (req, res) => {
-    try { await deleteEvent(Number(req.params.id)); res.json({ ok: true }); }
+    try { await deleteEvent(db, Number(req.params.id)); res.json({ ok: true }); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
@@ -166,12 +152,12 @@ function createAdminRouter() {
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
-  router.put('/api/prices', async (req, res) => {
+  router.put('/api/prices', (req, res) => {
     try {
       const body = req.body || {};
       if (!body.seasonalStayRates || !body.perDayItems || !body.fixedItems)
         return res.status(400).json({ error: 'Неверный формат данных' });
-      await savePrices(body);
+      savePrices(body);
       res.json({ ok: true, prices: getPrices() });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
@@ -179,7 +165,7 @@ function createAdminRouter() {
   // ── Content ────────────────────────────────────────────────────────────
 
   router.get('/api/content', async (req, res) => {
-    try { res.json(await getAllContent()); }
+    try { res.json(await getAllContent(db)); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
@@ -189,46 +175,40 @@ function createAdminRouter() {
 
   router.put('/api/content', async (req, res) => {
     try {
-      await setManyContent(req.body || {});
-      res.json({ ok: true, content: await getAllContent() });
+      await setManyContent(db, req.body || {});
+      res.json({ ok: true, content: await getAllContent(db) });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   // ── Gallery ────────────────────────────────────────────────────────────
 
   router.get('/api/gallery', async (req, res) => {
-    try { res.json(await listPhotos()); }
+    try { res.json(await listPhotos(db)); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   router.post('/api/gallery', async (req, res) => {
     try {
       if (!req.body?.url) return res.status(400).json({ error: 'URL обязателен' });
-      res.status(201).json(await createPhoto(req.body));
+      res.status(201).json(await createPhoto(db, req.body));
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   router.patch('/api/gallery/:id', async (req, res) => {
-    try { res.json(await updatePhoto(Number(req.params.id), req.body || {})); }
+    try { res.json(await updatePhoto(db, Number(req.params.id), req.body || {})); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   router.delete('/api/gallery/:id', async (req, res) => {
-    try { await deletePhoto(Number(req.params.id)); res.json({ ok: true }); }
+    try { await deletePhoto(db, Number(req.params.id)); res.json({ ok: true }); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   // ── File upload ────────────────────────────────────────────────────────
 
-  router.post('/api/upload', upload.single('file'), async (req, res) => {
+  router.post('/api/upload', upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен или неверный формат' });
-    try {
-      const url = await uploadFile(req.file);
-      res.json({ url });
-    } catch (err) {
-      console.error('Upload error:', err);
-      res.status(500).json({ error: 'Ошибка загрузки файла' });
-    }
+    res.json({ url: `/images/uploads/${req.file.filename}` });
   });
 
   // ── Static + SPA ───────────────────────────────────────────────────────

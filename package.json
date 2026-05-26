@@ -5,25 +5,18 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
-    "vercel-build": "echo build done",
-    "deploy": "wrangler deploy",
-    "preview": "wrangler dev"
+    "start": "node src/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@libsql/client": "^0.14.0",
-    "@vercel/blob": "^0.27.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
     "helmet": "^8.1.0",
     "multer": "^2.1.1",
-    "nodemailer": "^8.0.5"
-  },
-  "devDependencies": {
-    "wrangler": "^4.94.0"
+    "nodemailer": "^8.0.5",
+    "sqlite3": "^6.0.1"
   }
 }

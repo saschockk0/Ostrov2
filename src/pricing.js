@@ -1,5 +1,7 @@
-const { run, getOne } = require('./libsql-client');
+const fs = require('fs');
+const path = require('path');
 
+const PRICES_PATH = path.join(__dirname, '..', 'data', 'prices.json');
 const WEEKEND_DAYS = new Set([5, 6, 0]); // Fri, Sat, Sun
 
 const DEFAULT_PRICES = {
@@ -38,35 +40,24 @@ const DEFAULT_PRICES = {
 
 let _prices = null;
 
-async function loadPricesFromDb() {
+function loadPrices() {
   try {
-    const row = await getOne(
-      `SELECT value FROM content_blocks WHERE key = ?`,
-      ['_prices_json']
-    );
-    if (row) {
-      _prices = JSON.parse(row.value);
-    } else {
-      _prices = DEFAULT_PRICES;
-    }
+    _prices = JSON.parse(fs.readFileSync(PRICES_PATH, 'utf8'));
   } catch {
     _prices = DEFAULT_PRICES;
+    try { fs.writeFileSync(PRICES_PATH, JSON.stringify(_prices, null, 2)); } catch { /* ignore */ }
   }
   return _prices;
 }
 
-async function savePrices(prices) {
-  const now = new Date().toISOString();
-  await run(
-    `INSERT INTO content_blocks (key, value, updated_at) VALUES (?, ?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-    ['_prices_json', JSON.stringify(prices), now]
-  );
+function savePrices(prices) {
+  fs.writeFileSync(PRICES_PATH, JSON.stringify(prices, null, 2), 'utf8');
   _prices = prices;
 }
 
 function getPrices() {
-  return _prices || DEFAULT_PRICES;
+  if (!_prices) loadPrices();
+  return _prices;
 }
 
 // ── Calculation helpers ───────────────────────────────────────────────────
@@ -157,6 +148,8 @@ function calculateQuote(payload) {
   };
 }
 
+loadPrices(); // warm up on module load
+
 module.exports = {
   WEEKEND_DAYS,
   get PER_DAY_ITEMS() { return getPrices().perDayItems; },
@@ -164,6 +157,5 @@ module.exports = {
   get SEASONAL_STAY_RATES() { return getPrices().seasonalStayRates; },
   getPrices,
   savePrices,
-  loadPricesFromDb,
   calculateQuote,
 };

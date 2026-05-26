@@ -11,6 +11,17 @@
     <link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg" />
     <link rel="shortcut icon" href="/assets/ostrov-logo.png" type="image/png" />
 
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://mc.yandex.ru" />
+
+    <!-- Preload critical font -->
+    <link rel="preload" href="/assets/fonts/Montserrat-VariableFont_wght.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- Google Fonts (non-blocking via link instead of @import) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'" />
+
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Парусный клуб «Остров»" />
     <meta property="og:title" content="Парусный клуб «Остров» — отдых на острове, 133 км от Москвы" />
@@ -239,8 +250,8 @@
         </div>
         <div class="hero-media">
           <div class="video-card">
-            <video autoplay muted loop playsinline controls preload="auto" poster="/assets/sunset.jpg">
-              <source src="/assets/hero.mp4" type="video/mp4" />
+            <video autoplay muted loop playsinline controls preload="metadata" poster="/assets/sunset.jpg">
+              <source src="/assets/hero-opt.mp4" type="video/mp4" />
               Ваш браузер не поддерживает видео.
             </video>
             <div class="video-badge">Видео с острова</div>
@@ -718,7 +729,7 @@
         <div class="yandex-reviews-wrap">
           <iframe
             class="yandex-reviews-iframe"
-            src="https://yandex.ru/maps-reviews-widget/107818186926?comments"
+            data-src="https://yandex.ru/maps-reviews-widget/107818186926?comments"
             frameborder="0"
             allow="fullscreen"
             loading="lazy"
@@ -766,7 +777,7 @@
         <div class="footer-map">
           <iframe
             title="Парусный клуб Остров на Яндекс Карте"
-            src="https://yandex.ru/map-widget/v1/?ll=36.3840%2C56.6890&z=15&pt=36.3852%2C56.6927%2Cpm2gnm~36.3828%2C56.6854%2Cpm2orm&l=map"
+            data-src="https://yandex.ru/map-widget/v1/?ll=36.3840%2C56.6890&z=15&pt=36.3852%2C56.6927%2Cpm2gnm~36.3828%2C56.6854%2Cpm2orm&l=map"
             loading="lazy"
             allowfullscreen
           ></iframe>
@@ -965,6 +976,25 @@
       <p class="lightbox__caption" id="lightboxCaption"></p>
     </div>
 
+    <!-- Lazy-load iframes when they scroll into view -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var lazyFrames = document.querySelectorAll('iframe[data-src]');
+        if ('IntersectionObserver' in window) {
+          var obs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) {
+              if (e.isIntersecting) {
+                e.target.src = e.target.dataset.src;
+                obs.unobserve(e.target);
+              }
+            });
+          }, { rootMargin: '300px' });
+          lazyFrames.forEach(function(f) { obs.observe(f); });
+        } else {
+          lazyFrames.forEach(function(f) { f.src = f.dataset.src; });
+        }
+      });
+    </script>
     <script src="/app.js" defer></script>
   </body>
 </html>

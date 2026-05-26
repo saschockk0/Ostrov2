@@ -1,4 +1,20 @@
-const { run, query, getOne } = require('../libsql-client');
+function query(db, sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
+  });
+}
+
+function run(db, sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) { err ? reject(err) : resolve(this); });
+  });
+}
+
+function getOne(db, sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => err ? reject(err) : resolve(row));
+  });
+}
 
 function tryParse(str) {
   try { return JSON.parse(str); } catch { return null; }
@@ -13,7 +29,7 @@ function parseApp(row) {
   };
 }
 
-async function listApplications({ status, search, limit = 50, offset = 0 } = {}) {
+async function listApplications(db, { status, search, limit = 50, offset = 0 } = {}) {
   const conditions = [];
   const params = [];
   if (status && status !== 'all') { conditions.push('status = ?'); params.push(status); }
@@ -23,18 +39,19 @@ async function listApplications({ status, search, limit = 50, offset = 0 } = {})
   }
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   const rows = await query(
+    db,
     `SELECT * FROM applications ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...params, Math.min(limit, 500), offset]
   );
   return rows.map(parseApp);
 }
 
-async function getApplication(id) {
-  const row = await getOne('SELECT * FROM applications WHERE id = ?', [id]);
+async function getApplication(db, id) {
+  const row = await getOne(db, 'SELECT * FROM applications WHERE id = ?', [id]);
   return row ? parseApp(row) : null;
 }
 
-async function updateApplication(id, updates) {
+async function updateApplication(db, id, updates) {
   const allowed = ['status', 'manager_note'];
   const fields = [];
   const params = [];
@@ -43,11 +60,11 @@ async function updateApplication(id, updates) {
   }
   if (!fields.length) return;
   params.push(id);
-  await run(`UPDATE applications SET ${fields.join(', ')} WHERE id = ?`, params);
+  await run(db, `UPDATE applications SET ${fields.join(', ')} WHERE id = ?`, params);
 }
 
-async function insertManualApplication(app) {
-  const result = await run(`
+async function insertManualApplication(db, app) {
+  const result = await run(db, `
     INSERT INTO applications
       (created_at, client_type, name, phone, messenger, email, comment, answers_json, quote_json, status, manager_note)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -67,10 +84,10 @@ async function insertManualApplication(app) {
   return result.lastID;
 }
 
-async function getStats() {
-  const counts = await query(`SELECT status, COUNT(*) as count FROM applications GROUP BY status`);
-  const totalRow = await getOne(`SELECT COUNT(*) as total FROM applications`);
-  const revenueRow = await getOne(`
+async function getStats(db) {
+  const counts = await query(db, `SELECT status, COUNT(*) as count FROM applications GROUP BY status`);
+  const totalRow = await getOne(db, `SELECT COUNT(*) as total FROM applications`);
+  const revenueRow = await getOne(db, `
     SELECT SUM(CAST(json_extract(quote_json, '$.total') AS REAL)) as total
     FROM applications WHERE status = 'confirmed'
   `);
@@ -102,12 +119,21 @@ function generateCsv(apps) {
   const headers = ['ID', 'Дата', 'Имя', 'Телефон', 'Мессенджер', 'Email',
     'Приезд', 'Отъезд', 'Взрослых', 'Детей', 'Ночей', 'Сумма', 'Статус', 'Комментарий', 'Заметка менеджера'];
   const rows = apps.map(a => [
-    a.id, a.created_at, a.name, a.phone, a.messenger, a.email,
-    a.answers?.arrivalDate || '', a.answers?.departureDate || '',
-    a.answers?.adults || '', a.answers?.children || '',
-    a.quote?.nights || '', a.quote?.total || 0,
+    a.id,
+    a.created_at,
+    a.name,
+    a.phone,
+    a.messenger,
+    a.email,
+    a.answers?.arrivalDate || '',
+    a.answers?.departureDate || '',
+    a.answers?.adults || '',
+    a.answers?.children || '',
+    a.quote?.nights || '',
+    a.quote?.total || 0,
     STATUS_LABELS[a.status] || a.status,
-    a.comment, a.manager_note,
+    a.comment,
+    a.manager_note,
   ].map(csvEscape).join(','));
   return [headers.join(','), ...rows].join('\r\n');
 }
