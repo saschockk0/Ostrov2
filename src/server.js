@@ -130,14 +130,15 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
       quote,
     });
 
-    const emailStatus = await sendApplicationEmail(appId, payload, quote);
+    sendApplicationEmail(appId, payload, quote).catch((err) =>
+      console.error("Email send error (async):", err.message)
+    );
 
     // TODO: add Telegram bot delivery in next iteration.
     return res.status(201).json({
       ok: true,
       applicationId: appId,
       quote,
-      emailSent: emailStatus.sent,
     });
   } catch (error) {
     console.error("Application submit error:", error);
