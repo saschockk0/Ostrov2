@@ -88,7 +88,7 @@ async function getStats(db) {
   const counts = await query(db, `SELECT status, COUNT(*) as count FROM applications GROUP BY status`);
   const totalRow = await getOne(db, `SELECT COUNT(*) as total FROM applications`);
   const revenueRow = await getOne(db, `
-    SELECT SUM(CAST(json_extract(quote_json, '$.total') AS REAL)) as total
+    SELECT SUM(CAST(JSON_EXTRACT(quote_json, '$.total') AS DECIMAL(12,2))) as total
     FROM applications WHERE status = 'confirmed'
   `);
   const byStatus = {};

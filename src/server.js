@@ -162,7 +162,7 @@ app.get("/api/reviews", (req, res) => {
           JSON.stringify(reviews),
         ]);
         db.run(
-          "DELETE FROM reviews_cache WHERE id NOT IN (SELECT id FROM reviews_cache ORDER BY id DESC LIMIT 3)"
+          "DELETE FROM reviews_cache WHERE id < (SELECT min_id FROM (SELECT id AS min_id FROM reviews_cache ORDER BY id DESC LIMIT 1 OFFSET 2) t)"
         );
         return res.json({ reviews, source: "fresh" });
       } catch (fetchErr) {

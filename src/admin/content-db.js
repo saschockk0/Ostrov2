@@ -34,7 +34,7 @@ function query(db, sql, params = []) {
 }
 
 async function getAllContent(db) {
-  const rows = await query(db, 'SELECT key, value, updated_at FROM content_blocks');
+  const rows = await query(db, 'SELECT `key`, value, updated_at FROM content_blocks');
   const result = { ...DEFAULT_CONTENT };
   for (const row of rows) result[row.key] = row.value;
   return result;
@@ -43,8 +43,7 @@ async function getAllContent(db) {
 async function setContent(db, key, value) {
   const now = new Date().toISOString();
   await run(db,
-    `INSERT INTO content_blocks (key, value, updated_at) VALUES (?, ?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    "INSERT INTO content_blocks (`key`, value, updated_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value), updated_at = VALUES(updated_at)",
     [key, value, now]
   );
 }

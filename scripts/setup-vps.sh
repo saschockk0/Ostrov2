@@ -7,7 +7,6 @@
 set -euo pipefail
 
 APP_DIR=/srv/ostrov
-DB_DIR=/var/lib/ostrov
 REPO_URL=https://github.com/saschockk0/Ostrov2.git
 
 # ── цвета для читаемого вывода ──────────────────────────────────────────────
@@ -26,7 +25,8 @@ apt-get install -y -q \
   git curl wget gnupg ca-certificates \
   build-essential python3 \
   nginx certbot python3-certbot-nginx \
-  ufw
+  ufw \
+  mysql-server
 
 # =============================================================================
 info "2. Node.js 20 LTS"
@@ -60,29 +60,44 @@ info "5. Установка зависимостей"
 npm ci --omit=dev
 
 # =============================================================================
-info "6. Директория для базы данных"
+info "6. MySQL — создание базы и пользователя"
 # =============================================================================
-mkdir -p "$DB_DIR"
-chown www-data:www-data "$DB_DIR"
+DB_NAME="ostrov"
+DB_USER="ostrov_user"
+DB_PASS=$(openssl rand -base64 18)
+
+systemctl enable mysql
+systemctl start mysql
+
+mysql -u root <<SQL
+CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
+GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'localhost';
+FLUSH PRIVILEGES;
+SQL
+info "БД: $DB_NAME, пользователь: $DB_USER"
 
 # =============================================================================
 info "7. Файл .env"
 # =============================================================================
 if [ ! -f "$APP_DIR/.env" ]; then
   cp "$APP_DIR/.env.example" "$APP_DIR/.env"
-  # Путь к БД — вне git-checkout, чтобы не терять данные при git pull
-  sed -i "s|^DB_PATH=.*|DB_PATH=$DB_DIR/ostrov.sqlite|" "$APP_DIR/.env"
+  sed -i "s|^DB_HOST=.*|DB_HOST=localhost|" "$APP_DIR/.env"
+  sed -i "s|^DB_PORT=.*|DB_PORT=3306|" "$APP_DIR/.env"
+  sed -i "s|^DB_NAME=.*|DB_NAME=$DB_NAME|" "$APP_DIR/.env"
+  sed -i "s|^DB_USER=.*|DB_USER=$DB_USER|" "$APP_DIR/.env"
+  sed -i "s|^DB_PASS=.*|DB_PASS=$DB_PASS|" "$APP_DIR/.env"
 
   echo ""
   warn "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  warn "ВАЖНО: заполните переменные окружения в .env"
+  warn "ВАЖНО: заполните остальные переменные в .env"
   warn "Команда: nano $APP_DIR/.env"
   warn ""
   warn "Что нужно заполнить:"
   warn "  SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS"
-  warn "  SMTP_FROM — адрес отправителя"
   warn "  MANAGER_EMAIL — куда приходят заявки"
   warn "  TURNSTILE_SITE_KEY / TURNSTILE_SECRET_KEY — от cloudflare.com/turnstile"
+  warn "  (DB_* уже заполнены автоматически)"
   warn "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
   read -rp "Нажмите Enter, чтобы открыть .env в редакторе (или Ctrl+C чтобы сделать это позже)..." _
