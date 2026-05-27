@@ -1,4 +1,46 @@
+# === Основные поисковики — полный доступ ===
+User-agent: Googlebot
+User-agent: Yandex
+User-agent: Bingbot
+Allow: /
+
+# === AI-краулеры — явно открыты для видимости в ИИ-поиске ===
+# ChatGPT / OpenAI
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Anthropic / Claude
+User-agent: Claude-Web
+User-agent: anthropic-ai
+Allow: /
+
+# Google AI Overviews (SGE)
+User-agent: Google-Extended
+Allow: /
+
+# Cohere, Meta, другие LLM-платформы
+User-agent: cohere-ai
+User-agent: meta-externalagent
+Allow: /
+
+# === SEO-аналитика — с ограничением нагрузки ===
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Crawl-delay: 10
+
+# === Все остальные боты ===
 User-agent: *
 Disallow: /api/
+Disallow: /ostrov-admin/
 
 Sitemap: https://ostrov-parusa.ru/sitemap.xml

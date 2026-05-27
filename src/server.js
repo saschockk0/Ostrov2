@@ -184,6 +184,19 @@ app.get("/api/reviews", (req, res) => {
   );
 });
 
+// SEO-файлы отдаём явно с правильным Content-Type,
+// чтобы catch-all ниже их не перекрыл
+app.get("/sitemap.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.sendFile(path.join(__dirname, "..", "public", "sitemap.xml"));
+});
+
+app.get("/robots.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.sendFile(path.join(__dirname, "..", "public", "robots.txt"));
+});
+
+// Все прочие пути → SPA
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
