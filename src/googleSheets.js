@@ -19,7 +19,9 @@ async function sendToGoogleSheets(application, quote) {
     accommodation: answers.accommodation || "",
     food: answers.food || "",
     total: quote.total != null ? String(quote.total) : "",
-    breakdown: quote.breakdown ? JSON.stringify(quote.breakdown) : "",
+    breakdown: (quote.breakdown || [])
+      .map((r) => `${r.label}: ${r.amount}₽`)
+      .join("\n"),
   };
 
   const res = await fetch(APPS_SCRIPT_URL, {
