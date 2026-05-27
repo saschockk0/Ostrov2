@@ -91,6 +91,9 @@ async function verifyTurnstile(token, ip) {
     body: params,
   });
   const data = await response.json();
+  if (!data.success) {
+    console.error("[Turnstile] verification failed:", JSON.stringify(data));
+  }
   return { ok: Boolean(data.success), reason: data["error-codes"] || null };
 }
 

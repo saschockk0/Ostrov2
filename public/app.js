@@ -214,6 +214,8 @@ let currentStep = 1;
 let stepDirection = 1;
 let turnstileSiteKey = "";
 let turnstileToken = "";
+let turnstileWidgetId = null;
+let turnstileScriptLoaded = false;
 let campingSuggested = false;
 
 function suggestCamping() {
@@ -267,6 +269,8 @@ function showStep(stepNum) {
   const progress = (stepNum / TOTAL_STEPS) * 100;
   progressBar.style.width = `${progress}%`;
   stepLabel.textContent = `Шаг ${stepNum} из ${TOTAL_STEPS}`;
+
+  if (stepNum === 5) renderTurnstile();
 
   prevBtn.classList.toggle("hidden", stepNum === 1);
   nextBtn.classList.toggle("hidden", stepNum === TOTAL_STEPS);
@@ -638,6 +642,34 @@ filterTabs.forEach((tab) => {
   });
 });
 
+function renderTurnstile() {
+  if (!turnstileSiteKey) return;
+  if (turnstileWidgetId != null && window.turnstile) {
+    window.turnstile.reset(turnstileWidgetId);
+    return;
+  }
+  if (!turnstileScriptLoaded) {
+    turnstileScriptLoaded = true;
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.onload = () => mountTurnstile();
+    document.head.appendChild(script);
+  } else if (window.turnstile) {
+    mountTurnstile();
+  }
+}
+
+function mountTurnstile() {
+  if (!window.turnstile || turnstileWidgetId != null) return;
+  turnstileWidgetId = window.turnstile.render("#turnstileContainer", {
+    sitekey: turnstileSiteKey,
+    callback: (token) => { turnstileToken = token; },
+    "expired-callback": () => { turnstileToken = ""; },
+    "error-callback": () => { turnstileToken = ""; },
+  });
+}
+
 fetch("/api/config")
   .then((r) => r.json())
   .then((cfg) => {
@@ -645,22 +677,7 @@ fetch("/api/config")
     if (!turnstileSiteKey) {
       turnstileContainer.textContent =
         "Turnstile можно включить через TURNSTILE_SITE_KEY и TURNSTILE_SECRET_KEY.";
-      return;
     }
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (!window.turnstile) return;
-      window.turnstile.render("#turnstileContainer", {
-        sitekey: turnstileSiteKey,
-        callback: (token) => {
-          turnstileToken = token;
-        },
-      });
-    };
-    document.head.appendChild(script);
   })
   .catch(() => {
     turnstileContainer.textContent = "Не удалось загрузить конфигурацию безопасности.";
