@@ -7,6 +7,7 @@ const rateLimit = require("express-rate-limit");
 
 const { calculateQuote, getPrices } = require("./pricing");
 const { initDb, insertApplication } = require("./database");
+const { sendToGoogleSheets } = require("./googleSheets");
 const { sendApplicationEmail } = require("./email");
 const { fetchFromYandex } = require("./yandex-reviews");
 const { createAdminRouter } = require("./admin/router");
@@ -132,6 +133,10 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
 
     sendApplicationEmail(appId, payload, quote).catch((err) =>
       console.error("Email send error (async):", err.message)
+    );
+
+    sendToGoogleSheets(payload, quote).catch((err) =>
+      console.error("Google Sheets error (async):", err.message)
     );
 
     // TODO: add Telegram bot delivery in next iteration.
