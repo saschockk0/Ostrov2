@@ -15,6 +15,7 @@ const { getAllContent } = require("./admin/content-db");
 const { listPhotos } = require("./admin/gallery-db");
 
 const app = express();
+app.set("trust proxy", 1);
 const db = initDb();
 const port = Number(process.env.PORT || 3000);
 
