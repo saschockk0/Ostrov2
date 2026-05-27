@@ -7,7 +7,7 @@ async function sendToGoogleSheets(application, quote) {
   const body = {
     clientType: application.clientType || "individual",
     name: application.name,
-    phone: application.phone,
+    phone: (application.phone || "").replace(/^\+/, ""),
     messenger: application.messenger || "",
     email: application.email || "",
     comment: application.comment || "",
