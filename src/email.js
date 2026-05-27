@@ -14,6 +14,7 @@ function createTransporter() {
     port,
     secure,
     auth: { user, pass },
+    family: 4,
   });
 }
 
