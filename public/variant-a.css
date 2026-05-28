@@ -1105,7 +1105,12 @@ body.va-nav-open {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 64px;
+  margin-bottom: 48px;
+}
+
+.va-fleet__head h2 {
+  font-size: 38px;
+  line-height: 1.2;
 }
 
 .va-fleet__grid {
@@ -1120,7 +1125,6 @@ body.va-nav-open {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
   transition: box-shadow 0.2s, transform 0.2s;
 }
 
@@ -1130,9 +1134,12 @@ body.va-nav-open {
 }
 
 .va-fleet-card__media {
-  height: 180px;
+  height: 200px;
   position: relative;
   overflow: hidden;
+  border-radius: 14px;
+  margin: 12px 12px 0;
+  background: linear-gradient(135deg, #dce6f0 0%, #b8cfe0 100%);
 }
 
 .va-fleet-card__media img {
@@ -1140,23 +1147,19 @@ body.va-nav-open {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 14px;
 }
 
-.va-fleet-card__media--placeholder {
-  background: var(--va-bg-alt, #e8edf2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--va-mute);
-  font-size: 13px;
+.va-fleet-card__media--dark {
+  background: linear-gradient(135deg, #2a5a6e 0%, #1b3a4b 100%);
 }
 
 .va-fleet-card__count {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 99px;
   font-size: 11px;
   font-weight: 700;
@@ -1165,8 +1168,34 @@ body.va-nav-open {
   letter-spacing: 0.05em;
 }
 
+.va-fleet-card__label {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  padding: 6px 12px;
+  background: rgba(20, 50, 70, 0.75);
+  backdrop-filter: blur(4px);
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+}
+
+.va-fleet-card__label::before {
+  content: "photo";
+  display: block;
+  font-size: 9px;
+  font-weight: 400;
+  opacity: 0.7;
+  letter-spacing: 0.12em;
+  margin-bottom: 1px;
+}
+
 .va-fleet-card__body {
-  padding: 24px 22px;
+  padding: 20px 20px 22px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1174,7 +1203,7 @@ body.va-nav-open {
 
 .va-fleet-card__name {
   font-family: var(--font-display, "Lora", serif);
-  font-size: 22px;
+  font-size: 20px;
   color: var(--va-ink);
   letter-spacing: -0.02em;
 }
@@ -1182,11 +1211,11 @@ body.va-nav-open {
 .va-fleet-card__kind {
   font-size: 13px;
   color: var(--va-mute);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .va-fleet-card__divider {
-  margin: 20px 0;
+  margin: 16px 0;
   height: 1px;
   background: var(--va-hair);
 }
@@ -1194,7 +1223,7 @@ body.va-nav-open {
 .va-fleet-card__specs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   font-size: 12px;
   color: var(--va-ink-soft);
 }
@@ -1203,10 +1232,12 @@ body.va-nav-open {
   display: block;
   color: var(--va-mute);
   margin-bottom: 2px;
+  font-size: 11px;
 }
 
 .va-fleet-card__specs strong {
   font-weight: 600;
+  font-size: 13px;
 }
 
 .va-fleet-card__specs .span-2 {
@@ -1214,17 +1245,17 @@ body.va-nav-open {
 }
 
 .va-fleet-card__note {
-  margin-top: 18px;
+  margin-top: auto;
+  padding-top: 14px;
   font-size: 12px;
   color: var(--va-ink-soft);
   line-height: 1.5;
   font-style: italic;
-  border-top: 1px solid var(--va-hair);
-  padding-top: 14px;
+  flex: 1;
 }
 
 .va-fleet-card__arrow {
-  margin-top: 20px;
+  margin-top: 16px;
   display: flex;
   justify-content: flex-end;
 }
@@ -1233,128 +1264,19 @@ body.va-nav-open {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid var(--va-ink);
+  border: 1px solid var(--va-hair);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
-}
-
-/* Fleet popup */
-.va-fleet-popup {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
-.va-fleet-popup[hidden] { display: none; }
-
-.va-fleet-popup__overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-}
-
-.va-fleet-popup__content {
-  position: relative;
-  background: var(--va-bg, #fff);
-  border-radius: 20px;
-  overflow: hidden;
-  max-width: 520px;
-  width: 100%;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
-  animation: fleetPopIn 0.25s ease-out;
-}
-
-@keyframes fleetPopIn {
-  from { opacity: 0; transform: scale(0.95) translateY(12px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.va-fleet-popup__close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.9);
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: var(--va-ink);
+  transition: background 0.15s, color 0.15s;
 }
 
-.va-fleet-popup__img-wrap {
-  height: 280px;
-  overflow: hidden;
-  background: var(--va-bg-alt, #e8edf2);
-}
-
-.va-fleet-popup__img-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.va-fleet-popup__info {
-  padding: 28px 24px 32px;
-}
-
-.va-fleet-popup__name {
-  font-family: var(--font-display, "Lora", serif);
-  font-size: 24px;
-  color: var(--va-ink);
-  letter-spacing: -0.02em;
-}
-
-.va-fleet-popup__kind {
-  font-size: 13px;
-  color: var(--va-mute);
-  margin-top: 4px;
-}
-
-.va-fleet-popup__specs {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--va-hair);
-  font-size: 13px;
-  color: var(--va-ink-soft);
-}
-
-.va-fleet-popup__specs label {
-  display: block;
-  color: var(--va-mute);
-  margin-bottom: 4px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.va-fleet-popup__specs strong {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.va-fleet-popup__note {
-  margin-top: 16px;
-  font-size: 14px;
-  color: var(--va-ink-soft);
-  line-height: 1.5;
+.va-fleet-card:hover .va-fleet-card__arrow span {
+  background: var(--va-ink);
+  color: #fff;
+  border-color: var(--va-ink);
 }
 
 /* Pricing */
