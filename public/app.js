@@ -829,18 +829,43 @@ document.querySelectorAll(".js-show-all-events").forEach((btn) => {
   });
 })();
 
-// --- Fleet cards toggle ---
-document.querySelectorAll('[data-fleet-card]').forEach(card => {
-  card.style.cursor = 'pointer';
-  card.addEventListener('click', () => {
-    const details = card.querySelector('.va-fleet-card__details');
-    const arrow = card.querySelector('.va-fleet-card__arrow span');
-    if (!details) return;
-    const open = !details.hidden;
-    details.hidden = open;
-    if (arrow) arrow.textContent = open ? '↓' : '↑';
+// --- Fleet cards popup ---
+(function initFleetPopup() {
+  var popup = document.getElementById('fleetPopup');
+  if (!popup) return;
+  var overlay = popup.querySelector('.va-fleet-popup__overlay');
+  var closeBtn = popup.querySelector('.va-fleet-popup__close');
+
+  function open(card) {
+    var d = card.dataset;
+    document.getElementById('fleetPopupName').textContent = d.name || '';
+    document.getElementById('fleetPopupKind').textContent = d.kind || '';
+    document.getElementById('fleetPopupCrew').textContent = d.crew || '';
+    document.getElementById('fleetPopupSpeed').textContent = d.speed || '';
+    document.getElementById('fleetPopupSize').textContent = d.size || '';
+    document.getElementById('fleetPopupNote').textContent = d.note || '';
+    var img = document.getElementById('fleetPopupImg');
+    if (d.img) { img.src = d.img; img.alt = d.name; img.style.display = ''; }
+    else { img.style.display = 'none'; }
+    popup.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    popup.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('[data-fleet-card]').forEach(function(card) {
+    card.addEventListener('click', function() { open(card); });
   });
-});
+
+  overlay.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !popup.hidden) close();
+  });
+})();
 
 // --- Gallery photos + Lightbox ---
 (function initGallery() {
