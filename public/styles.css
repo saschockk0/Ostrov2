@@ -153,11 +153,7 @@ body {
 }
 
 .eyebrow::before {
-  content: '';
-  display: inline-block;
-  width: 24px;
-  height: 1px;
-  background: currentColor;
+  display: none;
 }
 
 .hero__content h1 {
