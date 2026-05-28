@@ -416,6 +416,13 @@ function validateStep() {
     }
   }
 
+  if (currentStep === 6) {
+    if (!form.elements.privacyConsent.checked) {
+      formMessage.textContent = "Необходимо согласие с политикой обработки данных.";
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -821,6 +828,19 @@ document.querySelectorAll(".js-show-all-events").forEach((btn) => {
     dot.classList.toggle("is-past", today > monthEnd);
   });
 })();
+
+// --- Fleet cards toggle ---
+document.querySelectorAll('[data-fleet-card]').forEach(card => {
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => {
+    const details = card.querySelector('.va-fleet-card__details');
+    const arrow = card.querySelector('.va-fleet-card__arrow span');
+    if (!details) return;
+    const open = !details.hidden;
+    details.hidden = open;
+    if (arrow) arrow.textContent = open ? '↓' : '↑';
+  });
+});
 
 // --- Gallery photos + Lightbox ---
 (function initGallery() {
