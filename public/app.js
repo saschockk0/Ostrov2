@@ -760,7 +760,6 @@ function renderFleetCard(item) {
     <div class="va-fleet-card__media${hasImage ? '' : ' va-fleet-card__media--dark'}">
       ${hasImage ? `<img src="${escHtml(item.image_url)}" alt="${escHtml(item.name)}" loading="lazy">` : ''}
       ${item.count ? `<span class="va-fleet-card__count">${escHtml(item.count)}</span>` : ''}
-      <span class="va-fleet-card__label">${escHtml(item.name)}</span>
     </div>
     <div class="va-fleet-card__body">
       <div class="va-fleet-card__name">${escHtml(item.name)}</div>
