@@ -25,14 +25,16 @@ async function getEvent(db, id) {
 
 async function createEvent(db, data) {
   const r = await run(db, `
-    INSERT INTO events (title, description, date, end_date, image_url, active, sort_order, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO events (title, description, date, end_date, image_url, kind, spots, active, sort_order, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     data.title || '',
     data.description || '',
     data.date || null,
     data.end_date || null,
     data.image_url || '',
+    data.kind || 'season',
+    data.spots || '',
     data.active !== false ? 1 : 0,
     Number(data.sort_order) || 0,
     new Date().toISOString(),
@@ -44,7 +46,7 @@ async function updateEvent(db, id, data) {
   const fields = [];
   const params = [];
   const allowed = { title: String, description: String, date: v => v || null, end_date: v => v || null,
-    image_url: String, active: v => (v ? 1 : 0), sort_order: Number };
+    image_url: String, kind: String, spots: String, active: v => (v ? 1 : 0), sort_order: Number };
   for (const [key, cast] of Object.entries(allowed)) {
     if (data[key] !== undefined) { fields.push(`${key} = ?`); params.push(cast(data[key])); }
   }

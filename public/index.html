@@ -347,7 +347,6 @@
                 <div class="span-2"><label>Экипаж</label><strong>2–4 чел.</strong></div>
               </div>
               <div class="va-fleet-card__note">Разборный, для походов и соревнований до 10 м²</div>
-              <div class="va-fleet-card__arrow"><span>→</span></div>
             </div>
           </article>
 
@@ -367,7 +366,6 @@
                 <div class="span-2"><label>Экипаж</label><strong>1–2 чел.</strong></div>
               </div>
               <div class="va-fleet-card__note">Самый безопасный для новичков — мачта гнётся, парус сбрасывает порыв</div>
-              <div class="va-fleet-card__arrow"><span>→</span></div>
             </div>
           </article>
 
@@ -386,7 +384,6 @@
                 <div class="span-2"><label>Экипаж</label><strong>1–2 чел.</strong></div>
               </div>
               <div class="va-fleet-card__note">Сибирский проект. Для уверенных рулевых</div>
-              <div class="va-fleet-card__arrow"><span>→</span></div>
             </div>
           </article>
 
@@ -405,7 +402,6 @@
                 <div class="span-2"><label>Экипаж</label><strong>до 12 чел.</strong></div>
               </div>
               <div class="va-fleet-card__note">Прогулки вокруг острова в штиль. Не в аренду</div>
-              <div class="va-fleet-card__arrow"><span>→</span></div>
             </div>
           </article>
 
@@ -499,151 +495,17 @@
           </div>
         </div>
 
-        <div class="events-grid">
-          <article class="event-featured">
-            <div class="event-featured__visual">
-              <span class="event-featured__badge">Ближайшая регата</span>
-              <div class="event-featured__date-block">
-                <span class="event-featured__day">19</span>
-                <div>
-                  <div class="event-featured__month-name">июля</div>
-                  <div class="event-featured__dow">суббота</div>
-                </div>
-              </div>
-              <span class="event-featured__crew">4 / 8 экипажей</span>
-            </div>
-            <div class="event-featured__body">
-              <div class="event-featured__kind">Регата · Благотворительная гонка в монотипе</div>
-              <h3 class="event-featured__title">Регата «Спасательный круг»</h3>
-              <p class="event-featured__desc">Два гоночных дня на катамаранах «Ветер». Сбор средств в фонд помощи детям. Прошлый год — 18 экипажей, в этом ждём минимум 20.</p>
-              <div class="event-featured__footer">
-                <div>
-                  <div class="event-featured__fee-label">взнос с экипажа</div>
-                  <div class="event-featured__fee">1 000 ₽</div>
-                </div>
-                <div class="event-featured__actions">
-                  <button class="btn btn-outline">Положение</button>
-                  <button class="btn btn-primary js-open-wizard">Записать экипаж →</button>
-                </div>
-              </div>
-            </div>
-          </article>
-
+        <div class="events-grid" id="eventsGrid">
+          <div id="eventFeaturedSlot"></div>
           <div class="event-list-card">
             <div class="event-list-card__header">
               <div>
                 <span class="event-list-card__title">Календарь сезона</span>
-                <span class="event-list-card__count">7 событий</span>
+                <span class="event-list-card__count" id="eventsCount"></span>
               </div>
               <button class="event-list-card__link js-show-all-events" type="button">Все события →</button>
             </div>
-            <div id="eventsList">
-              <div class="event-item" data-kind="season">
-                <div>
-                  <div class="event-item__date-num">01</div>
-                  <div class="event-item__date-meta">мая · Чт</div>
-                </div>
-                <div>
-                  <div class="event-item__tags">
-                    <span class="event-tag event-tag--season">Сезон</span>
-                    <span class="event-item__spots">свободно</span>
-                  </div>
-                  <div class="event-item__name">Открытие сезона</div>
-                  <div class="event-item__sub">Спуск флота, поднятие флага</div>
-                </div>
-                <span class="event-item__arrow">→</span>
-              </div>
-              <div class="event-item" data-kind="promo">
-                <div>
-                  <div class="event-item__date-num">24</div>
-                  <div class="event-item__date-meta">мая · Сб</div>
-                </div>
-                <div>
-                  <div class="event-item__tags">
-                    <span class="event-tag event-tag--promo">Акция</span>
-                    <span class="event-item__spots">весь май</span>
-                  </div>
-                  <div class="event-item__name">Майские скидки</div>
-                  <div class="event-item__sub">Будни — 1 300 ₽ за ночь</div>
-                </div>
-                <span class="event-item__arrow">→</span>
-              </div>
-              <div class="event-item" data-kind="school">
-                <div>
-                  <div class="event-item__date-num">14</div>
-                  <div class="event-item__date-meta">июня · Сб</div>
-                </div>
-                <div>
-                  <div class="event-item__tags">
-                    <span class="event-tag event-tag--school">Школа</span>
-                    <span class="event-item__spots">2 места</span>
-                  </div>
-                  <div class="event-item__name">Обучение на «Ветре»</div>
-                  <div class="event-item__sub">Теория + час практики</div>
-                </div>
-                <span class="event-item__arrow">→</span>
-              </div>
-              <div class="event-item" data-kind="school">
-                <div>
-                  <div class="event-item__date-num">05</div>
-                  <div class="event-item__date-meta">июля · Сб</div>
-                </div>
-                <div>
-                  <div class="event-item__tags">
-                    <span class="event-tag event-tag--school">Школа</span>
-                    <span class="event-item__spots">3 места</span>
-                  </div>
-                  <div class="event-item__name">Группа выходного дня</div>
-                  <div class="event-item__sub">Старт в 10:00, до 3 чел.</div>
-                </div>
-                <span class="event-item__arrow">→</span>
-              </div>
-              <div class="event-item" data-kind="corp">
-                <div>
-                  <div class="event-item__date-num">16</div>
-                  <div class="event-item__date-meta">авг. · Сб</div>
-                </div>
-                <div>
-                  <div class="event-item__tags">
-                    <span class="event-tag event-tag--corp">Корп.</span>
-                    <span class="event-item__spots">по запросу</span>
-                  </div>
-                  <div class="event-item__name">Корпоративная регата</div>
-                  <div class="event-item__sub">Закрытое team-building</div>
-                </div>
-                <span class="event-item__arrow">→</span>
-              </div>
-              <div class="event-item" data-kind="school">
-                <div>
-                  <div class="event-item__date-num">05</div>
-                  <div class="event-item__date-meta">сент. · Сб</div>
-                </div>
-                <div>
-                  <div class="event-item__tags">
-                    <span class="event-tag event-tag--school">Сборы</span>
-                    <span class="event-item__spots">набор открыт</span>
-                  </div>
-                  <div class="event-item__name">Подготовка к «Осенним»</div>
-                  <div class="event-item__sub">Тренировки экипажей</div>
-                </div>
-                <span class="event-item__arrow">→</span>
-              </div>
-              <div class="event-item" data-kind="regatta">
-                <div>
-                  <div class="event-item__date-num">20</div>
-                  <div class="event-item__date-meta">сент. · Сб</div>
-                </div>
-                <div>
-                  <div class="event-item__tags">
-                    <span class="event-tag event-tag--regatta">Регата</span>
-                    <span class="event-item__spots">набор экипажей</span>
-                  </div>
-                  <div class="event-item__name">Регата «Осенние ветры»</div>
-                  <div class="event-item__sub">Закрытие сезона, банкет</div>
-                </div>
-                <span class="event-item__arrow">→</span>
-              </div>
-            </div>
+            <div id="eventsList"></div>
             <div class="event-list-card__footer">
               <p>Анонсы выходят за 14 дней. Подпишитесь — пришлём расписание на месяц вперёд.</p>
               <a class="btn btn-outline" href="https://wa.me/79037334243?text=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%21+%D0%A5%D0%BE%D1%87%D1%83+%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B0%D1%82%D1%8C+%D0%B0%D0%BD%D0%BE%D0%BD%D1%81%D1%8B+%D0%BC%D0%B5%D1%80%D0%BE%D0%BF%D1%80%D0%B8%D1%8F%D1%82%D0%B8%D0%B9+%D0%9F%D0%B0%D1%80%D1%83%D1%81%D0%BD%D0%BE%D0%B3%D0%BE+%D0%BA%D0%BB%D1%83%D0%B1%D0%B0+%C2%AB%D0%9E%D1%81%D1%82%D1%80%D0%BE%D0%B2%C2%BB" target="_blank" rel="noopener noreferrer" style="flex-shrink:0">Подписаться в WhatsApp</a>
@@ -678,19 +540,19 @@
 
       <section class="section container" id="calculator">
         <h2>Быстрый калькулятор</h2>
-        <div class="calc-v2">
-          <form id="quickCalc" class="calc-v2__left">
+        <form id="quickCalc" class="calc-v2 calc-v2--card">
+          <div class="calc-v2__left">
             <label>Взрослые <input type="number" min="1" name="adults" value="2" /></label>
             <label>Дети 7–14 лет <input type="number" min="0" name="children" value="0" /></label>
             <input type="hidden" name="arrivalDate" id="qcArrival" />
             <input type="hidden" name="departureDate" id="qcDeparture" />
-            <button class="btn btn-primary" type="submit">Рассчитать →</button>
-          </form>
+          </div>
           <div class="calc-v2__right">
             <div id="quickCalCal" class="range-cal"></div>
             <div id="quickCalCalSummary" class="range-cal__summary hidden"></div>
           </div>
-        </div>
+          <button class="btn btn-primary calc-v2__submit" type="submit" disabled>Выберите даты →</button>
+        </form>
         <div id="quickCalcResult" class="result hidden"></div>
         <div id="calcLead" class="calc-lead hidden">
           <p>Хотите уточнить детали? Оставьте контакт — менеджер ответит в течение часа.</p>

@@ -74,11 +74,15 @@ function initDb() {
       date VARCHAR(30),
       end_date VARCHAR(30),
       image_url VARCHAR(500),
+      kind VARCHAR(50) NOT NULL DEFAULT 'season',
+      spots VARCHAR(100),
       active INT NOT NULL DEFAULT 1,
       sort_order INT NOT NULL DEFAULT 0,
       created_at VARCHAR(30) NOT NULL
     )
   `);
+  db.run("ALTER TABLE events ADD COLUMN kind VARCHAR(50) NOT NULL DEFAULT 'season'", [], function(err) {});
+  db.run("ALTER TABLE events ADD COLUMN spots VARCHAR(100)", [], function(err) {});
   db.run(`
     CREATE TABLE IF NOT EXISTS content_blocks (
       \`key\` VARCHAR(191) PRIMARY KEY,

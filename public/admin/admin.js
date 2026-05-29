@@ -179,7 +179,7 @@ async function createApp(data) {
 
 function openEventForm(event = null) {
   setState({
-    eventForm: event ? { ...event } : { title: '', description: '', date: '', end_date: '', image_url: '', active: true, sort_order: 0 },
+    eventForm: event ? { ...event } : { title: '', description: '', date: '', end_date: '', image_url: '', kind: 'season', spots: '', active: true, sort_order: 0 },
     selectedEvent: event,
   });
 }
@@ -493,18 +493,20 @@ function renderAppDrawer(app) {
 
 function renderEventsView() {
   const { events } = state;
+  const KIND_LABELS = { regatta: 'Регата', school: 'Школа', promo: 'Акция', corp: 'Корп.', season: 'Сезон' };
   const rows = events.length ? events.map(e => `
     <tr>
       <td>${esc(e.title)}</td>
+      <td><span class="badge" style="background:#e8f0fe;color:#1a56db">${esc(KIND_LABELS[e.kind] || e.kind || 'Сезон')}</span></td>
       <td>${e.date ? fmtDate(e.date) : '—'}${e.end_date ? ' — ' + fmtDate(e.end_date) : ''}</td>
-      <td>${e.image_url ? `<img src="${esc(e.image_url)}" style="height:36px;border-radius:4px;object-fit:cover">` : '—'}</td>
+      <td>${esc(e.spots || '—')}</td>
       <td><span class="badge ${e.active ? 'badge-confirmed' : 'badge-rejected'}">${e.active ? 'Активно' : 'Скрыто'}</span></td>
       <td>
         <button class="btn btn-sm btn-secondary" data-edit-event="${e.id}">Изменить</button>
         <button class="btn btn-sm" style="background:var(--bg);border:1px solid var(--border)" data-toggle-event="${e.id}" data-active="${e.active ? 0 : 1}">${e.active ? 'Скрыть' : 'Показать'}</button>
         <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" data-delete-event="${e.id}">✕</button>
       </td>
-    </tr>`).join('') : `<tr><td class="table-empty" colspan="5">Мероприятий нет</td></tr>`;
+    </tr>`).join('') : `<tr><td class="table-empty" colspan="7">Мероприятий нет</td></tr>`;
 
   return `
     <div>
@@ -512,7 +514,7 @@ function renderEventsView() {
         <button class="btn btn-primary" id="add-event-btn">+ Добавить</button>
       </div>
       <div class="table-wrap">
-        <table><thead><tr><th>Название</th><th>Дата</th><th>Фото</th><th>Статус</th><th>Действия</th></tr></thead>
+        <table><thead><tr><th>Название</th><th>Тип</th><th>Дата</th><th>Места</th><th>Статус</th><th>Действия</th></tr></thead>
         <tbody>${rows}</tbody></table>
       </div>
     </div>`;
@@ -529,6 +531,18 @@ function renderEventModal() {
           ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ''}
           <div class="field"><label>Название *</label><input id="ef-title" type="text" value="${esc(f.title)}"></div>
           <div class="field"><label>Описание</label><textarea id="ef-desc" rows="3">${esc(f.description)}</textarea></div>
+          <div class="fields-row">
+            <div class="field"><label>Тип</label>
+              <select id="ef-kind">
+                <option value="season" ${f.kind === 'season' ? 'selected' : ''}>Сезон</option>
+                <option value="regatta" ${f.kind === 'regatta' ? 'selected' : ''}>Регата</option>
+                <option value="school" ${f.kind === 'school' ? 'selected' : ''}>Школа / Сборы</option>
+                <option value="promo" ${f.kind === 'promo' ? 'selected' : ''}>Акция</option>
+                <option value="corp" ${f.kind === 'corp' ? 'selected' : ''}>Корпоратив</option>
+              </select>
+            </div>
+            <div class="field"><label>Места / статус</label><input id="ef-spots" type="text" value="${esc(f.spots || '')}" placeholder="напр. 3 места, набор открыт"></div>
+          </div>
           <div class="fields-row">
             <div class="field"><label>Дата начала</label><input id="ef-date" type="date" value="${esc(f.date || '')}"></div>
             <div class="field"><label>Дата конца</label><input id="ef-enddate" type="date" value="${esc(f.end_date || '')}"></div>
@@ -837,6 +851,8 @@ function attachShellHandlers() {
     if (!state.eventForm) return;
     state.eventForm.title = document.getElementById('ef-title').value.trim();
     state.eventForm.description = document.getElementById('ef-desc').value.trim();
+    state.eventForm.kind = document.getElementById('ef-kind').value;
+    state.eventForm.spots = document.getElementById('ef-spots').value.trim();
     state.eventForm.date = document.getElementById('ef-date').value || null;
     state.eventForm.end_date = document.getElementById('ef-enddate').value || null;
     state.eventForm.image_url = document.getElementById('ef-image').value.trim();

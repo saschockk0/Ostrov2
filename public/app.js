@@ -57,9 +57,9 @@ class RangeCalendar {
 
     this.el.innerHTML = `
       <div class="rc-header">
-        <button type="button" class="rc-nav" id="rcPrev" ${prevDis ? "disabled" : ""}>‹</button>
+        <button type="button" class="rc-nav" id="rcPrev" aria-label="Предыдущий месяц" ${prevDis ? "disabled" : ""}>‹</button>
         <span class="rc-month">${monthStr}</span>
-        <button type="button" class="rc-nav" id="rcNext">›</button>
+        <button type="button" class="rc-nav" id="rcNext" aria-label="Следующий месяц">›</button>
       </div>
       <div class="rc-weekdays">
         ${WDS.map((w, i) => `<span class="rc-wd${WD_WE[i] ? " rc-wd--we" : ""}">${w}</span>`).join("")}
@@ -499,12 +499,16 @@ const wizardCal = new RangeCalendar(
 );
 
 // Init quick-calculator calendar
+const quickCalcSubmit = quickCalcForm.querySelector(".calc-v2__submit");
 const quickCalCal = new RangeCalendar(
   document.getElementById("quickCalCal"),
   document.getElementById("quickCalCalSummary"),
   (arrival, departure) => {
     document.getElementById("qcArrival").value = arrival || "";
     document.getElementById("qcDeparture").value = departure || "";
+    const ready = arrival && departure;
+    quickCalcSubmit.disabled = !ready;
+    quickCalcSubmit.textContent = ready ? "Рассчитать →" : "Выберите даты →";
   }
 );
 
@@ -627,25 +631,132 @@ quickCalcForm.addEventListener("submit", async (event) => {
   }
 });
 
+// Events: dynamic loading from API
+const KIND_LABELS = { regatta: 'Регата', school: 'Школа', promo: 'Акция', corp: 'Корп.', season: 'Сезон' };
+const KIND_TAG_CLASS = { regatta: 'event-tag--regatta', school: 'event-tag--school', promo: 'event-tag--promo', corp: 'event-tag--corp', season: 'event-tag--season' };
+const MONTHS_SHORT = ['янв.', 'февр.', 'марта', 'апр.', 'мая', 'июня', 'июля', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.'];
+const MONTHS_FULL = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const DOWS_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+
+let loadedEvents = [];
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderEventItem(ev) {
+  const kind = ev.kind || 'season';
+  const tagLabel = KIND_LABELS[kind] || 'Сезон';
+  const tagClass = KIND_TAG_CLASS[kind] || 'event-tag--season';
+  let dateNum = '—', dateMeta = '';
+  if (ev.date) {
+    const d = new Date(ev.date + 'T00:00:00');
+    dateNum = String(d.getDate()).padStart(2, '0');
+    dateMeta = MONTHS_SHORT[d.getMonth()] + ' · ' + DOWS_SHORT[d.getDay()];
+  }
+  return `<div class="event-item" data-kind="${escHtml(kind)}">
+    <div>
+      <div class="event-item__date-num">${dateNum}</div>
+      <div class="event-item__date-meta">${escHtml(dateMeta)}</div>
+    </div>
+    <div>
+      <div class="event-item__tags">
+        <span class="event-tag ${tagClass}">${escHtml(tagLabel)}</span>
+        ${ev.spots ? `<span class="event-item__spots">${escHtml(ev.spots)}</span>` : ''}
+      </div>
+      <div class="event-item__name">${escHtml(ev.title)}</div>
+      ${ev.description ? `<div class="event-item__sub">${escHtml(ev.description)}</div>` : ''}
+    </div>
+    <span class="event-item__arrow">→</span>
+  </div>`;
+}
+
+function renderFeaturedEvent(ev) {
+  const d = ev.date ? new Date(ev.date + 'T00:00:00') : null;
+  const dayStr = d ? String(d.getDate()) : '—';
+  const monthStr = d ? MONTHS_FULL[d.getMonth()] : '';
+  const dowStr = d ? DOWS_SHORT[d.getDay()].toLowerCase() + (DOWS_SHORT[d.getDay()] === 'Сб' || DOWS_SHORT[d.getDay()] === 'Вс' ? '' : '') : '';
+  const dowFull = d ? ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'][d.getDay()] : '';
+  const kindLabel = KIND_LABELS[ev.kind] || 'Событие';
+  return `<article class="event-featured">
+    <div class="event-featured__visual">
+      <span class="event-featured__badge">Ближайшее событие</span>
+      <div class="event-featured__date-block">
+        <span class="event-featured__day">${dayStr}</span>
+        <div>
+          <div class="event-featured__month-name">${escHtml(monthStr)}</div>
+          <div class="event-featured__dow">${escHtml(dowFull)}</div>
+        </div>
+      </div>
+      ${ev.spots ? `<span class="event-featured__crew">${escHtml(ev.spots)}</span>` : ''}
+    </div>
+    <div class="event-featured__body">
+      <div class="event-featured__kind">${escHtml(kindLabel)}${ev.description ? ' · ' + escHtml(ev.description) : ''}</div>
+      <h3 class="event-featured__title">${escHtml(ev.title)}</h3>
+      <div class="event-featured__footer">
+        <div class="event-featured__actions">
+          <button class="btn btn-primary js-open-wizard">Оставить заявку →</button>
+        </div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function applyEventsFilter(filter) {
+  document.querySelectorAll('#eventsList .event-item').forEach(item => {
+    const kind = item.dataset.kind;
+    const show = filter === 'all'
+      || (filter === 'regatta' && (kind === 'regatta' || kind === 'corp'))
+      || (filter === 'school' && kind === 'school')
+      || (filter === 'promo' && kind === 'promo');
+    item.style.display = show ? '' : 'none';
+  });
+}
+
+function renderEventsSection(events) {
+  loadedEvents = events;
+  const listEl = document.getElementById('eventsList');
+  const countEl = document.getElementById('eventsCount');
+  const featuredSlot = document.getElementById('eventFeaturedSlot');
+  if (!listEl) return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const upcoming = events.filter(e => !e.date || new Date(e.date + 'T00:00:00') >= today);
+  const nearest = upcoming[0];
+
+  if (nearest && featuredSlot) {
+    featuredSlot.innerHTML = renderFeaturedEvent(nearest);
+    featuredSlot.querySelector('.js-open-wizard')?.addEventListener('click', () => {
+      document.querySelector('.js-open-wizard')?.click();
+    });
+  } else if (featuredSlot) {
+    featuredSlot.innerHTML = '';
+  }
+
+  if (countEl) countEl.textContent = events.length + ' ' + (events.length === 1 ? 'событие' : events.length < 5 ? 'события' : 'событий');
+  listEl.innerHTML = events.length
+    ? events.map(renderEventItem).join('')
+    : '<div style="padding:24px;text-align:center;color:#6b7280">Мероприятий пока нет</div>';
+
+  const activeTab = document.querySelector('.filter-tab.is-active');
+  if (activeTab) applyEventsFilter(activeTab.dataset.filter);
+}
+
+fetch('/api/events')
+  .then(r => r.json())
+  .then(events => renderEventsSection(Array.isArray(events) ? events : []))
+  .catch(() => renderEventsSection([]));
+
 // Events filter tabs
 const filterTabs = document.querySelectorAll(".filter-tab");
-const eventItems = document.querySelectorAll("#eventsList .event-item");
-
 filterTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     filterTabs.forEach((t) => t.classList.remove("is-active"));
     tab.classList.add("is-active");
-
-    const filter = tab.dataset.filter;
-    eventItems.forEach((item) => {
-      const kind = item.dataset.kind;
-      const show =
-        filter === "all" ||
-        (filter === "regatta" && (kind === "regatta" || kind === "corp")) ||
-        (filter === "school" && kind === "school") ||
-        (filter === "promo" && kind === "promo");
-      item.style.display = show ? "" : "none";
-    });
+    applyEventsFilter(tab.dataset.filter);
   });
 });
 
