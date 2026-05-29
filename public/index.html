@@ -216,7 +216,7 @@
           <a href="#contacts">Контакты</a>
         </nav>
         <div class="header-actions">
-          <a class="phone-link" href="tel:+79037334243">+7 (903) 733-42-43</a>
+          <a class="phone-link" href="tel:+79037334243" id="headerPhone">+7 (903) 733-42-43</a>
           <button class="btn btn-primary js-open-wizard">Оставить заявку</button>
           <button class="nav-burger" id="navBurger" aria-label="Открыть меню" aria-expanded="false">
             <span class="nav-burger__line"></span>
@@ -231,9 +231,9 @@
     <main id="top">
       <section class="hero container hero-split">
         <div class="hero__content">
-          <p class="eyebrow">Парусный клуб · Видогощи · Иваньковское водохранилище</p>
-          <h1>Платите за остров, парус и ветер включены</h1>
-          <p>
+          <p class="eyebrow" data-content="hero_eyebrow">Парусный клуб · Видогощи · Иваньковское водохранилище</p>
+          <h1 data-content="hero_title">Платите за остров, парус и ветер включены</h1>
+          <p data-content="hero_subtitle">
             Прокат катамаранов для гостей острова бесплатный. Трансфер с причала Новомелково включён в выходные.
             Оплачиваете только проживание, снаряжение и дополнительные активности: SUP, байдарку и мероприятия.
           </p>
@@ -241,11 +241,11 @@
             <button class="btn btn-primary js-open-wizard">Оставить заявку</button>
             <a class="btn btn-outline" href="#calculator">Быстрый калькулятор</a>
           </div>
-          <div class="hero-stats">
-            <div><strong>0 ₽</strong><span>прокат катамарана</span></div>
-            <div><strong>1 300 ₽</strong><span>ночь в будни в мае</span></div>
-            <div><strong>133 км</strong><span>от Москвы</span></div>
-            <div><strong>с 1 мая</strong><span>старт сезона</span></div>
+          <div class="hero-stats" id="heroStats">
+            <div data-content="hero_stat_1"><strong>0 ₽</strong><span>прокат катамарана</span></div>
+            <div data-content="hero_stat_2"><strong>1 300 ₽</strong><span>ночь в будни в мае</span></div>
+            <div data-content="hero_stat_3"><strong>133 км</strong><span>от Москвы</span></div>
+            <div data-content="hero_stat_4"><strong>с 1 мая</strong><span>старт сезона</span></div>
           </div>
         </div>
         <div class="hero-media">
@@ -293,7 +293,7 @@
 
       <section class="section container" id="about">
         <h2>О лагере</h2>
-        <p>
+        <p data-content-html="about_text">
           Парусный клуб «Остров» работает с 2014 года на настоящем острове Иваньковского
           водохранилища — в Тверской области, 133 км от Москвы. К нам приезжают семьями,
           с друзьями и небольшими командами на активный отдых: парусный спорт, кемпинг,
@@ -303,19 +303,19 @@
           В выходные — бесплатно для гостей.
         </p>
         <div class="grid grid-4" style="margin-top:2rem">
-          <article class="card">
+          <article class="card" data-content-card="about_card_1">
             <h3>Для кого</h3>
             <p>Семьи с детьми, компании друзей, корпоративные группы — от 1 до 30+ человек, любой возраст.</p>
           </article>
-          <article class="card">
+          <article class="card" data-content-card="about_card_2">
             <h3>Опыт не нужен</h3>
             <p>Обучим с нуля: 30 мин. теории + час на воде с инструктором. Выдаём всё снаряжение.</p>
           </article>
-          <article class="card">
+          <article class="card" data-content-card="about_card_3">
             <h3>Прокат бесплатно</h3>
             <p>Катамараны для гостей острова — бесплатно. Платите только за проживание и активности.</p>
           </article>
-          <article class="card">
+          <article class="card" data-content-card="about_card_4">
             <h3>Работаем с 2014</h3>
             <p>Рейтинг 5 на Яндекс Картах. Ежегодные регаты, парусная школа, детский формат.</p>
           </article>
@@ -337,8 +337,8 @@
       <section class="section container" id="events">
         <div class="section-head section-head--row">
           <div>
-            <p class="eyebrow">Сезон 2026 · с 1 мая по 28 сентября</p>
-            <h2>Регаты, школа и сборы —<br><em>пять месяцев на воде</em></h2>
+            <p class="eyebrow" data-content="events_eyebrow">Сезон 2026 · с 1 мая по 28 сентября</p>
+            <h2 data-content-html="events_title">Регаты, школа и сборы —<br><em>пять месяцев на воде</em></h2>
           </div>
           <div class="events-filters">
             <div class="filter-tabs" role="tablist">
@@ -498,36 +498,36 @@
               Не нашли ответ — напишите в VK или на&nbsp;<a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>, ответим в рабочие часы.
             </p>
           </div>
-          <div class="faq">
-            <details open>
+          <div class="faq" id="faqList">
+            <details open data-content-faq="faq_1">
               <summary>А это правда остров?</summary>
               <p>Да, наш лагерь действительно расположен на острове, но на очень большом. По вечерам, при достаточном количестве желающих, организуем прогулки на плоту вокруг него. А при опыте и ветре — обход на катамаране.</p>
             </details>
-            <details>
+            <details data-content-faq="faq_2">
               <summary>Можно ли приехать совсем без опыта?</summary>
               <p>Да. К нам можно приехать абсолютно неподготовленным, сразу с работы или учёбы. Мы предоставляем в аренду всё необходимое — от надувной подушки до парусного катамарана.</p>
             </details>
-            <details>
+            <details data-content-faq="faq_3">
               <summary>Как устроено обучение?</summary>
               <p>Обучение проводится на катамаране «Ветер». Это 20–30 минут теории на берегу и один час практики на воде с инструктором. Дальше вы сами отрабатываете элементы управления. Максимум 3 человека в группе, оплата одинаковая — 2 000 ₽.</p>
             </details>
-            <details>
+            <details data-content-faq="faq_4">
               <summary>Что взять с собой?</summary>
               <p>Удобную одежду, ветровку, кепку, крем от солнца, личные вещи для кемпинга. Палатку и снаряжение можно взять у нас. Спасжилеты выдаём всем на воду.</p>
             </details>
-            <details>
+            <details data-content-faq="faq_5">
               <summary>Что делать, если погода — штиль?</summary>
               <p>Волейбол, барбекю, рыбалка — всё на берегу. Можно покататься на плоту «Дункель» вокруг острова или взять SUP. И, конечно, дождаться заката — они здесь всегда прекрасны.</p>
             </details>
-            <details>
+            <details data-content-faq="faq_6">
               <summary>Как добраться из Москвы?</summary>
               <p>133 км от Москвы по Ленинградскому шоссе. Доезжаете на машине до причала <strong>Новомелково</strong> (Тверская область, Конаковский район) — координаты на карте в разделе «Контакты». Трансфер на остров: 15 минут по воде, в выходные для гостей бесплатно.</p>
             </details>
-            <details>
+            <details data-content-faq="faq_7">
               <summary>Сколько стоит отдых? Что входит в цену?</summary>
               <p>Прокат катамарана — бесплатно для всех гостей. Проживание: май/сентябрь — 3 000 ₽/день в выходные (пт–вс), 1 300 ₽ в будни. Июнь — 4 100 ₽ в выходные. Июль–август — 4 700 ₽. Дети 7–14 лет — 1 500 ₽ в выходные. SUP — 600 ₽/час. Обучение — 2 000 ₽/чел.</p>
             </details>
-            <details>
+            <details data-content-faq="faq_8">
               <summary>Есть ли детский формат? Можно ли с маленькими детьми?</summary>
               <p>Да. Специальная цена для детей 7–14 лет: 1 500 ₽ в выходные и 700 ₽ в будни. Спасжилеты детских размеров есть. Малышей берём на воду только с родителями. Лагерь отлично подходит для семейного отдыха — тихая вода, нет посторонних машин, природа.</p>
             </details>
@@ -541,11 +541,11 @@
         <div class="editorial__wash-bottom"></div>
         <div class="editorial__content">
           <div class="editorial__body">
-            <p class="editorial__eyebrow">С сайта клуба · август</p>
-            <blockquote class="editorial__quote">
+            <p class="editorial__eyebrow" data-content="editorial_eyebrow">С сайта клуба · август</p>
+            <blockquote class="editorial__quote" data-content-html="editorial_quote">
               «Какая бы погода ни была днём — <em>закаты здесь всегда прекрасны»</em>
             </blockquote>
-            <p class="editorial__text">Когда ветра нет — играем в волейбол, жарим барбекю на берегу, ходим на рыбалку. По вечерам выпускаем плот «Дункель» с прогулками вокруг острова. На воде или на песке — закаты не подводят.</p>
+            <p class="editorial__text" data-content="editorial_text">Когда ветра нет — играем в волейбол, жарим барбекю на берегу, ходим на рыбалку. По вечерам выпускаем плот «Дункель» с прогулками вокруг острова. На воде или на песке — закаты не подводят.</p>
             <div class="editorial__items">
               <span class="editorial__item">Волейбол</span>
               <span class="editorial__item">Барбекю</span>
@@ -648,8 +648,8 @@
             allowfullscreen
           ></iframe>
           <div class="map-card map-card--desktop">
-            <h3>Тверская область, Видогощи</h3>
-            <p>Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
+            <h3 data-content="contact_address">Тверская область, Видогощи</h3>
+            <p data-content-html="contact_address_desc">Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
             <div style="display:flex;flex-direction:column;gap:8px;margin:10px 0">
               <a href="https://yandex.ru/maps/-/CPspj8IP" target="_blank" rel="noreferrer" class="btn btn-primary" style="font-size:13px">
                 🟢 «Остров» на карте
@@ -662,8 +662,8 @@
           </div>
         </div>
         <div class="map-card map-card--mobile">
-          <h3>Тверская область, Видогощи</h3>
-          <p>Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
+          <h3 data-content="contact_address">Тверская область, Видогощи</h3>
+          <p data-content-html="contact_address_desc">Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
           <div style="display:flex;flex-direction:column;gap:8px;margin:10px 0">
             <a href="https://yandex.ru/maps/-/CPspj8IP" target="_blank" rel="noreferrer" class="btn btn-primary" style="font-size:13px">
               🟢 «Остров» на карте
@@ -676,15 +676,15 @@
         </div>
         <div class="footer-contacts">
           <img src="/assets/logo-light.svg" alt="Парусный клуб Остров" class="footer-logo" />
-          <div class="contact-card">
+          <div class="contact-card" id="contactPhone">
             <span>Телефон и WhatsApp</span>
             <a href="tel:+79037334243">+7 (903) 733-42-43</a>
           </div>
-          <div class="contact-card">
+          <div class="contact-card" id="contactEmail">
             <span>Почта</span>
             <a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>
           </div>
-          <div class="contact-card">
+          <div class="contact-card" id="contactVk">
             <span>ВКонтакте</span>
             <a href="https://vk.com/ostrovparusa" target="_blank" rel="noreferrer">vk.com/ostrovparusa</a>
           </div>

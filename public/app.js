@@ -800,6 +800,92 @@ fetch('/api/fleet')
   .then(items => renderFleetSection(Array.isArray(items) ? items : []))
   .catch(() => renderFleetSection([]));
 
+// Content: dynamic text substitution from /api/content
+function applyContent(content) {
+  // Simple text content: data-content="key"
+  document.querySelectorAll('[data-content]').forEach(el => {
+    const key = el.dataset.content;
+    if (!content[key]) return;
+    el.textContent = content[key];
+  });
+
+  // HTML content: data-content-html="key"
+  document.querySelectorAll('[data-content-html]').forEach(el => {
+    const key = el.dataset.contentHtml;
+    if (!content[key]) return;
+    el.innerHTML = content[key];
+  });
+
+  // Stat blocks: value|label format -> <strong>value</strong><span>label</span>
+  document.querySelectorAll('[data-content^="hero_stat_"]').forEach(el => {
+    const key = el.dataset.content;
+    if (!content[key]) return;
+    const parts = content[key].split('|');
+    if (parts.length === 2) {
+      el.innerHTML = `<strong>${escHtml(parts[0])}</strong><span>${escHtml(parts[1])}</span>`;
+    }
+  });
+
+  // Cards: title|text format -> <h3>title</h3><p>text</p>
+  document.querySelectorAll('[data-content-card]').forEach(el => {
+    const key = el.dataset.contentCard;
+    if (!content[key]) return;
+    const parts = content[key].split('|');
+    if (parts.length === 2) {
+      el.querySelector('h3').textContent = parts[0];
+      el.querySelector('p').textContent = parts[1];
+    }
+  });
+
+  // FAQ: question|answer format
+  document.querySelectorAll('[data-content-faq]').forEach(el => {
+    const key = el.dataset.contentFaq;
+    if (!content[key]) return;
+    const parts = content[key].split('|');
+    if (parts.length >= 2) {
+      const summary = el.querySelector('summary');
+      const p = el.querySelector('p');
+      if (summary) summary.textContent = parts[0];
+      if (p) p.innerHTML = parts.slice(1).join('|');
+    }
+  });
+
+  // Contacts
+  if (content.contact_phone) {
+    const phone = content.contact_phone;
+    const phoneDigits = phone.replace(/[^\d+]/g, '');
+    const headerPhone = document.getElementById('headerPhone');
+    if (headerPhone) { headerPhone.textContent = phone; headerPhone.href = 'tel:' + phoneDigits; }
+    const contactPhone = document.getElementById('contactPhone');
+    if (contactPhone) {
+      const a = contactPhone.querySelector('a');
+      if (a) { a.textContent = phone; a.href = 'tel:' + phoneDigits; }
+    }
+  }
+  if (content.contact_email) {
+    const contactEmail = document.getElementById('contactEmail');
+    if (contactEmail) {
+      const a = contactEmail.querySelector('a');
+      if (a) { a.textContent = content.contact_email; a.href = 'mailto:' + content.contact_email; }
+    }
+  }
+  if (content.contact_vk) {
+    const contactVk = document.getElementById('contactVk');
+    if (contactVk) {
+      const a = contactVk.querySelector('a');
+      if (a) {
+        a.href = content.contact_vk;
+        a.textContent = content.contact_vk.replace('https://', '');
+      }
+    }
+  }
+}
+
+fetch('/api/content')
+  .then(r => r.json())
+  .then(content => { if (content && typeof content === 'object') applyContent(content); })
+  .catch(() => {});
+
 // Events filter tabs
 const filterTabs = document.querySelectorAll(".filter-tab");
 filterTabs.forEach((tab) => {
