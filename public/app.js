@@ -753,6 +753,54 @@ fetch('/api/events')
   .then(events => renderEventsSection(Array.isArray(events) ? events : []))
   .catch(() => renderEventsSection([]));
 
+// Fleet: dynamic loading from API
+function renderFleetCard(item) {
+  const hasImage = !!item.image_url;
+  return `<article class="va-fleet-card">
+    <div class="va-fleet-card__media${hasImage ? '' : ' va-fleet-card__media--dark'}">
+      ${hasImage ? `<img src="${escHtml(item.image_url)}" alt="${escHtml(item.name)}" loading="lazy">` : ''}
+      ${item.count ? `<span class="va-fleet-card__count">${escHtml(item.count)}</span>` : ''}
+      <span class="va-fleet-card__label">${escHtml(item.name)}</span>
+    </div>
+    <div class="va-fleet-card__body">
+      <div class="va-fleet-card__name">${escHtml(item.name)}</div>
+      ${item.kind ? `<div class="va-fleet-card__kind">${escHtml(item.kind)}</div>` : ''}
+      <div class="va-fleet-card__divider"></div>
+      <div class="va-fleet-card__specs">
+        <div><label>Длина</label><strong>${escHtml(item.length_m || '—')}</strong></div>
+        <div><label>Парусность</label><strong>${escHtml(item.sail_area || '—')}</strong></div>
+        <div class="span-2"><label>Экипаж</label><strong>${escHtml(item.crew || '—')}</strong></div>
+      </div>
+      ${item.note ? `<div class="va-fleet-card__note">${escHtml(item.note)}</div>` : ''}
+    </div>
+  </article>`;
+}
+
+function renderFleetSection(items) {
+  const grid = document.getElementById('fleetGrid');
+  const title = document.getElementById('fleetTitle');
+  if (!grid) return;
+
+  if (title && items.length > 0) {
+    const total = items.reduce((sum, i) => {
+      const n = parseInt(String(i.count).replace(/[^\d]/g, ''), 10);
+      return sum + (n > 0 ? n : 1);
+    }, 0);
+    const labels = items.map(i => i.kind || '').filter(Boolean);
+    const unique = [...new Set(labels)];
+    title.innerHTML = total + ' ' + (unique.length > 1 ? 'судов' : (unique[0] || 'судов')) + '.<br>Каждый под свою задачу.';
+  }
+
+  grid.innerHTML = items.length
+    ? items.map(renderFleetCard).join('')
+    : '<p style="text-align:center;color:#6b7280;padding:32px">Информация о флоте скоро появится</p>';
+}
+
+fetch('/api/fleet')
+  .then(r => r.json())
+  .then(items => renderFleetSection(Array.isArray(items) ? items : []))
+  .catch(() => renderFleetSection([]));
+
 // Events filter tabs
 const filterTabs = document.querySelectorAll(".filter-tab");
 filterTabs.forEach((tab) => {

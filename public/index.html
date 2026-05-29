@@ -326,85 +326,11 @@
         <div class="va-fleet__head">
           <div>
             <p class="eyebrow">Флот</p>
-            <h2>13 катамаранов + плот.<br>Каждый под свою задачу.</h2>
+            <h2 id="fleetTitle">Наш флот</h2>
           </div>
         </div>
-        <div class="va-fleet__grid">
-
-          <article class="va-fleet-card">
-            <div class="va-fleet-card__media">
-              <img src="images/fleet/veter.jpg" alt="Катамаран «Ветер»">
-              <span class="va-fleet-card__count">×10</span>
-              <span class="va-fleet-card__label">«Ветер»</span>
-            </div>
-            <div class="va-fleet-card__body">
-              <div class="va-fleet-card__name">«Ветер»</div>
-              <div class="va-fleet-card__kind">Парусный катамаран</div>
-              <div class="va-fleet-card__divider"></div>
-              <div class="va-fleet-card__specs">
-                <div><label>Длина</label><strong>5,0 м</strong></div>
-                <div><label>Парусность</label><strong>10 м²</strong></div>
-                <div class="span-2"><label>Экипаж</label><strong>2–4 чел.</strong></div>
-              </div>
-              <div class="va-fleet-card__note">Разборный, для походов и соревнований до 10 м²</div>
-            </div>
-          </article>
-
-          <article class="va-fleet-card">
-            <div class="va-fleet-card__media">
-              <img src="images/fleet/breese.jpg" alt="Катамаран «Бриз-Микро»">
-              <span class="va-fleet-card__count">×2</span>
-              <span class="va-fleet-card__label">«Бриз-Микро»</span>
-            </div>
-            <div class="va-fleet-card__body">
-              <div class="va-fleet-card__name">«Бриз-Микро»</div>
-              <div class="va-fleet-card__kind">Парусный катамаран</div>
-              <div class="va-fleet-card__divider"></div>
-              <div class="va-fleet-card__specs">
-                <div><label>Длина</label><strong>4,0 м</strong></div>
-                <div><label>Парусность</label><strong>5 м²</strong></div>
-                <div class="span-2"><label>Экипаж</label><strong>1–2 чел.</strong></div>
-              </div>
-              <div class="va-fleet-card__note">Самый безопасный для новичков — мачта гнётся, парус сбрасывает порыв</div>
-            </div>
-          </article>
-
-          <article class="va-fleet-card">
-            <div class="va-fleet-card__media">
-              <img src="images/fleet/vitamin.jpg" alt="Катамаран «Витамин»">
-              <span class="va-fleet-card__label">«Витамин»</span>
-            </div>
-            <div class="va-fleet-card__body">
-              <div class="va-fleet-card__name">«Витамин»</div>
-              <div class="va-fleet-card__kind">Парусный катамаран</div>
-              <div class="va-fleet-card__divider"></div>
-              <div class="va-fleet-card__specs">
-                <div><label>Длина</label><strong>—</strong></div>
-                <div><label>Парусность</label><strong>—</strong></div>
-                <div class="span-2"><label>Экипаж</label><strong>1–2 чел.</strong></div>
-              </div>
-              <div class="va-fleet-card__note">Сибирский проект. Для уверенных рулевых</div>
-            </div>
-          </article>
-
-          <article class="va-fleet-card">
-            <div class="va-fleet-card__media va-fleet-card__media--dark">
-              <span class="va-fleet-card__count">×1</span>
-              <span class="va-fleet-card__label">Плот «Дункель»</span>
-            </div>
-            <div class="va-fleet-card__body">
-              <div class="va-fleet-card__name">Плот «Дункель»</div>
-              <div class="va-fleet-card__kind">Моторный · трансфер</div>
-              <div class="va-fleet-card__divider"></div>
-              <div class="va-fleet-card__specs">
-                <div><label>Длина</label><strong>8,4 м</strong></div>
-                <div><label>Парусность</label><strong>15 л.с.</strong></div>
-                <div class="span-2"><label>Экипаж</label><strong>до 12 чел.</strong></div>
-              </div>
-              <div class="va-fleet-card__note">Прогулки вокруг острова в штиль. Не в аренду</div>
-            </div>
-          </article>
-
+        <div class="va-fleet__grid" id="fleetGrid">
+          <!-- Загружается динамически из /api/fleet -->
         </div>
       </section>
 

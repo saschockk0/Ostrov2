@@ -20,6 +20,7 @@ let state = {
   apps: [], selectedApp: null,
   filters: { status: 'all', search: '' },
   events: [], selectedEvent: null, eventForm: null,
+  fleet: [], fleetForm: null,
   prices: null, pricesDirty: false,
   content: null, contentLabels: null, contentDirty: false,
   gallery: [], galleryPhotoForm: null,
@@ -88,7 +89,7 @@ async function doLogin(login, password) {
 
 async function doLogout() {
   await api('POST', '/api/logout').catch(() => {});
-  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, events: [], prices: null, content: null, gallery: [], galleryPhotoForm: null });
+  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, events: [], fleet: [], fleetForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null });
 }
 
 // ── Loaders ───────────────────────────────────────────────────────────────
@@ -116,6 +117,11 @@ async function loadApps() {
 async function loadEvents() {
   try { setState({ events: await api('GET', '/api/events'), view: 'events' }); }
   catch (err) { setState({ error: err.message, view: 'events', events: [] }); }
+}
+
+async function loadFleet() {
+  try { setState({ fleet: await api('GET', '/api/fleet'), view: 'fleet' }); }
+  catch (err) { setState({ error: err.message, view: 'fleet', fleet: [] }); }
 }
 
 async function loadPrices() {
@@ -209,6 +215,42 @@ async function deleteEvent(id) {
   try {
     await api('DELETE', `/api/events/${id}`);
     setState({ events: state.events.filter(e => e.id !== id), eventForm: null });
+  } catch (err) { setState({ error: err.message }); }
+}
+
+// ── Fleet actions ─────────────────────────────────────────────────────────
+
+function openFleetForm(item = null) {
+  setState({
+    fleetForm: item ? { ...item } : { name: '', kind: '', image_url: '', count: '', length_m: '', sail_area: '', crew: '', note: '', active: true, sort_order: 0 },
+  });
+}
+
+async function saveFleetItem() {
+  const f = state.fleetForm;
+  if (!f?.name) { setState({ error: 'Введите название судна' }); return; }
+  setState({ saving: true });
+  try {
+    let item;
+    if (f.id) item = await api('PATCH', `/api/fleet/${f.id}`, f);
+    else       item = await api('POST', '/api/fleet', f);
+    const fleet = f.id ? state.fleet.map(e => e.id === f.id ? item : e) : [item, ...state.fleet];
+    setState({ fleet, fleetForm: null, saving: false });
+  } catch (err) { setState({ saving: false, error: err.message }); }
+}
+
+async function toggleFleetActive(id, active) {
+  try {
+    const item = await api('PATCH', `/api/fleet/${id}`, { active });
+    setState({ fleet: state.fleet.map(e => e.id === id ? item : e) });
+  } catch (err) { setState({ error: err.message }); }
+}
+
+async function deleteFleetItem(id) {
+  if (!confirm('Удалить судно из флота?')) return;
+  try {
+    await api('DELETE', `/api/fleet/${id}`);
+    setState({ fleet: state.fleet.filter(e => e.id !== id), fleetForm: null });
   } catch (err) { setState({ error: err.message }); }
 }
 
@@ -328,6 +370,7 @@ function renderShell() {
   if      (view === 'dashboard')    content = renderDashboard();
   else if (view === 'applications') content = renderApplicationsList();
   else if (view === 'events')       content = renderEventsView();
+  else if (view === 'fleet')        content = renderFleetView();
   else if (view === 'prices')       content = renderPricesView();
   else if (view === 'content')      content = renderContentView();
   else if (view === 'gallery')      content = renderGalleryView();
@@ -336,6 +379,7 @@ function renderShell() {
   const drawerOpen   = state.selectedApp ? ' open' : '';
   const overlayOpen  = state.selectedApp ? ' open' : '';
   const eventModal        = state.eventForm        ? renderEventModal()       : '';
+  const fleetModal        = state.fleetForm         ? renderFleetModal()       : '';
   const newAppModal       = state.showNewAppModal  ? renderNewAppModal()      : '';
   const galleryPhotoModal = state.galleryPhotoForm ? renderGalleryPhotoModal() : '';
 
@@ -350,6 +394,7 @@ function renderShell() {
           ${navItem('dashboard',    'Дашборд')}
           ${navItem('applications', 'Заявки', badgeHtml)}
           ${navItem('events',       'Мероприятия')}
+          ${navItem('fleet',        'Флот')}
           ${navItem('prices',       'Цены')}
           ${navItem('content',      'Контент')}
           ${navItem('gallery',      'Галерея')}
@@ -363,7 +408,7 @@ function renderShell() {
     </div>
     <div class="drawer-overlay${overlayOpen}" id="drawer-overlay"></div>
     <aside class="detail-drawer${drawerOpen}" id="detail-drawer">${drawerHtml}</aside>
-    ${eventModal}${newAppModal}${galleryPhotoModal}`;
+    ${eventModal}${fleetModal}${newAppModal}${galleryPhotoModal}`;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -571,6 +616,90 @@ function renderEventModal() {
           ${isEdit ? `<button class="btn btn-danger" id="delete-event-btn">Удалить</button>` : ''}
           <button class="btn btn-secondary" id="cancel-event-modal">Отмена</button>
           <button class="btn btn-primary" id="save-event-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Fleet ─────────────────────────────────────────────────────────────────
+
+function renderFleetView() {
+  const { fleet } = state;
+  const rows = fleet.length ? fleet.map(e => `
+    <tr>
+      <td>${e.image_url ? `<img src="${esc(e.image_url)}" style="height:36px;width:52px;border-radius:4px;object-fit:cover">` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><strong>${esc(e.name)}</strong></td>
+      <td>${esc(e.kind || '—')}</td>
+      <td style="text-align:center">${esc(e.count || '—')}</td>
+      <td>${esc(e.length_m || '—')}</td>
+      <td>${esc(e.sail_area || '—')}</td>
+      <td>${esc(e.crew || '—')}</td>
+      <td><span class="badge ${e.active ? 'badge-confirmed' : 'badge-rejected'}">${e.active ? 'Активно' : 'Скрыто'}</span></td>
+      <td>
+        <button class="btn btn-sm btn-secondary" data-edit-fleet="${e.id}">Изменить</button>
+        <button class="btn btn-sm" style="background:var(--bg);border:1px solid var(--border)" data-toggle-fleet="${e.id}" data-fleet-active="${e.active ? 0 : 1}">${e.active ? 'Скрыть' : 'Показать'}</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" data-delete-fleet="${e.id}">✕</button>
+      </td>
+    </tr>`).join('') : `<tr><td class="table-empty" colspan="9">Флот пуст. Добавьте первое судно.</td></tr>`;
+
+  return `
+    <div>
+      <div class="page-header"><h2>Флот</h2>
+        <button class="btn btn-primary" id="add-fleet-btn">+ Добавить судно</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Фото</th><th>Название</th><th>Тип</th><th>Кол-во</th><th>Длина</th><th>Парусность</th><th>Экипаж</th><th>Статус</th><th>Действия</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+      </div>
+    </div>`;
+}
+
+function renderFleetModal() {
+  const f = state.fleetForm;
+  const isEdit = !!f.id;
+  return `
+    <div class="modal-overlay" id="fleet-modal-overlay">
+      <div class="modal">
+        <div class="modal-head"><h3>${isEdit ? 'Редактировать' : 'Новое'} судно</h3><button class="btn-icon" id="close-fleet-modal">✕</button></div>
+        <div class="modal-body">
+          ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ''}
+          <div class="fields-row">
+            <div class="field"><label>Название *</label><input id="ff-name" type="text" value="${esc(f.name)}" placeholder="«Ветер»"></div>
+            <div class="field"><label>Тип</label><input id="ff-kind" type="text" value="${esc(f.kind)}" placeholder="Парусный катамаран"></div>
+          </div>
+          <div class="field">
+            <label>Фотография</label>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <input id="ff-image" type="text" value="${esc(f.image_url || '')}" placeholder="/images/fleet/photo.jpg" style="flex:1">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap">
+                Загрузить<input type="file" id="ff-file" accept="image/*" style="display:none">
+              </label>
+            </div>
+            ${f.image_url ? `<img src="${esc(f.image_url)}" style="margin-top:8px;max-height:80px;border-radius:6px;object-fit:cover">` : ''}
+          </div>
+          <div class="fields-row">
+            <div class="field"><label>Количество</label><input id="ff-count" type="text" value="${esc(f.count || '')}" placeholder="×10"></div>
+            <div class="field"><label>Длина</label><input id="ff-length" type="text" value="${esc(f.length_m || '')}" placeholder="5,0 м"></div>
+          </div>
+          <div class="fields-row">
+            <div class="field"><label>Парусность / мощность</label><input id="ff-sail" type="text" value="${esc(f.sail_area || '')}" placeholder="10 м²"></div>
+            <div class="field"><label>Экипаж</label><input id="ff-crew" type="text" value="${esc(f.crew || '')}" placeholder="2–4 чел."></div>
+          </div>
+          <div class="field"><label>Примечание</label><textarea id="ff-note" rows="2">${esc(f.note || '')}</textarea></div>
+          <div class="fields-row">
+            <div class="field"><label>Порядок сортировки</label><input id="ff-order" type="number" value="${f.sort_order || 0}"></div>
+            <div class="field"><label>Статус</label>
+              <select id="ff-active">
+                <option value="1" ${f.active ? 'selected' : ''}>Активно</option>
+                <option value="0" ${!f.active ? 'selected' : ''}>Скрыто</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          ${isEdit ? `<button class="btn btn-danger" id="delete-fleet-btn">Удалить</button>` : ''}
+          <button class="btn btn-secondary" id="cancel-fleet-modal">Отмена</button>
+          <button class="btn btn-primary" id="save-fleet-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить'}</button>
         </div>
       </div>
     </div>`;
@@ -800,6 +929,7 @@ function attachShellHandlers() {
       const v = el.dataset.nav;
       if      (v === 'applications') { setState({ view: 'applications', selectedApp: null }); loadApps(); }
       else if (v === 'events')       { setState({ view: 'events', eventForm: null });         loadEvents(); }
+      else if (v === 'fleet')        { setState({ view: 'fleet', fleetForm: null });          loadFleet(); }
       else if (v === 'prices')       { setState({ view: 'prices' }); loadPrices(); }
       else if (v === 'content')      { setState({ view: 'content' }); loadContent(); }
       else if (v === 'gallery')      { setState({ view: 'gallery', galleryPhotoForm: null }); loadGallery(); }
@@ -888,6 +1018,58 @@ function attachShellHandlers() {
       const { section, key, field } = e.target.dataset;
       updatePriceField(section, key, field, e.target.value);
     });
+  });
+
+  // Fleet handlers
+  document.getElementById('add-fleet-btn')?.addEventListener('click', () => openFleetForm());
+  root.querySelectorAll('[data-edit-fleet]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const item = state.fleet.find(e => e.id === Number(btn.dataset.editFleet));
+      if (item) openFleetForm(item);
+    }));
+  root.querySelectorAll('[data-toggle-fleet]').forEach(btn =>
+    btn.addEventListener('click', () => toggleFleetActive(Number(btn.dataset.toggleFleet), Number(btn.dataset.fleetActive) === 1)));
+  root.querySelectorAll('[data-delete-fleet]').forEach(btn =>
+    btn.addEventListener('click', () => deleteFleetItem(Number(btn.dataset.deleteFleet))));
+
+  // Fleet modal handlers
+  document.getElementById('close-fleet-modal')?.addEventListener('click', () => setState({ fleetForm: null, error: null }));
+  document.getElementById('cancel-fleet-modal')?.addEventListener('click', () => setState({ fleetForm: null, error: null }));
+  document.getElementById('fleet-modal-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) setState({ fleetForm: null, error: null });
+  });
+  document.getElementById('save-fleet-btn')?.addEventListener('click', () => {
+    if (!state.fleetForm) return;
+    state.fleetForm.name = document.getElementById('ff-name').value.trim();
+    state.fleetForm.kind = document.getElementById('ff-kind').value.trim();
+    state.fleetForm.image_url = document.getElementById('ff-image').value.trim();
+    state.fleetForm.count = document.getElementById('ff-count').value.trim();
+    state.fleetForm.length_m = document.getElementById('ff-length').value.trim();
+    state.fleetForm.sail_area = document.getElementById('ff-sail').value.trim();
+    state.fleetForm.crew = document.getElementById('ff-crew').value.trim();
+    state.fleetForm.note = document.getElementById('ff-note').value.trim();
+    state.fleetForm.sort_order = Number(document.getElementById('ff-order').value) || 0;
+    state.fleetForm.active = Number(document.getElementById('ff-active').value) === 1;
+    saveFleetItem();
+  });
+  document.getElementById('delete-fleet-btn')?.addEventListener('click', () => {
+    if (state.fleetForm?.id) deleteFleetItem(state.fleetForm.id);
+  });
+  document.getElementById('ff-file')?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      document.getElementById('ff-image').value = url;
+      state.fleetForm.image_url = url;
+      const preview = document.querySelector('#fleet-modal-overlay img');
+      if (preview) { preview.src = url; } else {
+        const imgContainer = document.getElementById('ff-image').parentElement;
+        const img = document.createElement('img');
+        img.src = url; img.style.cssText = 'margin-top:8px;max-height:80px;border-radius:6px;object-fit:cover';
+        imgContainer.parentElement.appendChild(img);
+      }
+    } catch (err) { setState({ error: err.message }); }
   });
 
   // Gallery handlers

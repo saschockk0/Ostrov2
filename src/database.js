@@ -84,6 +84,22 @@ function initDb() {
   db.run("ALTER TABLE events ADD COLUMN kind VARCHAR(50) NOT NULL DEFAULT 'season'", [], function(err) {});
   db.run("ALTER TABLE events ADD COLUMN spots VARCHAR(100)", [], function(err) {});
   db.run(`
+    CREATE TABLE IF NOT EXISTS fleet (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      name VARCHAR(255) NOT NULL,
+      kind VARCHAR(100) NOT NULL DEFAULT '',
+      image_url VARCHAR(500),
+      count VARCHAR(20),
+      length_m VARCHAR(50),
+      sail_area VARCHAR(50),
+      crew VARCHAR(50),
+      note TEXT,
+      active INT NOT NULL DEFAULT 1,
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at VARCHAR(30) NOT NULL
+    )
+  `);
+  db.run(`
     CREATE TABLE IF NOT EXISTS content_blocks (
       \`key\` VARCHAR(191) PRIMARY KEY,
       value TEXT NOT NULL,

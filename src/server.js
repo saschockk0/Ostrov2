@@ -14,6 +14,7 @@ const { createAdminRouter } = require("./admin/router");
 const { listEvents } = require("./admin/events-db");
 const { getAllContent } = require("./admin/content-db");
 const { listPhotos } = require("./admin/gallery-db");
+const { listFleet } = require("./admin/fleet-db");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -65,6 +66,11 @@ app.get("/api/content", async (req, res) => {
 
 app.get("/api/gallery", async (req, res) => {
   try { res.json(await listPhotos(db, true)); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get("/api/fleet", async (req, res) => {
+  try { res.json(await listFleet(db, true)); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 

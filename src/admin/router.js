@@ -12,6 +12,7 @@ const {
 const { listEvents, getEvent, createEvent, updateEvent, deleteEvent } = require('./events-db');
 const { getAllContent, setManyContent, CONTENT_LABELS } = require('./content-db');
 const { listPhotos, getPhoto, createPhoto, updatePhoto, deletePhoto } = require('./gallery-db');
+const { listFleet, getFleetItem, createFleetItem, updateFleetItem, deleteFleetItem } = require('./fleet-db');
 const { getPrices, savePrices } = require('../pricing');
 
 const ADMIN_STATIC = path.join(__dirname, '..', '..', 'public', 'admin');
@@ -201,6 +202,30 @@ function createAdminRouter(db) {
 
   router.delete('/api/gallery/:id', async (req, res) => {
     try { await deletePhoto(db, Number(req.params.id)); res.json({ ok: true }); }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  // ── Fleet ──────────────────────────────────────────────────────────────
+
+  router.get('/api/fleet', async (req, res) => {
+    try { res.json(await listFleet(db)); }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  router.post('/api/fleet', async (req, res) => {
+    try {
+      if (!req.body?.name) return res.status(400).json({ error: 'Название обязательно' });
+      res.status(201).json(await createFleetItem(db, req.body));
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  router.patch('/api/fleet/:id', async (req, res) => {
+    try { res.json(await updateFleetItem(db, Number(req.params.id), req.body || {})); }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  router.delete('/api/fleet/:id', async (req, res) => {
+    try { await deleteFleetItem(db, Number(req.params.id)); res.json({ ok: true }); }
     catch (err) { res.status(500).json({ error: err.message }); }
   });
 
