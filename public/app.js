@@ -680,8 +680,11 @@ function renderFeaturedEvent(ev) {
   const dowStr = d ? DOWS_SHORT[d.getDay()].toLowerCase() + (DOWS_SHORT[d.getDay()] === 'Сб' || DOWS_SHORT[d.getDay()] === 'Вс' ? '' : '') : '';
   const dowFull = d ? ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'][d.getDay()] : '';
   const kindLabel = KIND_LABELS[ev.kind] || 'Событие';
+  const visualStyle = ev.image_url
+    ? `background-image:url('${ev.image_url}');background-size:cover;background-position:center`
+    : '';
   return `<article class="event-featured">
-    <div class="event-featured__visual">
+    <div class="event-featured__visual"${visualStyle ? ` style="${visualStyle}"` : ''}>
       <span class="event-featured__badge">Ближайшее событие</span>
       <div class="event-featured__date-block">
         <span class="event-featured__day">${dayStr}</span>
