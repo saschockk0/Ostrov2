@@ -257,9 +257,19 @@ async function deleteFleetItem(id) {
 // ── Prices actions ────────────────────────────────────────────────────────
 
 function updatePriceField(section, key, field, value) {
-  const prices = JSON.parse(JSON.stringify(state.prices));
-  prices[section][key][field] = field === 'label' ? value : (Number(value) || 0);
-  setState({ prices, pricesDirty: true });
+  if (!state.prices[section] || !state.prices[section][key]) return;
+  state.prices[section][key][field] = field === 'label' ? value : (Number(value) || 0);
+  if (!state.pricesDirty) {
+    state.pricesDirty = true;
+    const header = document.querySelector('.page-header .page-actions');
+    if (header && !header.querySelector('.dirty-hint')) {
+      const hint = document.createElement('span');
+      hint.className = 'dirty-hint';
+      hint.style.cssText = 'color:var(--yellow);font-size:13px;align-self:center';
+      hint.textContent = '● Есть несохранённые изменения';
+      header.prepend(hint);
+    }
+  }
 }
 
 async function savePricesAction() {
@@ -274,8 +284,19 @@ async function savePricesAction() {
 // ── Content actions ───────────────────────────────────────────────────────
 
 function updateContentField(key, value) {
-  const content = { ...state.content, [key]: value };
-  setState({ content, contentDirty: true });
+  state.content[key] = value;
+  if (!state.contentDirty) {
+    state.contentDirty = true;
+    // Show unsaved indicator without full re-render
+    const header = document.querySelector('.page-header .page-actions');
+    if (header && !header.querySelector('.dirty-hint')) {
+      const hint = document.createElement('span');
+      hint.className = 'dirty-hint';
+      hint.style.cssText = 'color:var(--yellow);font-size:13px;align-self:center';
+      hint.textContent = '● Есть несохранённые изменения';
+      header.prepend(hint);
+    }
+  }
 }
 
 async function saveContentAction() {
