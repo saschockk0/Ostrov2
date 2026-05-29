@@ -589,13 +589,22 @@ textarea {
 .calc-v2 {
   display: grid;
   grid-template-columns: 210px 1fr;
-  gap: 28px;
+  gap: 20px;
   align-items: start;
   margin-bottom: 4px;
 }
 
+.calc-v2--card {
+  max-width: 680px;
+  padding: 24px;
+  background: var(--ink-050);
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+}
+
 @media (max-width: 640px) {
   .calc-v2 { grid-template-columns: 1fr; }
+  .calc-v2--card { padding: 16px; }
 }
 
 .calc-v2__left {
@@ -610,7 +619,7 @@ textarea {
   gap: 5px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink-500);
+  color: var(--ink-600);
   letter-spacing: .02em;
   text-transform: uppercase;
 }
@@ -630,9 +639,16 @@ textarea {
   padding: 9px 4px;
 }
 
-.calc-v2__left button[type="submit"] {
+.calc-v2__submit {
+  grid-column: 1 / -1;
   width: 100%;
+  max-width: 320px;
   margin-top: 4px;
+}
+
+.calc-v2__submit:disabled {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
 /* ── Lead capture form (after calculator result) ─────────────── */
@@ -723,7 +739,6 @@ textarea {
 
 .rc-day {
   position: relative;
-  aspect-ratio: 1;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -734,7 +749,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 8px 0;
 }
 
 .rc-day--empty { pointer-events: none; }
