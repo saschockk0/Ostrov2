@@ -646,6 +646,32 @@ function escHtml(s) {
   return d.innerHTML;
 }
 
+const SAFE_TAGS = new Set(['strong', 'em', 'br', 'b', 'i', 'u', 'small', 'span', 'sub', 'sup']);
+function sanitizeHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  function clean(node) {
+    const children = Array.from(node.childNodes);
+    for (const child of children) {
+      if (child.nodeType === 3) continue;
+      if (child.nodeType === 1) {
+        const tag = child.tagName.toLowerCase();
+        if (!SAFE_TAGS.has(tag)) {
+          while (child.firstChild) node.insertBefore(child.firstChild, child);
+          node.removeChild(child);
+        } else {
+          while (child.attributes.length > 0) child.removeAttribute(child.attributes[0].name);
+          clean(child);
+        }
+      } else {
+        node.removeChild(child);
+      }
+    }
+  }
+  clean(tmp);
+  return tmp.innerHTML;
+}
+
 function renderEventItem(ev) {
   const kind = ev.kind || 'season';
   const tagLabel = KIND_LABELS[kind] || 'Сезон';
@@ -809,11 +835,11 @@ function applyContent(content) {
     el.textContent = content[key];
   });
 
-  // HTML content: data-content-html="key"
+  // HTML content: data-content-html="key" (sanitized)
   document.querySelectorAll('[data-content-html]').forEach(el => {
     const key = el.dataset.contentHtml;
     if (!content[key]) return;
-    el.innerHTML = content[key];
+    el.innerHTML = sanitizeHtml(content[key]);
   });
 
   // Stat blocks: value|label format -> <strong>value</strong><span>label</span>
@@ -846,7 +872,7 @@ function applyContent(content) {
       const summary = el.querySelector('summary');
       const p = el.querySelector('p');
       if (summary) summary.textContent = parts[0];
-      if (p) p.innerHTML = parts.slice(1).join('|');
+      if (p) p.innerHTML = sanitizeHtml(parts.slice(1).join('|'));
     }
   });
 

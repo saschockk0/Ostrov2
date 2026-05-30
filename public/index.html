@@ -186,17 +186,7 @@
     <link rel="stylesheet" href="/styles.css" />
 
     <!-- Yandex.Metrika counter -->
-    <script type="text/javascript">
-      window.__YM_ID__ = 109335500;
-      (function(m,e,t,r,i,k,a){
-          m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-          m[i].l=1*new Date();
-          for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-          k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-      })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=109335500', 'ym');
-
-      ym(109335500, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
-    </script>
+    <script src="/ym-init.js"></script>
     <noscript><div><img src="https://mc.yandex.ru/watch/109335500" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <!-- /Yandex.Metrika counter -->
   </head>
@@ -859,25 +849,7 @@
       <p class="lightbox__caption" id="lightboxCaption"></p>
     </div>
 
-    <!-- Lazy-load iframes when they scroll into view -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var lazyFrames = document.querySelectorAll('iframe[data-src]');
-        if ('IntersectionObserver' in window) {
-          var obs = new IntersectionObserver(function(entries) {
-            entries.forEach(function(e) {
-              if (e.isIntersecting) {
-                e.target.src = e.target.dataset.src;
-                obs.unobserve(e.target);
-              }
-            });
-          }, { rootMargin: '300px' });
-          lazyFrames.forEach(function(f) { obs.observe(f); });
-        } else {
-          lazyFrames.forEach(function(f) { f.src = f.dataset.src; });
-        }
-      });
-    </script>
+    <script src="/landing-ui.js" defer></script>
     <script src="/app.js" defer></script>
   </body>
 </html>

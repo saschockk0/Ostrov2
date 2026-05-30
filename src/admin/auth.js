@@ -4,6 +4,11 @@ const COOKIE_NAME = 'ostrov_admin_sid';
 const SESSION_TTL = 8 * 60 * 60 * 1000;
 const sessions = new Map();
 
+const _fallbackSecret = crypto.randomBytes(32).toString('hex');
+if (!process.env.ADMIN_SESSION_SECRET) {
+  console.warn('[Admin] ADMIN_SESSION_SECRET not set — using random per-process secret. Set it in .env for stable HMAC verification.');
+}
+
 function parseCookies(req) {
   const cookies = {};
   (req.headers.cookie || '').split(';').forEach(part => {
@@ -38,7 +43,7 @@ function checkCredentials(login, password) {
     console.error('[Admin] ADMIN_LOGIN or ADMIN_PASSWORD not set in .env');
     return false;
   }
-  const secret = process.env.ADMIN_SESSION_SECRET || 'ostrov-admin-secret';
+  const secret = process.env.ADMIN_SESSION_SECRET || _fallbackSecret;
   const hmac = (val) => crypto.createHmac('sha256', secret).update(val).digest();
   try {
     const loginOk = crypto.timingSafeEqual(hmac(login || ''), hmac(adminLogin));

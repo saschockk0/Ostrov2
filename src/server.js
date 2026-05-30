@@ -21,7 +21,23 @@ app.set("trust proxy", 1);
 const db = initDb();
 const port = Number(process.env.PORT || 3000);
 
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://mc.yandex.ru", "https://challenges.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'", "https://mc.yandex.ru", "https://mc.yandex.com"],
+      frameSrc: ["https://challenges.cloudflare.com", "https://yandex.ru"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+}));
 app.use(express.json({ limit: "512kb" }));
 app.use(express.static(path.join(__dirname, "..", "public")));
 
@@ -54,24 +70,26 @@ app.get("/api/config", (req, res) => {
   });
 });
 
+const GENERIC_ERR = "Ошибка сервера. Попробуйте позже.";
+
 app.get("/api/events", async (req, res) => {
   try { res.json(await listEvents(db, true)); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  catch (err) { console.error("GET /api/events error:", err); res.status(500).json({ error: GENERIC_ERR }); }
 });
 
 app.get("/api/content", async (req, res) => {
   try { res.json(await getAllContent(db)); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  catch (err) { console.error("GET /api/content error:", err); res.status(500).json({ error: GENERIC_ERR }); }
 });
 
 app.get("/api/gallery", async (req, res) => {
   try { res.json(await listPhotos(db, true)); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  catch (err) { console.error("GET /api/gallery error:", err); res.status(500).json({ error: GENERIC_ERR }); }
 });
 
 app.get("/api/fleet", async (req, res) => {
   try { res.json(await listFleet(db, true)); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  catch (err) { console.error("GET /api/fleet error:", err); res.status(500).json({ error: GENERIC_ERR }); }
 });
 
 app.post("/api/quote", (req, res) => {
@@ -114,6 +132,14 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
 
     if (!payload.name || !payload.phone) {
       return res.status(400).json({ error: "Введите имя и телефон." });
+    }
+
+    if (payload.name.length > 255 || payload.phone.length > 50) {
+      return res.status(400).json({ error: "Слишком длинные данные." });
+    }
+
+    if ((payload.comment || '').length > 2000 || (payload.email || '').length > 255) {
+      return res.status(400).json({ error: "Слишком длинные данные." });
     }
 
     const quote = calculateQuote(payload.answers || {});
@@ -187,7 +213,7 @@ app.get("/api/reviews", (req, res) => {
           return res.json({ reviews: JSON.parse(row.reviews_json), source: "cache_fallback" });
         }
         return res.status(503).json({
-          error: "Не удалось загрузить отзывы. Проверьте YANDEX_OAUTH_TOKEN в .env",
+          error: "Не удалось загрузить отзывы.",
           reviews: [],
         });
       }

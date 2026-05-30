@@ -1,3 +1,21 @@
+// Lazy-load iframes when they scroll into view
+(function () {
+  var lazyFrames = document.querySelectorAll('iframe[data-src]');
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.src = e.target.dataset.src;
+          obs.unobserve(e.target);
+        }
+      });
+    }, { rootMargin: '300px' });
+    lazyFrames.forEach(function(f) { obs.observe(f); });
+  } else {
+    lazyFrames.forEach(function(f) { f.src = f.dataset.src; });
+  }
+})();
+
 (function () {
   "use strict";
 
