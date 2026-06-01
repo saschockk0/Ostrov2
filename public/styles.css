@@ -2010,25 +2010,6 @@ textarea {
   max-width: 560px;
 }
 
-.editorial__eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #F4C57A; /* golden glow */
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-
-.editorial__eyebrow::before {
-  content: '';
-  display: inline-block;
-  width: 24px;
-  height: 1px;
-  background: currentColor;
-}
 
 .editorial__quote {
   font-family: var(--font-display);
@@ -2087,35 +2068,6 @@ textarea {
   flex-wrap: wrap;
 }
 
-.editorial__caption {
-  justify-self: end;
-  align-self: flex-end;
-  padding: 14px 18px;
-  background: rgba(20,12,8,0.42);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(245,235,213,0.22);
-  border-radius: 12px;
-  color: #F5EBD5;
-  max-width: 280px;
-}
-
-.editorial__caption-meta {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #F4C57A;
-  opacity: 0.9;
-}
-
-.editorial__caption-text {
-  font-family: var(--font-display);
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  margin-top: 4px;
-  color: #F5EBD5;
-}
 
 .btn-cream {
   background: #F5EBD5;
@@ -2724,9 +2676,6 @@ textarea {
     gap: 32px;
   }
 
-  .editorial__caption {
-    justify-self: start;
-  }
 
   .event-item {
     grid-template-columns: 48px 1fr auto;
