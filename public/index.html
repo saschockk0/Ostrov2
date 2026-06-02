@@ -432,11 +432,8 @@
         </div>
       </section>
 
-      <section class="section container" id="pricing">
-        <div class="section__title-row">
-          <h2>Мини-прайс</h2>
-          <button class="btn btn-outline js-open-wizard">Оставить заявку</button>
-        </div>
+      <section class="section container section--sky" id="pricing">
+        <h2>Мини-прайс</h2>
         <div class="table-wrap">
           <table>
             <thead>
@@ -454,6 +451,9 @@
           </table>
         </div>
         <small>Выходные дни в расчетах: пятница, суббота, воскресенье.</small>
+        <div class="pricing-cta">
+          <button class="btn btn-cream js-open-wizard">Оставить заявку</button>
+        </div>
       </section>
 
       <section class="section container" id="calculator">
@@ -479,6 +479,7 @@
             <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" required />
             <button type="submit" class="btn btn-primary">Получить консультацию</button>
           </form>
+          <div id="calcLeadTurnstile" class="turnstile-placeholder"></div>
           <p id="calcLeadMsg" class="form-message"></p>
         </div>
       </section>
@@ -539,7 +540,7 @@
             <blockquote class="editorial__quote" data-content-html="editorial_quote">
               «Какая бы погода ни была днём — <em>закаты здесь всегда прекрасны»</em>
             </blockquote>
-            <p class="editorial__text" data-content="editorial_text">Когда ветра нет — волейбол, барбекю, рыбалка. По вечерам, если набирается компания, выпускаем плот и идём вокруг острова; а при опыте и хорошем ветре остров можно обойти под парусом. Закаты здесь не подводят в любую погоду.</p>
+            <p class="editorial__text" data-content="editorial_text">Остров — это не только про парус, но и про спокойный отдых на воде. Когда ветра нет — волейбол, барбекю, рыбалка. По вечерам, если набирается компания, выпускаем плот и идём вокруг острова; а при опыте и хорошем ветре остров можно обойти под парусом. Закаты здесь не подводят в любую погоду.</p>
             <div class="editorial__items">
               <span class="editorial__item">Волейбол</span>
               <span class="editorial__item">Барбекю</span>
@@ -563,7 +564,7 @@
 
       <section class="section container" id="reviews">
         <p class="eyebrow">Отзывы</p>
-        <div style="display:flex;align-items:flex-end;gap:36px;flex-wrap:wrap;margin-top:16px">
+        <div style="display:flex;align-items:flex-end;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:16px">
           <div class="testimonials-stat">
             <span class="testimonials-stat__num">5</span>
             <span class="testimonials-stat__caption">Рейтинг на Яндекс Картах. Реальные отзывы гостей:</span>
@@ -607,18 +608,22 @@
           </div>
           <div class="friends-grid">
             <div class="friend-card">
+              <img class="friend-card__logo" src="/assets/MPTK.jpeg" alt="МПТК">
               <div class="friend-card__abbr">МПТК</div>
               <div class="friend-card__name">Московский парусно-туристический клуб</div>
             </div>
             <div class="friend-card">
+              <img class="friend-card__logo" src="/assets/marins.jpg" alt="МАРИНС">
               <div class="friend-card__abbr">МАРИНС</div>
               <div class="friend-card__name">Международная ассоциация рулевых многокорпусных разборных судов</div>
             </div>
             <div class="friend-card">
+              <img class="friend-card__logo" src="/assets/SOL-volga.svg" alt="СОЛ «Волга»">
               <div class="friend-card__abbr">СОЛ «Волга»</div>
               <div class="friend-card__name">Спортивно-оздоровительный лагерь МИФИ</div>
             </div>
             <div class="friend-card">
+              <img class="friend-card__logo" src="/assets/shtilu.net.png" alt="shtilu.net">
               <div class="friend-card__abbr">shtilu.net</div>
               <div class="friend-card__name">Парусная мастерская Сергея Новицкого</div>
             </div>

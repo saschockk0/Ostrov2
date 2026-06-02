@@ -222,7 +222,7 @@ async function deleteEvent(id) {
 
 function openFleetForm(item = null) {
   setState({
-    fleetForm: item ? { ...item } : { name: '', kind: '', image_url: '', count: '', length_m: '', sail_area: '', crew: '', note: '', active: true, sort_order: 0 },
+    fleetForm: item ? { ...item } : { name: '', kind: '', image_url: '', images: '', count: '', length_m: '', sail_area: '', crew: '', note: '', active: true, sort_order: 0 },
   });
 }
 
@@ -698,6 +698,10 @@ function renderFleetModal() {
             </div>
             ${f.image_url ? `<img src="${esc(f.image_url)}" style="margin-top:8px;max-height:80px;border-radius:6px;object-fit:cover">` : ''}
           </div>
+          <div class="field">
+            <label>Доп. фото (по одному URL на строку)</label>
+            <textarea id="ff-images" rows="3" placeholder="/images/fleet/veter-2.jpg&#10;/images/fleet/veter-3.jpg">${esc(f.images || '')}</textarea>
+          </div>
           <div class="fields-row">
             <div class="field"><label>Количество</label><input id="ff-count" type="text" value="${esc(f.count || '')}" placeholder="×10"></div>
             <div class="field"><label>Длина</label><input id="ff-length" type="text" value="${esc(f.length_m || '')}" placeholder="5,0 м"></div>
@@ -1064,6 +1068,7 @@ function attachShellHandlers() {
     state.fleetForm.name = document.getElementById('ff-name').value.trim();
     state.fleetForm.kind = document.getElementById('ff-kind').value.trim();
     state.fleetForm.image_url = document.getElementById('ff-image').value.trim();
+    state.fleetForm.images = document.getElementById('ff-images').value.trim();
     state.fleetForm.count = document.getElementById('ff-count').value.trim();
     state.fleetForm.length_m = document.getElementById('ff-length').value.trim();
     state.fleetForm.sail_area = document.getElementById('ff-sail').value.trim();

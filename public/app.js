@@ -216,6 +216,8 @@ let turnstileSiteKey = "";
 let turnstileToken = "";
 let turnstileWidgetId = null;
 let turnstileScriptLoaded = false;
+let calcLeadTurnstileToken = "";
+let calcLeadTurnstileWidgetId = null;
 let campingSuggested = false;
 
 function suggestCamping() {
@@ -625,6 +627,7 @@ quickCalcForm.addEventListener("submit", async (event) => {
       <small>${quote.disclaimer}</small>
     `;
     document.getElementById("calcLead").classList.remove("hidden");
+    renderCalcLeadTurnstile();
   } catch (error) {
     quickCalcResult.classList.remove("hidden");
     quickCalcResult.textContent = error.message;
@@ -780,11 +783,22 @@ fetch('/api/events')
   .catch(() => renderEventsSection([]));
 
 // Fleet: dynamic loading from API
+// Collect all photos of a fleet item: main image_url + extra `images` (one URL per line)
+function fleetPhotos(item) {
+  const urls = [];
+  if (item.image_url) urls.push(item.image_url);
+  if (item.images) String(item.images).split('\n').map(s => s.trim()).filter(Boolean).forEach(u => urls.push(u));
+  return urls.map(url => ({ url, caption: item.name }));
+}
+
 function renderFleetCard(item) {
-  const hasImage = !!item.image_url;
-  return `<article class="va-fleet-card">
+  const photos = fleetPhotos(item);
+  const hasImage = photos.length > 0;
+  const clickable = photos.length > 0;
+  return `<article class="va-fleet-card${clickable ? ' is-clickable' : ''}"${clickable ? ' role="button" tabindex="0"' : ''}>
     <div class="va-fleet-card__media${hasImage ? '' : ' va-fleet-card__media--dark'}">
-      ${hasImage ? `<img src="${escHtml(item.image_url)}" alt="${escHtml(item.name)}" loading="lazy">` : ''}
+      ${hasImage ? `<img src="${escHtml(photos[0].url)}" alt="${escHtml(item.name)}" loading="lazy">` : ''}
+      ${photos.length > 1 ? `<span class="va-fleet-card__photos">${photos.length} фото</span>` : ''}
       ${item.count ? `<span class="va-fleet-card__count">${escHtml(item.count)}</span>` : ''}
     </div>
     <div class="va-fleet-card__body">
@@ -819,6 +833,20 @@ function renderFleetSection(items) {
   grid.innerHTML = items.length
     ? items.map(renderFleetCard).join('')
     : '<p style="text-align:center;color:#6b7280;padding:32px">Информация о флоте скоро появится</p>';
+
+  // Make cards with photos open the shared lightbox (honest affordance for the hover lift)
+  const cards = grid.querySelectorAll('.va-fleet-card');
+  items.forEach((item, i) => {
+    const card = cards[i];
+    if (!card) return;
+    const photos = fleetPhotos(item);
+    if (!photos.length) return;
+    const open = () => Lightbox.open(photos, 0);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
 }
 
 fetch('/api/fleet')
@@ -922,22 +950,24 @@ filterTabs.forEach((tab) => {
   });
 });
 
+function ensureTurnstileScript(onReady) {
+  if (window.turnstile) { onReady(); return; }
+  if (turnstileScriptLoaded) return;
+  turnstileScriptLoaded = true;
+  const script = document.createElement("script");
+  script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+  script.async = true;
+  script.onload = () => onReady();
+  document.head.appendChild(script);
+}
+
 function renderTurnstile() {
   if (!turnstileSiteKey) return;
   if (turnstileWidgetId != null && window.turnstile) {
     window.turnstile.reset(turnstileWidgetId);
     return;
   }
-  if (!turnstileScriptLoaded) {
-    turnstileScriptLoaded = true;
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true;
-    script.onload = () => mountTurnstile();
-    document.head.appendChild(script);
-  } else if (window.turnstile) {
-    mountTurnstile();
-  }
+  ensureTurnstileScript(mountTurnstile);
 }
 
 function mountTurnstile() {
@@ -950,17 +980,42 @@ function mountTurnstile() {
   });
 }
 
+function renderCalcLeadTurnstile() {
+  if (!turnstileSiteKey) return;
+  if (calcLeadTurnstileWidgetId != null && window.turnstile) {
+    window.turnstile.reset(calcLeadTurnstileWidgetId);
+    calcLeadTurnstileToken = "";
+    return;
+  }
+  ensureTurnstileScript(mountCalcLeadTurnstile);
+}
+
+function mountCalcLeadTurnstile() {
+  if (!window.turnstile || calcLeadTurnstileWidgetId != null) return;
+  calcLeadTurnstileWidgetId = window.turnstile.render("#calcLeadTurnstile", {
+    sitekey: turnstileSiteKey,
+    callback: (token) => { calcLeadTurnstileToken = token; },
+    "expired-callback": () => { calcLeadTurnstileToken = ""; },
+    "error-callback": () => { calcLeadTurnstileToken = ""; },
+  });
+}
+
+const calcLeadTurnstileContainer = document.getElementById("calcLeadTurnstile");
+
 fetch("/api/config")
   .then((r) => r.json())
   .then((cfg) => {
     turnstileSiteKey = cfg.turnstileSiteKey || "";
     if (!turnstileSiteKey) {
-      turnstileContainer.textContent =
-        "Turnstile можно включить через TURNSTILE_SITE_KEY и TURNSTILE_SECRET_KEY.";
+      const placeholder = "Turnstile можно включить через TURNSTILE_SITE_KEY и TURNSTILE_SECRET_KEY.";
+      turnstileContainer.textContent = placeholder;
+      if (calcLeadTurnstileContainer) calcLeadTurnstileContainer.textContent = placeholder;
     }
   })
   .catch(() => {
-    turnstileContainer.textContent = "Не удалось загрузить конфигурацию безопасности.";
+    const errMsg = "Не удалось загрузить конфигурацию безопасности.";
+    turnstileContainer.textContent = errMsg;
+    if (calcLeadTurnstileContainer) calcLeadTurnstileContainer.textContent = errMsg;
   });
 
 // --- Lead form after quick calculator ---
@@ -985,6 +1040,7 @@ calcLeadForm.addEventListener("submit", async (e) => {
       body: JSON.stringify({
         name,
         phone,
+        turnstileToken: calcLeadTurnstileToken,
         answers: {
           adults: quickCalcForm.elements.adults.value,
           children: quickCalcForm.elements.children.value,
@@ -997,8 +1053,15 @@ calcLeadForm.addEventListener("submit", async (e) => {
       }),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Ошибка отправки.");
+    if (!response.ok) {
+      if (window.turnstile && calcLeadTurnstileWidgetId != null) {
+        window.turnstile.reset(calcLeadTurnstileWidgetId);
+        calcLeadTurnstileToken = "";
+      }
+      throw new Error(data.error || "Ошибка отправки.");
+    }
     calcLeadForm.classList.add("hidden");
+    if (calcLeadTurnstileContainer) calcLeadTurnstileContainer.classList.add("hidden");
     calcLeadMsg.style.color = "var(--brand-leaf-700)";
     calcLeadMsg.textContent = `Заявка #${data.applicationId} принята. Перезвоним в ближайшее время!`;
     ymGoal("calc_lead_submit", { applicationId: data.applicationId });
@@ -1104,53 +1167,69 @@ document.querySelectorAll(".js-show-all-events").forEach((btn) => {
 
 
 // --- Gallery photos + Lightbox ---
-(function initGallery() {
-  const section = document.getElementById('gallery');
-  const grid = document.getElementById('galleryGrid');
-  if (!section || !grid) return;
-
-  const lb       = document.getElementById('lightbox');
-  const lbImg    = document.getElementById('lightboxImg');
+// Shared lightbox controller — used by both the photo gallery and fleet cards.
+// open(photos, idx): photos is an array of { url, caption }.
+const Lightbox = (function () {
+  const lb        = document.getElementById('lightbox');
+  const lbImg     = document.getElementById('lightboxImg');
   const lbCaption = document.getElementById('lightboxCaption');
-  const lbClose  = document.getElementById('lightboxClose');
-  const lbPrev   = document.getElementById('lightboxPrev');
-  const lbNext   = document.getElementById('lightboxNext');
+  const lbClose   = document.getElementById('lightboxClose');
+  const lbPrev    = document.getElementById('lightboxPrev');
+  const lbNext    = document.getElementById('lightboxNext');
 
   let photos = [];
   let current = 0;
 
-  function openLightbox(idx) {
+  function show(idx) {
     current = (idx + photos.length) % photos.length;
     lbImg.src = photos[current].url;
     lbImg.alt = photos[current].caption || 'Фото';
     if (lbCaption) lbCaption.textContent = photos[current].caption || '';
+  }
+
+  function open(items, idx = 0) {
+    if (!lb || !Array.isArray(items) || !items.length) return;
+    photos = items;
+    const multi = photos.length > 1;
+    if (lbPrev) lbPrev.style.display = multi ? '' : 'none';
+    if (lbNext) lbNext.style.display = multi ? '' : 'none';
+    show(idx);
     lb.classList.add('is-open');
     lb.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
   }
 
-  function closeLightbox() {
+  function close() {
+    if (!lb) return;
     lb.classList.remove('is-open');
     lb.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
 
-  if (lbClose) lbClose.addEventListener('click', closeLightbox);
-  if (lbPrev)  lbPrev.addEventListener('click', () => openLightbox(current - 1));
-  if (lbNext)  lbNext.addEventListener('click', () => openLightbox(current + 1));
-  if (lb) lb.addEventListener('click', e => { if (e.target === lb) closeLightbox(); });
+  if (lbClose) lbClose.addEventListener('click', close);
+  if (lbPrev)  lbPrev.addEventListener('click', () => show(current - 1));
+  if (lbNext)  lbNext.addEventListener('click', () => show(current + 1));
+  if (lb) lb.addEventListener('click', e => { if (e.target === lb) close(); });
 
   document.addEventListener('keydown', e => {
     if (!lb || !lb.classList.contains('is-open')) return;
-    if (e.key === 'Escape')      closeLightbox();
-    if (e.key === 'ArrowLeft')   openLightbox(current - 1);
-    if (e.key === 'ArrowRight')  openLightbox(current + 1);
+    if (e.key === 'Escape')      close();
+    if (e.key === 'ArrowLeft' && photos.length > 1)   show(current - 1);
+    if (e.key === 'ArrowRight' && photos.length > 1)  show(current + 1);
   });
+
+  return { open, close };
+})();
+
+(function initGallery() {
+  const section = document.getElementById('gallery');
+  const grid = document.getElementById('galleryGrid');
+  if (!section || !grid) return;
 
   fetch('/api/gallery')
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
-      photos = data;
+      const photos = data;
       if (!photos.length) { section.hidden = true; return; }
       photos.forEach((photo, idx) => {
         const item = document.createElement('div');
@@ -1167,11 +1246,26 @@ document.querySelectorAll(".js-show-all-events").forEach((btn) => {
           cap.textContent = photo.caption;
           item.appendChild(cap);
         }
-        item.addEventListener('click', () => openLightbox(idx));
+        item.addEventListener('click', () => Lightbox.open(photos, idx));
         grid.appendChild(item);
       });
     })
     .catch(() => { section.hidden = true; });
+})();
+
+// --- Partner logos: show logo when it loads, fall back to text abbreviation otherwise ---
+(function initPartnerLogos() {
+  document.querySelectorAll('.friend-card__logo').forEach((img) => {
+    const settle = () => {
+      if (img.naturalWidth > 0) img.closest('.friend-card')?.classList.add('has-logo');
+      else img.remove();
+    };
+    if (img.complete) settle();
+    else {
+      img.addEventListener('load', settle);
+      img.addEventListener('error', () => img.remove());
+    }
+  });
 })();
 
 // --- Yandex review photos ---

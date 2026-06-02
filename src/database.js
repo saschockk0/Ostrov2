@@ -99,6 +99,8 @@ function initDb() {
       created_at VARCHAR(30) NOT NULL
     )
   `);
+  // Additional fleet photos (one URL per line); main photo stays in image_url
+  db.run("ALTER TABLE fleet ADD COLUMN images TEXT", [], function (err) {});
   db.run(`
     CREATE TABLE IF NOT EXISTS content_blocks (
       \`key\` VARCHAR(191) PRIMARY KEY,

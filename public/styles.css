@@ -313,6 +313,38 @@ body {
   transform: translateY(-2px);
 }
 
+.va-fleet-card.is-clickable { cursor: pointer; }
+
+.va-fleet-card.is-clickable:focus-visible {
+  outline: 2px solid var(--brand-sky-700, #1b4f72);
+  outline-offset: 2px;
+}
+
+.va-fleet-card__photos {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  background: rgba(20, 50, 70, 0.78);
+  backdrop-filter: blur(4px);
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+.va-fleet-card__photos::before {
+  content: "";
+  width: 12px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1.5px solid currentColor;
+}
+
 .va-fleet-card__media {
   height: 200px;
   position: relative;
@@ -513,6 +545,39 @@ body {
   gap: 12px;
 }
 
+/* Blue accent section — adds mid-page contrast (e.g. mini-price).
+   `.section.section--sky` keeps specificity above the mobile `.section` override. */
+.section.section--sky {
+  background: var(--brand-sky-700);
+  color: #fff;
+  border-radius: 24px;
+  padding: 48px clamp(20px, 4vw, 56px);
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.section--sky h2 {
+  color: #fff;
+  text-align: center;
+}
+
+.section--sky small {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Keep the white price-table card readable on the blue background */
+.section--sky .table-wrap { color: var(--ink-900); }
+.section--sky th { color: var(--ink-700); }
+
+.pricing-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
 .table-wrap {
   overflow: auto;
   border-radius: 14px;
@@ -596,10 +661,20 @@ textarea {
 
 .calc-v2--card {
   max-width: 680px;
+  margin-inline: auto;
   padding: 24px;
   background: var(--ink-050);
   border: 1px solid var(--ink-200);
   border-radius: 14px;
+}
+
+/* Center the calculator composition so the right side reads as intentional space */
+#calculator h2 { text-align: center; }
+
+#quickCalcResult,
+#calcLead {
+  max-width: 680px;
+  margin-inline: auto;
 }
 
 @media (max-width: 640px) {
@@ -644,6 +719,7 @@ textarea {
   width: 100%;
   max-width: 320px;
   margin-top: 4px;
+  justify-self: center;
 }
 
 .calc-v2__submit:disabled {
@@ -1485,7 +1561,7 @@ textarea {
   border: 1px solid var(--ink-200);
   border-radius: 16px;
   padding: 28px 32px;
-  margin-bottom: 24px;
+  margin-top: 24px;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -1630,6 +1706,7 @@ textarea {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   gap: 24px;
+  margin-top: 24px;
 }
 
 .event-featured {
@@ -2176,6 +2253,11 @@ textarea {
   margin-bottom: 8px;
 }
 
+/* Center the reviews composition (avoids the empty gap on the right) */
+#reviews { text-align: center; }
+#reviews .testimonials-stat { justify-content: center; }
+#reviews .yandex-reviews-wrap { margin-inline: auto; }
+
 .testimonials-stat__num {
   font-family: var(--font-display);
   font-size: 72px;
@@ -2531,22 +2613,33 @@ textarea {
 }
 
 .friend-card {
-  padding: 24px;
+  padding: 28px;
   border-radius: 14px;
   border: 1px solid var(--ink-200);
   background: var(--ink-050);
 }
 
+.friend-card__logo {
+  display: block;
+  height: 40px;
+  width: auto;
+  max-width: 70%;
+  object-fit: contain;
+  object-position: left center;
+  margin-bottom: 14px;
+}
+
 .friend-card__abbr {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--ink-900);
   letter-spacing: -0.02em;
   margin-bottom: 8px;
 }
 
 .friend-card__name {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-400);
   line-height: 1.5;
 }

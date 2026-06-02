@@ -34,6 +34,12 @@ function isValidUrl(url) {
   catch { return false; }
 }
 
+// Validates a multi-line list of image URLs (one per line); empty is allowed.
+function areValidImageUrls(images) {
+  if (!images) return true;
+  return String(images).split('\n').map(s => s.trim()).filter(Boolean).every(isValidUrl);
+}
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -246,6 +252,7 @@ function createAdminRouter(db) {
     try {
       if (!req.body?.name) return res.status(400).json({ error: 'Название обязательно' });
       if (!isValidUrl(req.body.image_url)) return res.status(400).json({ error: 'Недопустимый URL изображения' });
+      if (!areValidImageUrls(req.body.images)) return res.status(400).json({ error: 'Недопустимый URL в списке доп. фото' });
       res.status(201).json(await createFleetItem(db, req.body));
     } catch (err) { console.error('Create fleet error:', err); res.status(500).json({ error: GENERIC_ERR }); }
   });
@@ -254,6 +261,8 @@ function createAdminRouter(db) {
     try {
       if (req.body?.image_url !== undefined && !isValidUrl(req.body.image_url))
         return res.status(400).json({ error: 'Недопустимый URL изображения' });
+      if (req.body?.images !== undefined && !areValidImageUrls(req.body.images))
+        return res.status(400).json({ error: 'Недопустимый URL в списке доп. фото' });
       res.json(await updateFleetItem(db, Number(req.params.id), req.body || {}));
     }
     catch (err) { console.error('Update fleet error:', err); res.status(500).json({ error: GENERIC_ERR }); }

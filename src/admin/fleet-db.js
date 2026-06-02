@@ -25,12 +25,13 @@ async function getFleetItem(db, id) {
 
 async function createFleetItem(db, data) {
   const r = await run(db, `
-    INSERT INTO fleet (name, kind, image_url, count, length_m, sail_area, crew, note, active, sort_order, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO fleet (name, kind, image_url, images, count, length_m, sail_area, crew, note, active, sort_order, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     data.name || '',
     data.kind || '',
     data.image_url || '',
+    data.images || '',
     data.count || '',
     data.length_m || '',
     data.sail_area || '',
@@ -47,7 +48,7 @@ async function updateFleetItem(db, id, data) {
   const fields = [];
   const params = [];
   const allowed = {
-    name: String, kind: String, image_url: String, count: String,
+    name: String, kind: String, image_url: String, images: String, count: String,
     length_m: String, sail_area: String, crew: String, note: String,
     active: v => (v ? 1 : 0), sort_order: Number,
   };
