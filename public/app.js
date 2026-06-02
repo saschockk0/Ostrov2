@@ -649,7 +649,8 @@ function escHtml(s) {
   return d.innerHTML;
 }
 
-const SAFE_TAGS = new Set(['strong', 'em', 'br', 'b', 'i', 'u', 'small', 'span', 'sub', 'sup']);
+const SAFE_TAGS = new Set(['strong', 'em', 'br', 'b', 'i', 'u', 'small', 'span', 'sub', 'sup', 'a']);
+const SAFE_ATTRS = { a: new Set(['href', 'target', 'rel']) };
 function sanitizeHtml(html) {
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
@@ -663,7 +664,22 @@ function sanitizeHtml(html) {
           while (child.firstChild) node.insertBefore(child.firstChild, child);
           node.removeChild(child);
         } else {
-          while (child.attributes.length > 0) child.removeAttribute(child.attributes[0].name);
+          const allowed = SAFE_ATTRS[tag];
+          Array.from(child.attributes).forEach(attr => {
+            if (allowed && allowed.has(attr.name)) {
+              // Validate href: only allow http/https/relative URLs
+              if (attr.name === 'href') {
+                const v = attr.value.trim();
+                if (!/^(https?:\/\/|\/)/.test(v)) child.removeAttribute('href');
+              }
+            } else {
+              child.removeAttribute(attr.name);
+            }
+          });
+          // Ensure external links are safe
+          if (tag === 'a') {
+            child.setAttribute('rel', 'noopener noreferrer');
+          }
           clean(child);
         }
       } else {

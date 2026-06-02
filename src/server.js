@@ -12,7 +12,7 @@ const { sendApplicationEmail } = require("./email");
 const { fetchFromYandex } = require("./yandex-reviews");
 const { createAdminRouter } = require("./admin/router");
 const { listEvents } = require("./admin/events-db");
-const { getAllContent } = require("./admin/content-db");
+const { getAllContent, DEFAULT_CONTENT } = require("./admin/content-db");
 const { listPhotos } = require("./admin/gallery-db");
 const { listFleet } = require("./admin/fleet-db");
 
@@ -79,7 +79,7 @@ app.get("/api/events", async (req, res) => {
 
 app.get("/api/content", async (req, res) => {
   try { res.json(await getAllContent(db)); }
-  catch (err) { console.error("GET /api/content error:", err); res.status(500).json({ error: GENERIC_ERR }); }
+  catch (err) { console.error("GET /api/content error:", err); res.json(DEFAULT_CONTENT); }
 });
 
 app.get("/api/gallery", async (req, res) => {
