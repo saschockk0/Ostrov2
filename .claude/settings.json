@@ -285,5 +285,8 @@
       "cveCheck": true,
       "threatModel": true
     }
+  },
+  "enabledPlugins": {
+    "andrej-karpathy-skills@karpathy-skills": true
   }
 }
