@@ -797,13 +797,11 @@ function renderContentView() {
   const labels = state.contentLabels || {};
   const fields = Object.entries(state.content).map(([key, value]) => {
     const label = labels[key] || key;
-    const isLong = value.length > 80;
+    const rows = Math.max(2, Math.min(12, Math.ceil(String(value).length / 70)));
     return `
       <div class="field">
-        <label>${esc(label)}</label>
-        ${isLong
-          ? `<textarea class="content-field" data-key="${key}" rows="3">${esc(value)}</textarea>`
-          : `<input class="content-field" type="text" data-key="${key}" value="${esc(value)}">`}
+        <label>${esc(label)} <span class="html-badge">HTML</span></label>
+        <textarea class="content-field content-field--code" data-key="${key}" rows="${rows}">${esc(value)}</textarea>
       </div>`;
   }).join('');
 
@@ -815,6 +813,7 @@ function renderContentView() {
           <button class="btn btn-primary" id="save-content-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить контент'}</button>
         </div>
       </div>
+      <p class="content-html-hint">Во всех полях поддерживается HTML — можно вставлять <code>&lt;a href="..."&gt;ссылку&lt;/a&gt;</code>, <code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code> и другие теги.</p>
       <div class="content-editor">${fields}</div>
     </div>`;
 }

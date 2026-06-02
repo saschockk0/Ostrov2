@@ -219,10 +219,17 @@ tr:hover td { background: var(--blue-light); }
 /* ── Content editor ──────────────────────────────────────────────────── */
 .content-editor { display: flex; flex-direction: column; gap: 16px;
   background: var(--card); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow); }
-.content-editor .field textarea { min-height: 80px; resize: vertical; }
+.content-editor .field textarea { min-height: 60px; resize: vertical; }
 .content-field { width: 100%; padding: 9px 12px; border: 1px solid var(--border);
   border-radius: var(--radius); font-size: 13px; font-family: inherit; outline: none; }
 .content-field:focus { border-color: var(--blue); }
+.content-field--code { font-family: 'Consolas', 'Menlo', monospace; font-size: 12px; line-height: 1.6; }
+.html-badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  background: #e0f0ff; color: #1a56a0; border-radius: 3px; padding: 1px 5px;
+  vertical-align: middle; font-family: monospace; }
+.content-html-hint { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.content-html-hint code { background: var(--bg); border: 1px solid var(--border);
+  border-radius: 3px; padding: 1px 4px; font-size: 11px; }
 
 /* ── Gallery admin ───────────────────────────────────────────────────── */
 .gallery-admin-grid {
