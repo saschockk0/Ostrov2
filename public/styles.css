@@ -2164,6 +2164,17 @@ textarea {
   background: #ede0c5;
 }
 
+.btn-cream.js-open-wizard {
+  background: var(--brand-leaf-700);
+  color: #fff;
+  border-color: var(--brand-leaf-700);
+}
+
+.btn-cream.js-open-wizard:hover {
+  background: var(--brand-leaf-900);
+  border-color: var(--brand-leaf-900);
+}
+
 .btn-ghost-cream {
   background: transparent;
   color: #F5EBD5;
