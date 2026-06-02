@@ -300,12 +300,29 @@ function updateContentField(key, value) {
 }
 
 async function saveContentAction() {
-  setState({ saving: true });
+  // Capture the button to show saving state without full re-render
+  const btn = document.getElementById('save-content-btn');
+  const dirtyHint = document.querySelector('.dirty-hint');
+  if (btn) { btn.disabled = true; btn.textContent = 'Сохранение...'; }
   try {
-    const result = await api('PUT', '/api/content', state.content);
-    setState({ content: result.content, contentDirty: false, saving: false, successMsg: 'Контент сохранён' });
-    setTimeout(() => setState({ successMsg: null }), 3000);
-  } catch (err) { setState({ saving: false, error: err.message }); }
+    await api('PUT', '/api/content', state.content);
+    state.contentDirty = false;
+    state.saving = false;
+    if (btn) { btn.disabled = false; btn.textContent = 'Сохранить контент'; }
+    if (dirtyHint) dirtyHint.remove();
+    // Show success inline without full re-render
+    const area = document.querySelector('.content-area');
+    const msg = document.createElement('div');
+    msg.className = 'alert alert-success content-save-msg';
+    msg.style.cssText = 'margin-bottom:16px';
+    msg.textContent = 'Контент сохранён';
+    const editor = document.querySelector('.content-editor');
+    if (editor) editor.before(msg);
+    setTimeout(() => msg.remove(), 3000);
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Сохранить контент'; }
+    setState({ saving: false, error: err.message });
+  }
 }
 
 // ── Gallery actions ───────────────────────────────────────────────────────

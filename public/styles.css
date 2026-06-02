@@ -625,6 +625,14 @@ th {
   background: var(--primary-hover);
 }
 
+.btn-primary.js-open-wizard {
+  background: var(--brand-leaf-700);
+}
+
+.btn-primary.js-open-wizard:hover {
+  background: var(--brand-leaf-900);
+}
+
 .btn-outline {
   background: transparent;
   color: var(--primary);
