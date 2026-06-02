@@ -843,6 +843,23 @@
       </div>
     </div>
 
+    <!-- Поп-ап лид-формы (после калькулятора + FAQ > 30 сек) -->
+    <div id="leadPopup" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Уточнить детали">
+      <div class="modal__dialog modal__dialog--compact">
+        <button class="modal__close" id="leadPopupClose" aria-label="Закрыть">×</button>
+        <div class="calc-lead calc-lead--popup">
+          <p>Хотите уточнить детали? Оставьте контакт — менеджер ответит в течение часа.</p>
+          <form id="leadPopupForm" class="calc-lead__form">
+            <input type="text" name="name" placeholder="Ваше имя" required />
+            <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" required />
+            <button type="submit" class="btn btn-primary">Получить консультацию</button>
+          </form>
+          <div id="leadPopupTurnstile" class="turnstile-placeholder"></div>
+          <p id="leadPopupMsg" class="form-message"></p>
+        </div>
+      </div>
+    </div>
+
     <!-- Лайтбокс для галереи -->
     <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
       <button class="lightbox__close" id="lightboxClose" aria-label="Закрыть">✕</button>

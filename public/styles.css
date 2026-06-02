@@ -635,8 +635,14 @@ th {
 
 .btn-outline {
   background: transparent;
-  color: var(--primary);
-  border: 1px solid var(--primary);
+  color: var(--brand-leaf-700);
+  border: 1px solid var(--brand-leaf-700);
+}
+
+.btn-outline:hover {
+  background: var(--brand-leaf-050);
+  border-color: var(--brand-leaf-900);
+  color: var(--brand-leaf-900);
 }
 
 label {
@@ -1069,6 +1075,36 @@ textarea {
   background: transparent;
   font-size: 24px;
   cursor: pointer;
+}
+
+.modal__dialog--compact {
+  width: min(560px, 100%);
+  padding: 28px 24px 20px;
+}
+
+.calc-lead--popup {
+  margin-top: 0;
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+.calc-lead--popup .calc-lead__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.calc-lead--popup .calc-lead__form button {
+  grid-column: 1 / -1;
+  justify-self: center;
+  background: var(--brand-leaf-700);
+  border-color: var(--brand-leaf-700);
+}
+
+.calc-lead--popup .calc-lead__form button:hover {
+  background: var(--brand-leaf-900);
+  border-color: var(--brand-leaf-900);
 }
 
 .progress {

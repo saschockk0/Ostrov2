@@ -628,6 +628,7 @@ quickCalcForm.addEventListener("submit", async (event) => {
     `;
     document.getElementById("calcLead").classList.remove("hidden");
     renderCalcLeadTurnstile();
+    document.dispatchEvent(new Event("calcPriceDone"));
   } catch (error) {
     quickCalcResult.classList.remove("hidden");
     quickCalcResult.textContent = error.message;
@@ -1088,6 +1089,160 @@ calcLeadForm.addEventListener("submit", async (e) => {
     btn.textContent = "Получить консультацию";
   }
 });
+
+// --- Lead popup: показывать после расчёта цены, если FAQ читают > 30 сек; повтор раз в 3 мин ---
+(function initLeadPopup() {
+  const popup        = document.getElementById("leadPopup");
+  const closeBtn     = document.getElementById("leadPopupClose");
+  const popupForm    = document.getElementById("leadPopupForm");
+  const popupMsg     = document.getElementById("leadPopupMsg");
+  const faqSection   = document.getElementById("faq");
+  if (!popup || !faqSection) return;
+
+  let calcDone        = false;   // пользователь посчитал цену
+  let faqTimer        = null;    // таймер 30 сек
+  let cooldownTimer   = null;    // таймер 3 мин до следующего показа
+  let onCooldown      = false;
+  let popupShown      = false;   // был ли показан хоть раз (для сброса таймера)
+  let leadPopupTurnstileToken = "";
+  let leadPopupTurnstileWidgetId = null;
+
+  function openPopup(force) {
+    if (onCooldown && !force) return;
+    popup.classList.remove("hidden");
+    popup.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    popupShown = true;
+    mountLeadPopupTurnstile();
+    ymGoal("lead_popup_open");
+  }
+
+  function closePopup() {
+    popup.classList.add("hidden");
+    popup.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    onCooldown = true;
+    cooldownTimer = setTimeout(() => {
+      onCooldown = false;
+      // если FAQ всё ещё в видимости — покажем снова
+      if (faqVisible) startFaqTimer();
+    }, 3 * 60 * 1000);
+  }
+
+  // Глобальный доступ + ссылки .js-open-lead-popup + хэш #lead-popup
+  window.openLeadPopup = () => openPopup(true);
+
+  closeBtn.addEventListener("click", closePopup);
+  popup.addEventListener("click", (e) => { if (e.target === popup) closePopup(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !popup.classList.contains("hidden")) closePopup();
+  });
+
+  document.addEventListener("click", (e) => {
+    const trigger = e.target.closest(".js-open-lead-popup");
+    if (!trigger) return;
+    e.preventDefault();
+    openPopup(true);
+  });
+
+  const checkHash = () => {
+    if (location.hash === "#lead-popup") { openPopup(true); history.replaceState(null, "", location.pathname + location.search); }
+  };
+  checkHash();
+  window.addEventListener("hashchange", checkHash);
+
+  let faqVisible = false;
+
+  function startFaqTimer() {
+    if (faqTimer || onCooldown) return;
+    faqTimer = setTimeout(() => {
+      faqTimer = null;
+      if (faqVisible && calcDone) openPopup();
+    }, 30 * 1000);
+  }
+
+  function stopFaqTimer() {
+    if (faqTimer) { clearTimeout(faqTimer); faqTimer = null; }
+  }
+
+  const obs = new IntersectionObserver((entries) => {
+    faqVisible = entries[0].isIntersecting;
+    if (faqVisible && calcDone && !onCooldown) {
+      startFaqTimer();
+    } else {
+      stopFaqTimer();
+    }
+  }, { threshold: 0.15 });
+  obs.observe(faqSection);
+
+  // Сигнал от калькулятора: цена посчитана
+  document.addEventListener("calcPriceDone", () => {
+    calcDone = true;
+    if (faqVisible && !onCooldown) startFaqTimer();
+  });
+
+  // Turnstile для поп-апа
+  function mountLeadPopupTurnstile() {
+    if (!turnstileSiteKey || leadPopupTurnstileWidgetId != null) return;
+    ensureTurnstileScript(() => {
+      if (!window.turnstile || leadPopupTurnstileWidgetId != null) return;
+      leadPopupTurnstileWidgetId = window.turnstile.render("#leadPopupTurnstile", {
+        sitekey: turnstileSiteKey,
+        callback: (t) => { leadPopupTurnstileToken = t; },
+        "expired-callback": () => { leadPopupTurnstileToken = ""; },
+        "error-callback":   () => { leadPopupTurnstileToken = ""; },
+      });
+    });
+  }
+
+  popupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name  = popupForm.elements.name.value.trim();
+    const phone = popupForm.elements.phone.value.trim();
+    if (!name || !validatePhone(phone)) {
+      popupMsg.textContent = "Введите имя и корректный телефон (не менее 10 цифр).";
+      return;
+    }
+    const btn = popupForm.querySelector('[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = "Отправляем…";
+    try {
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          phone,
+          turnstileToken: leadPopupTurnstileToken,
+          answers: {
+            adults:        quickCalcForm.elements.adults.value,
+            children:      quickCalcForm.elements.children.value,
+            arrivalDate:   document.getElementById("qcArrival").value,
+            departureDate: document.getElementById("qcDeparture").value,
+            perDay: {}, fixed: {}, storeTripPeople: 0,
+          },
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Ошибка отправки.");
+      popupForm.classList.add("hidden");
+      document.getElementById("leadPopupTurnstile").classList.add("hidden");
+      popupMsg.style.color = "var(--brand-leaf-700)";
+      popupMsg.textContent = `Заявка #${data.applicationId} принята. Перезвоним в ближайшее время!`;
+      ymGoal("lead_popup_submit", { applicationId: data.applicationId });
+      onCooldown = true; // больше не показывать после успешной отправки
+    } catch (err) {
+      popupMsg.textContent = err.message;
+      if (window.turnstile && leadPopupTurnstileWidgetId != null) {
+        window.turnstile.reset(leadPopupTurnstileWidgetId);
+        leadPopupTurnstileToken = "";
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Получить консультацию";
+    }
+  });
+})();
 
 // --- Click tracking: phone / WhatsApp / map ---
 // Делегированный обработчик — работает и для динамически добавленных ссылок (sticky CTA и т.п.)
