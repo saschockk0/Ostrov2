@@ -72,9 +72,9 @@
     // Убираем флаг из стандартного префикса Leaflet, оставляя ссылку
     map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noreferrer">Leaflet</a>');
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
+    L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      attribution: 'Спутник © <a href="https://www.google.com/maps">Google</a>',
+      maxZoom: 20,
     }).addTo(map);
 
     var markers = {};

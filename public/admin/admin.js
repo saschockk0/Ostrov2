@@ -20,8 +20,8 @@ const MAP_CAT_LABELS = {
   nav: 'Навигация', infra: 'Инфраструктура', camp: 'Жильё',
   food: 'Питание', safety: 'Безопасность', leisure: 'Отдых',
 };
-const OSM_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const OSM_ATTR = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const SAT_TILES = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
+const SAT_ATTR = 'Спутник © <a href="https://www.google.com/maps">Google</a>';
 
 // Leaflet-объекты держим вне state, чтобы перерисовка SPA их не сериализовала
 let adminMap = { instance: null, markers: {} };
@@ -431,7 +431,7 @@ function initAdminMap() {
   const pts = state.mapPoints || [];
   const map = L.map('admin-map').setView([56.6915, 36.3878], 16);
   map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noreferrer">Leaflet</a>');
-  L.tileLayer(OSM_TILES, { attribution: OSM_ATTR, maxZoom: 19 }).addTo(map);
+  L.tileLayer(SAT_TILES, { attribution: SAT_ATTR, maxZoom: 20 }).addTo(map);
 
   const group = L.featureGroup().addTo(map);
   pts.forEach(p => {
