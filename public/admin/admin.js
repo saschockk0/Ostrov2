@@ -14,11 +14,11 @@ const SEASON_LABELS = {
 // План острова — категории точек (должны совпадать с public/js/island-plan.js)
 const MAP_CAT_COLORS = {
   nav: '#e67e22', infra: '#2980b9', camp: '#27ae60',
-  food: '#f39c12', safety: '#e74c3c', leisure: '#8e44ad',
+  food: '#f39c12', safety: '#e74c3c', leisure: '#8e44ad', transfer: '#16a085',
 };
 const MAP_CAT_LABELS = {
   nav: 'Навигация', infra: 'Инфраструктура', camp: 'Жильё',
-  food: 'Питание', safety: 'Безопасность', leisure: 'Отдых',
+  food: 'Питание', safety: 'Безопасность', leisure: 'Отдых', transfer: 'Трансфер',
 };
 const SAT_TILES = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
 const SAT_ATTR = 'Спутник © <a href="https://www.google.com/maps">Google</a>';

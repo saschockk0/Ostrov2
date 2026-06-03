@@ -641,62 +641,45 @@
       </div>
       <div class="island-plan__layout">
         <div id="island-map" class="island-plan__map"></div>
-        <div class="island-plan__legend">
-          <h3 class="island-plan__legend-title">Объекты</h3>
-          <div class="legend-grid" id="legend-grid"></div>
+        <div class="island-plan__sidebar">
+          <div class="island-plan__info">
+            <h3 data-content="contact_address">Тверская область, Видогощи</h3>
+            <p data-content-html="contact_address_desc">Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
+            <div class="island-plan__info-actions">
+              <a href="https://yandex.ru/maps/-/CPspj8IP" target="_blank" rel="noreferrer" class="btn btn-primary">
+                🟢 «Остров» на карте
+              </a>
+              <a href="https://yandex.ru/maps/-/CPDirKlf" target="_blank" rel="noreferrer" class="btn btn-outline">
+                🟠 Причал и парковка
+              </a>
+            </div>
+            <button class="btn btn-primary js-open-wizard" style="width:100%">Оставить заявку</button>
+          </div>
+          <div class="island-plan__legend">
+            <h3 class="island-plan__legend-title">Объекты</h3>
+            <div class="legend-grid" id="legend-grid"></div>
+          </div>
         </div>
       </div>
     </section>
 
     <footer class="footer" id="contacts">
-      <div class="footer-top">
-        <div class="footer-map">
-          <iframe
-            title="Парусный клуб Остров на Яндекс Карте"
-            data-src="https://yandex.ru/map-widget/v1/?ll=36.3840%2C56.6890&z=15&pt=36.3852%2C56.6927%2Cpm2gnm~36.3828%2C56.6854%2Cpm2orm&l=map"
-            loading="lazy"
-            allowfullscreen
-          ></iframe>
-          <div class="map-card map-card--desktop">
-            <h3 data-content="contact_address">Тверская область, Видогощи</h3>
-            <p data-content-html="contact_address_desc">Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
-            <div style="display:flex;flex-direction:column;gap:8px;margin:10px 0">
-              <a href="https://yandex.ru/maps/-/CPspj8IP" target="_blank" rel="noreferrer" class="btn btn-primary" style="font-size:13px">
-                🟢 «Остров» на карте
-              </a>
-              <a href="https://yandex.ru/maps/-/CPDirKlf" target="_blank" rel="noreferrer" class="btn btn-outline" style="font-size:13px">
-                🟠 Причал и парковка
-              </a>
-            </div>
-            <button class="btn btn-outline js-open-wizard" style="width:100%">Оставить заявку</button>
-          </div>
-        </div>
-        <div class="map-card map-card--mobile">
-          <h3 data-content="contact_address">Тверская область, Видогощи</h3>
-          <p data-content-html="contact_address_desc">Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
-          <div style="display:flex;flex-direction:column;gap:8px;margin:10px 0">
-            <a href="https://yandex.ru/maps/-/CPspj8IP" target="_blank" rel="noreferrer" class="btn btn-primary" style="font-size:13px">
-              🟢 «Остров» на карте
-            </a>
-            <a href="https://yandex.ru/maps/-/CPDirKlf" target="_blank" rel="noreferrer" class="btn btn-outline" style="font-size:13px">
-              🟠 Причал и парковка
-            </a>
-          </div>
-          <button class="btn btn-outline js-open-wizard" style="width:100%">Оставить заявку</button>
-        </div>
+      <div class="footer-top footer-top--simple">
         <div class="footer-contacts">
           <img src="/assets/logo-light.svg" alt="Парусный клуб Остров" class="footer-logo" />
-          <div class="contact-card" id="contactPhone">
-            <span>Телефон и WhatsApp</span>
-            <a href="tel:+79037334243">+7 (903) 733-42-43</a>
-          </div>
-          <div class="contact-card" id="contactEmail">
-            <span>Почта</span>
-            <a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>
-          </div>
-          <div class="contact-card" id="contactVk">
-            <span>ВКонтакте</span>
-            <a href="https://vk.com/ostrovparusa" target="_blank" rel="noreferrer">vk.com/ostrovparusa</a>
+          <div class="footer-contacts__cards">
+            <div class="contact-card" id="contactPhone">
+              <span>Телефон и WhatsApp</span>
+              <a href="tel:+79037334243">+7 (903) 733-42-43</a>
+            </div>
+            <div class="contact-card" id="contactEmail">
+              <span>Почта</span>
+              <a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>
+            </div>
+            <div class="contact-card" id="contactVk">
+              <span>ВКонтакте</span>
+              <a href="https://vk.com/ostrovparusa" target="_blank" rel="noreferrer">vk.com/ostrovparusa</a>
+            </div>
           </div>
         </div>
       </div>

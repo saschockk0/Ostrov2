@@ -1,20 +1,22 @@
 (function () {
   var CAT_COLORS = {
-    nav:     '#e67e22',
-    infra:   '#2980b9',
-    camp:    '#27ae60',
-    food:    '#f39c12',
-    safety:  '#e74c3c',
-    leisure: '#8e44ad',
+    nav:      '#e67e22',
+    infra:    '#2980b9',
+    camp:     '#27ae60',
+    food:     '#f39c12',
+    safety:   '#e74c3c',
+    leisure:  '#8e44ad',
+    transfer: '#16a085',
   };
 
   var CAT_LABELS = {
-    nav:     'Навигация',
-    infra:   'Инфраструктура',
-    camp:    'Жильё',
-    food:    'Питание',
-    safety:  'Безопасность',
-    leisure: 'Отдых',
+    nav:      'Навигация',
+    infra:    'Инфраструктура',
+    camp:     'Жильё',
+    food:     'Питание',
+    safety:   'Безопасность',
+    leisure:  'Отдых',
+    transfer: 'Трансфер',
   };
 
   function esc(s) {
@@ -87,10 +89,16 @@
       markers[item.id != null ? item.id : numOf(item)] = { marker: marker, item: item };
     });
 
-    // Подгоняем масштаб под все точки
-    if (points.length > 1) {
-      map.fitBounds(group.getBounds().pad(0.2));
-    } else {
+    // Кадрируем только по точкам острова — причал (transfer) лежит далеко
+    // на материке и иначе «сплющил» бы весь лагерь в кучку.
+    var islandLatLngs = points
+      .filter(function (p) { return catOf(p) !== 'transfer'; })
+      .map(function (p) { return [p.lat, p.lng]; });
+    var islandBounds = islandLatLngs.length ? L.latLngBounds(islandLatLngs) : null;
+
+    if (islandLatLngs.length > 1) {
+      map.fitBounds(islandBounds.pad(0.2));
+    } else if (points.length) {
       map.setView([points[0].lat, points[0].lng], 16);
     }
 
@@ -109,8 +117,15 @@
         row.addEventListener('click', function () {
           var entry = markers[key];
           if (!entry) return;
-          map.flyTo([item.lat, item.lng], 18, { duration: 0.8 });
-          setTimeout(function () { entry.marker.openPopup(); }, 850);
+          if (catOf(item) === 'transfer' && islandBounds) {
+            // Причал на материке: показываем весь маршрут остров → точка сбора.
+            var routeBounds = L.latLngBounds(islandBounds).extend([item.lat, item.lng]);
+            map.flyToBounds(routeBounds.pad(0.15), { duration: 0.9 });
+            setTimeout(function () { entry.marker.openPopup(); }, 950);
+          } else {
+            map.flyTo([item.lat, item.lng], 18, { duration: 0.8 });
+            setTimeout(function () { entry.marker.openPopup(); }, 850);
+          }
         });
         legendEl.appendChild(row);
       });
