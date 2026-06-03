@@ -69,6 +69,8 @@
     if (!container || typeof L === 'undefined' || !points || !points.length) return;
 
     var map = L.map('island-map', { zoomControl: true });
+    // Убираем флаг из стандартного префикса Leaflet, оставляя ссылку
+    map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noreferrer">Leaflet</a>');
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',

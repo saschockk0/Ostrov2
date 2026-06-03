@@ -430,6 +430,7 @@ function initAdminMap() {
 
   const pts = state.mapPoints || [];
   const map = L.map('admin-map').setView([56.6915, 36.3878], 16);
+  map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noreferrer">Leaflet</a>');
   L.tileLayer(OSM_TILES, { attribution: OSM_ATTR, maxZoom: 19 }).addTo(map);
 
   const group = L.featureGroup().addTo(map);
