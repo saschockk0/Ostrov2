@@ -15,10 +15,12 @@ const { listEvents } = require("./admin/events-db");
 const { getAllContent, DEFAULT_CONTENT } = require("./admin/content-db");
 const { listPhotos } = require("./admin/gallery-db");
 const { listFleet } = require("./admin/fleet-db");
+const { listMapPoints, ensureMapPoints } = require("./admin/map-points-db");
 
 const app = express();
 app.set("trust proxy", 1);
 const db = initDb();
+ensureMapPoints(db).catch((err) => console.error("map_points init error:", err.message));
 const port = Number(process.env.PORT || 3000);
 
 app.use(helmet({
@@ -90,6 +92,11 @@ app.get("/api/gallery", async (req, res) => {
 app.get("/api/fleet", async (req, res) => {
   try { res.json(await listFleet(db, true)); }
   catch (err) { console.error("GET /api/fleet error:", err); res.status(500).json({ error: GENERIC_ERR }); }
+});
+
+app.get("/api/map-points", async (req, res) => {
+  try { res.json(await listMapPoints(db, true)); }
+  catch (err) { console.error("GET /api/map-points error:", err); res.status(500).json({ error: GENERIC_ERR }); }
 });
 
 app.post("/api/quote", (req, res) => {

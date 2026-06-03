@@ -11,6 +11,21 @@ const SEASON_LABELS = {
   maySept: 'Май, Сентябрь', june: 'Июнь', julyAug: 'Июль–Август', child: 'Дети 7–14',
 };
 
+// План острова — категории точек (должны совпадать с public/js/island-plan.js)
+const MAP_CAT_COLORS = {
+  nav: '#e67e22', infra: '#2980b9', camp: '#27ae60',
+  food: '#f39c12', safety: '#e74c3c', leisure: '#8e44ad',
+};
+const MAP_CAT_LABELS = {
+  nav: 'Навигация', infra: 'Инфраструктура', camp: 'Жильё',
+  food: 'Питание', safety: 'Безопасность', leisure: 'Отдых',
+};
+const OSM_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const OSM_ATTR = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+// Leaflet-объекты держим вне state, чтобы перерисовка SPA их не сериализовала
+let adminMap = { instance: null, markers: {} };
+
 // ── State ─────────────────────────────────────────────────────────────────
 
 let state = {
@@ -24,6 +39,7 @@ let state = {
   prices: null, pricesDirty: false,
   content: null, contentLabels: null, contentDirty: false,
   gallery: [], galleryPhotoForm: null,
+  mapPoints: [], mapPointForm: null,
   showNewAppModal: false,
   saving: false, savingNote: false, noteText: '',
   error: null, successMsg: null,
@@ -89,7 +105,7 @@ async function doLogin(login, password) {
 
 async function doLogout() {
   await api('POST', '/api/logout').catch(() => {});
-  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, events: [], fleet: [], fleetForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null });
+  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, events: [], fleet: [], fleetForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null, mapPoints: [], mapPointForm: null });
 }
 
 // ── Loaders ───────────────────────────────────────────────────────────────
@@ -144,6 +160,14 @@ async function loadGallery() {
     setState({ gallery: Array.isArray(data) ? data : [], view: 'gallery', error: null });
   }
   catch (err) { setState({ error: err.message, view: 'gallery', gallery: [] }); }
+}
+
+async function loadMapPoints() {
+  try {
+    const data = await api('GET', '/api/map-points');
+    setState({ mapPoints: Array.isArray(data) ? data : [], view: 'map', error: null });
+  }
+  catch (err) { setState({ error: err.message, view: 'map', mapPoints: [] }); }
 }
 
 // ── Application actions ───────────────────────────────────────────────────
@@ -368,6 +392,125 @@ async function deleteGalleryPhoto(id) {
   } catch (err) { setState({ error: err.message }); }
 }
 
+// ── Map points (план острова) ───────────────────────────────────────────────
+
+function fmtCoord(lat, lng) {
+  return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+}
+
+function makeMapIcon(p) {
+  const color = MAP_CAT_COLORS[p.category] || '#2980b9';
+  return L.divIcon({
+    className: '',
+    html: `<div class="mp-pin" style="background:${color}">${esc(p.num)}</div>`,
+    iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16],
+  });
+}
+
+function showMapToast(msg) {
+  let t = document.getElementById('map-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'map-toast';
+    t.className = 'map-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showMapToast._timer);
+  showMapToast._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Полностью пересоздаём карту после каждого render() (SPA заменяет innerHTML).
+function initAdminMap() {
+  const el = document.getElementById('admin-map');
+  if (!el || typeof L === 'undefined') return;
+  if (adminMap.instance) { try { adminMap.instance.remove(); } catch (e) {} adminMap.instance = null; }
+  adminMap.markers = {};
+
+  const pts = state.mapPoints || [];
+  const map = L.map('admin-map').setView([56.6915, 36.3878], 16);
+  L.tileLayer(OSM_TILES, { attribution: OSM_ATTR, maxZoom: 19 }).addTo(map);
+
+  const group = L.featureGroup().addTo(map);
+  pts.forEach(p => {
+    const m = L.marker([p.lat, p.lng], { icon: makeMapIcon(p), draggable: true })
+      .addTo(group)
+      .bindTooltip(`${p.num}. ${p.name}`);
+    m.on('dragend', () => {
+      const ll = m.getLatLng();
+      saveMapPointPosition(p.id, ll.lat, ll.lng);
+    });
+    m.on('click', () => {
+      const fresh = state.mapPoints.find(x => x.id === p.id);
+      if (fresh) openMapPointForm(fresh);
+    });
+    adminMap.markers[p.id] = m;
+  });
+  if (pts.length > 1) map.fitBounds(group.getBounds().pad(0.2));
+  else if (pts.length === 1) map.setView([pts[0].lat, pts[0].lng], 16);
+
+  adminMap.instance = map;
+}
+
+// Перетаскивание маркера: сохраняем позицию без полного ре-рендера (карта не мигает).
+async function saveMapPointPosition(id, lat, lng) {
+  try {
+    const updated = await api('PATCH', `/api/map-points/${id}`, { lat, lng });
+    state.mapPoints = state.mapPoints.map(p => p.id === id ? updated : p);
+    const coordEl = document.querySelector(`[data-coord-for="${id}"]`);
+    if (coordEl) coordEl.textContent = fmtCoord(updated.lat, updated.lng);
+    showMapToast(`№${updated.num} «${updated.name}» — позиция сохранена`);
+  } catch (err) { setState({ error: err.message }); }
+}
+
+function openMapPointForm(point = null) {
+  const nextNum = state.mapPoints.length ? Math.max(...state.mapPoints.map(p => Number(p.num) || 0)) + 1 : 1;
+  setState({
+    mapPointForm: point ? { ...point } : {
+      num: nextNum, name: '', category: 'infra', description: '',
+      image_url: '', lat: 56.6915, lng: 36.3878, active: true, sort_order: nextNum,
+    },
+    error: null,
+  });
+}
+
+function collectMapPointForm() {
+  const f = state.mapPointForm;
+  if (!f) return;
+  f.num = Number(document.getElementById('mp-num').value) || 0;
+  f.name = document.getElementById('mp-name').value.trim();
+  f.category = document.getElementById('mp-cat').value;
+  f.description = document.getElementById('mp-desc').value;
+  f.image_url = document.getElementById('mp-image').value.trim();
+  f.lat = Number(document.getElementById('mp-lat').value);
+  f.lng = Number(document.getElementById('mp-lng').value);
+  f.sort_order = Number(document.getElementById('mp-order').value) || 0;
+  f.active = Number(document.getElementById('mp-active').value) === 1;
+}
+
+async function saveMapPoint() {
+  collectMapPointForm();
+  const f = state.mapPointForm;
+  if (!f?.name) { setState({ error: 'Введите название точки' }); return; }
+  setState({ saving: true });
+  try {
+    let item;
+    if (f.id) item = await api('PATCH', `/api/map-points/${f.id}`, f);
+    else       item = await api('POST', '/api/map-points', f);
+    const list = f.id ? state.mapPoints.map(p => p.id === f.id ? item : p) : [...state.mapPoints, item];
+    setState({ mapPoints: list, mapPointForm: null, saving: false });
+  } catch (err) { setState({ saving: false, error: err.message }); }
+}
+
+async function deleteMapPoint(id) {
+  if (!confirm('Удалить точку с карты?')) return;
+  try {
+    await api('DELETE', `/api/map-points/${id}`);
+    setState({ mapPoints: state.mapPoints.filter(p => p.id !== id), mapPointForm: null });
+  } catch (err) { setState({ error: err.message }); }
+}
+
 // ── Render ────────────────────────────────────────────────────────────────
 
 function render() {
@@ -412,6 +555,7 @@ function renderShell() {
   else if (view === 'prices')       content = renderPricesView();
   else if (view === 'content')      content = renderContentView();
   else if (view === 'gallery')      content = renderGalleryView();
+  else if (view === 'map')          content = renderMapView();
 
   const drawerHtml   = state.selectedApp ? renderAppDrawer(state.selectedApp) : '';
   const drawerOpen   = state.selectedApp ? ' open' : '';
@@ -420,6 +564,7 @@ function renderShell() {
   const fleetModal        = state.fleetForm         ? renderFleetModal()       : '';
   const newAppModal       = state.showNewAppModal  ? renderNewAppModal()      : '';
   const galleryPhotoModal = state.galleryPhotoForm ? renderGalleryPhotoModal() : '';
+  const mapPointModal     = state.mapPointForm     ? renderMapPointModal()     : '';
 
   return `
     <div class="layout">
@@ -436,6 +581,7 @@ function renderShell() {
           ${navItem('prices',       'Цены')}
           ${navItem('content',      'Контент')}
           ${navItem('gallery',      'Галерея')}
+          ${navItem('map',          'План острова')}
         </nav>
         <main class="content" id="content-area">
           ${state.error   ? `<div class="alert alert-error" style="margin-bottom:16px">${esc(state.error)} <span style="cursor:pointer;float:right" data-clear-error>✕</span></div>` : ''}
@@ -446,7 +592,7 @@ function renderShell() {
     </div>
     <div class="drawer-overlay${overlayOpen}" id="drawer-overlay"></div>
     <aside class="detail-drawer${drawerOpen}" id="detail-drawer">${drawerHtml}</aside>
-    ${eventModal}${fleetModal}${newAppModal}${galleryPhotoModal}`;
+    ${eventModal}${fleetModal}${newAppModal}${galleryPhotoModal}${mapPointModal}`;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -909,6 +1055,91 @@ function renderGalleryPhotoModal() {
     </div>`;
 }
 
+// ── Map points (план острова) ───────────────────────────────────────────────
+
+function renderMapView() {
+  const pts = state.mapPoints || [];
+  const rows = pts.length ? pts.map(p => {
+    const color = MAP_CAT_COLORS[p.category] || '#2980b9';
+    return `
+    <div class="mp-row">
+      <span class="mp-row__badge" style="background:${color}">${esc(p.num)}</span>
+      <div class="mp-row__main">
+        <div class="mp-row__name">${esc(p.name)} ${p.active ? '' : '<span class="badge badge-rejected" style="font-size:10px">скрыта</span>'}</div>
+        <div class="mp-row__coord" data-coord-for="${p.id}">${fmtCoord(p.lat, p.lng)}</div>
+      </div>
+      <button class="btn btn-sm btn-secondary" data-edit-point="${p.id}">Изменить</button>
+    </div>`;
+  }).join('') : '<p style="color:var(--muted);padding:16px">Точек нет. Добавьте первую.</p>';
+
+  return `
+    <div>
+      <div class="page-header"><h2>План острова <span style="font-size:14px;font-weight:400;color:var(--muted)">(${pts.length} точек)</span></h2>
+        <div class="page-actions"><button class="btn btn-primary" id="add-point-btn">+ Точка</button></div>
+      </div>
+      <p class="content-html-hint">Перетаскивайте маркеры по карте — новое расположение сохраняется автоматически. Нажмите на маркер или «Изменить», чтобы отредактировать карточку (название, описание, фото).</p>
+      <div class="map-editor">
+        <div id="admin-map" class="map-editor__map"></div>
+        <div class="map-editor__list">${rows}</div>
+      </div>
+    </div>`;
+}
+
+function renderMapPointModal() {
+  const f = state.mapPointForm;
+  const isEdit = !!f.id;
+  const catOptions = Object.entries(MAP_CAT_LABELS).map(([k, label]) =>
+    `<option value="${k}" ${f.category === k ? 'selected' : ''}>${label}</option>`).join('');
+  return `
+    <div class="modal-overlay" id="mp-modal-overlay">
+      <div class="modal">
+        <div class="modal-head"><h3>${isEdit ? 'Редактировать' : 'Новая'} точка</h3><button class="btn-icon" id="close-mp-modal">✕</button></div>
+        <div class="modal-body">
+          ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ''}
+          <div class="fields-row">
+            <div class="field" style="max-width:110px"><label>Номер</label><input id="mp-num" type="number" min="0" value="${esc(f.num ?? 0)}"></div>
+            <div class="field"><label>Название *</label><input id="mp-name" type="text" value="${esc(f.name || '')}" placeholder="Баня"></div>
+          </div>
+          <div class="field"><label>Категория</label>
+            <select id="mp-cat">${catOptions}</select>
+          </div>
+          <div class="field"><label>Описание карточки <span class="html-badge">HTML</span></label>
+            <textarea id="mp-desc" rows="4" placeholder="Текст, который откроется при клике на маркер. Можно вставлять &lt;a&gt;, &lt;strong&gt;, &lt;br&gt;…">${esc(f.description || '')}</textarea>
+          </div>
+          <div class="field">
+            <label>Фото в карточке</label>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <input id="mp-image" type="text" value="${esc(f.image_url || '')}" placeholder="/images/uploads/photo.jpg" style="flex:1">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap">
+                Загрузить<input type="file" id="mp-file" accept="image/*" style="display:none">
+              </label>
+            </div>
+            ${f.image_url ? `<img src="${esc(f.image_url)}" style="margin-top:8px;max-height:100px;border-radius:6px;object-fit:cover">` : ''}
+          </div>
+          <div class="fields-row">
+            <div class="field"><label>Широта (lat)</label><input id="mp-lat" type="number" step="0.0001" value="${esc(f.lat ?? '')}"></div>
+            <div class="field"><label>Долгота (lng)</label><input id="mp-lng" type="number" step="0.0001" value="${esc(f.lng ?? '')}"></div>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-top:-6px">Координаты удобнее задавать перетаскиванием маркера на карте.</p>
+          <div class="fields-row">
+            <div class="field"><label>Порядок сортировки</label><input id="mp-order" type="number" value="${esc(f.sort_order ?? 0)}"></div>
+            <div class="field"><label>Статус</label>
+              <select id="mp-active">
+                <option value="1" ${f.active ? 'selected' : ''}>Показывать</option>
+                <option value="0" ${!f.active ? 'selected' : ''}>Скрыть</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          ${isEdit ? `<button class="btn btn-danger" id="delete-mp-btn">Удалить</button>` : ''}
+          <button class="btn btn-secondary" id="cancel-mp-modal">Отмена</button>
+          <button class="btn btn-primary" id="save-mp-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ── New App Modal ─────────────────────────────────────────────────────────
 
 function renderNewAppModal() {
@@ -974,6 +1205,7 @@ function attachShellHandlers() {
       else if (v === 'prices')       { setState({ view: 'prices' }); loadPrices(); }
       else if (v === 'content')      { setState({ view: 'content' }); loadContent(); }
       else if (v === 'gallery')      { setState({ view: 'gallery', galleryPhotoForm: null }); loadGallery(); }
+      else if (v === 'map')          { setState({ view: 'map', mapPointForm: null }); loadMapPoints(); }
       else if (v === 'dashboard')    { setState({ view: 'dashboard', selectedApp: null }); loadStats(); }
     });
   });
@@ -1166,6 +1398,42 @@ function attachShellHandlers() {
   root.querySelectorAll('.content-field').forEach(el => {
     el.addEventListener('input', e => updateContentField(e.target.dataset.key, e.target.value));
   });
+
+  // Map points handlers
+  document.getElementById('add-point-btn')?.addEventListener('click', () => openMapPointForm());
+  root.querySelectorAll('[data-edit-point]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const p = state.mapPoints.find(x => x.id === Number(btn.dataset.editPoint));
+      if (p) openMapPointForm(p);
+    }));
+  document.getElementById('close-mp-modal')?.addEventListener('click', () => setState({ mapPointForm: null, error: null }));
+  document.getElementById('cancel-mp-modal')?.addEventListener('click', () => setState({ mapPointForm: null, error: null }));
+  document.getElementById('mp-modal-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) setState({ mapPointForm: null, error: null });
+  });
+  document.getElementById('save-mp-btn')?.addEventListener('click', saveMapPoint);
+  document.getElementById('delete-mp-btn')?.addEventListener('click', () => {
+    if (state.mapPointForm?.id) deleteMapPoint(state.mapPointForm.id);
+  });
+  document.getElementById('mp-file')?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      document.getElementById('mp-image').value = url;
+      state.mapPointForm.image_url = url;
+      const preview = document.querySelector('#mp-modal-overlay img');
+      if (preview) { preview.src = url; } else {
+        const imgContainer = document.getElementById('mp-image').parentElement;
+        const img = document.createElement('img');
+        img.src = url; img.style.cssText = 'margin-top:8px;max-height:100px;border-radius:6px;object-fit:cover';
+        imgContainer.parentElement.appendChild(img);
+      }
+    } catch (err) { setState({ error: err.message }); }
+  });
+
+  // Карту инициализируем после вставки DOM (innerHTML заменяется каждый render)
+  if (state.view === 'map') initAdminMap();
 }
 
 function submitNewApp() {

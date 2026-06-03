@@ -3014,3 +3014,122 @@ textarea {
     height: 500px;
   }
 }
+
+/* ── План острова ─────────────────────────────────── */
+.island-plan {
+  padding: 60px 0 0;
+}
+
+.island-plan__layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  height: 580px;
+  margin-top: 24px;
+}
+
+.island-plan__map {
+  height: 100%;
+}
+
+.island-plan__legend {
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: var(--paper);
+  border-left: 1px solid var(--ink-200);
+}
+
+.island-plan__legend-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-500);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.legend-item:hover {
+  background: var(--ink-50);
+}
+
+.legend-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  font-size: 13px;
+  color: var(--ink-800);
+  line-height: 1.3;
+}
+
+.iplan-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+
+.iplan-popup__title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 6px;
+  color: var(--ink-900);
+}
+
+.iplan-popup__img {
+  width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.iplan-popup__desc {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-700);
+}
+
+.iplan-popup__desc a { color: var(--blue, #2980b9); }
+
+@media (max-width: 768px) {
+  .island-plan__layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .island-plan__map {
+    height: 340px;
+  }
+
+  .island-plan__legend {
+    border-left: none;
+    border-top: 1px solid var(--ink-200);
+    max-height: 280px;
+  }
+}

@@ -186,6 +186,7 @@
     </script>
 
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/js/leaflet.css" />
 
     <!-- Yandex.Metrika counter -->
     <script src="/ym-init.js"></script>
@@ -633,6 +634,20 @@
 
     </main>
 
+    <section class="island-plan" id="island-plan">
+      <div class="container">
+        <h2 class="section-title">План острова</h2>
+        <p class="section-subtitle">Нажмите на маркер, чтобы узнать подробнее об объекте</p>
+      </div>
+      <div class="island-plan__layout">
+        <div id="island-map" class="island-plan__map"></div>
+        <div class="island-plan__legend">
+          <h3 class="island-plan__legend-title">Объекты</h3>
+          <div class="legend-grid" id="legend-grid"></div>
+        </div>
+      </div>
+    </section>
+
     <footer class="footer" id="contacts">
       <div class="footer-top">
         <div class="footer-map">
@@ -873,5 +888,8 @@
 
     <script src="/landing-ui.js" defer></script>
     <script src="/app.js" defer></script>
+    <script src="/js/leaflet.js"></script>
+    <script src="/js/island-plan-data.js"></script>
+    <script src="/js/island-plan.js"></script>
   </body>
 </html>

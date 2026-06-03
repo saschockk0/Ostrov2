@@ -14,6 +14,7 @@ const { listEvents, getEvent, createEvent, updateEvent, deleteEvent } = require(
 const { getAllContent, setManyContent, CONTENT_LABELS } = require('./content-db');
 const { listPhotos, getPhoto, createPhoto, updatePhoto, deletePhoto } = require('./gallery-db');
 const { listFleet, getFleetItem, createFleetItem, updateFleetItem, deleteFleetItem } = require('./fleet-db');
+const { listMapPoints, createMapPoint, updateMapPoint, deleteMapPoint } = require('./map-points-db');
 const { getPrices, savePrices } = require('../pricing');
 
 const ADMIN_STATIC = path.join(__dirname, '..', '..', 'public', 'admin');
@@ -271,6 +272,35 @@ function createAdminRouter(db) {
   router.delete('/api/fleet/:id', async (req, res) => {
     try { await deleteFleetItem(db, Number(req.params.id)); res.json({ ok: true }); }
     catch (err) { console.error('Delete fleet error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  // ── Map points (план острова) ──────────────────────────────────────────
+
+  router.get('/api/map-points', async (req, res) => {
+    try { res.json(await listMapPoints(db)); }
+    catch (err) { console.error('List map points error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.post('/api/map-points', async (req, res) => {
+    try {
+      if (!req.body?.name) return res.status(400).json({ error: 'Название обязательно' });
+      if (!isValidUrl(req.body.image_url)) return res.status(400).json({ error: 'Недопустимый URL изображения' });
+      res.status(201).json(await createMapPoint(db, req.body));
+    } catch (err) { console.error('Create map point error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.patch('/api/map-points/:id', async (req, res) => {
+    try {
+      if (req.body?.image_url !== undefined && !isValidUrl(req.body.image_url))
+        return res.status(400).json({ error: 'Недопустимый URL изображения' });
+      res.json(await updateMapPoint(db, Number(req.params.id), req.body || {}));
+    }
+    catch (err) { console.error('Update map point error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.delete('/api/map-points/:id', async (req, res) => {
+    try { await deleteMapPoint(db, Number(req.params.id)); res.json({ ok: true }); }
+    catch (err) { console.error('Delete map point error:', err); res.status(500).json({ error: GENERIC_ERR }); }
   });
 
   // ── File upload ────────────────────────────────────────────────────────
