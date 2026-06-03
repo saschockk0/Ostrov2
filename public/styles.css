@@ -694,6 +694,7 @@ textarea {
 @media (max-width: 640px) {
   .calc-v2 { grid-template-columns: 1fr; }
   .calc-v2--card { padding: 16px; }
+  .footer-contacts__cards { grid-template-columns: 1fr; }
 }
 
 .calc-v2__left {
@@ -974,10 +975,10 @@ textarea {
 
 .footer-contacts__cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   width: 100%;
-  max-width: 760px;
+  max-width: 880px;
   text-align: left;
 }
 
@@ -1001,6 +1002,15 @@ textarea {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.07em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.contact-card__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .contact-card a {
@@ -2838,7 +2848,7 @@ textarea {
   }
 
   .footer-contacts__cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
