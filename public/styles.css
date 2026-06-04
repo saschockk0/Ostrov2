@@ -3176,6 +3176,10 @@ textarea {
   box-shadow: 0 2px 6px rgba(0,0,0,0.35);
 }
 
+.iplan-glyph {
+  display: block;
+}
+
 .iplan-popup__title {
   font-weight: 700;
   font-size: 15px;
