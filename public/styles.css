@@ -950,7 +950,6 @@ textarea {
 }
 
 .footer {
-  margin-top: 30px;
   background: var(--brand-sky-900);
   color: #fff;
 }
@@ -3064,6 +3063,17 @@ textarea {
 
 .island-plan__map {
   height: 100%;
+}
+
+.island-plan__map .leaflet-control-zoom.leaflet-bar a {
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+  font-size: 24px;
+  text-indent: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .island-plan__sidebar {
