@@ -531,6 +531,35 @@
         </div>
       </section>
 
+      <section class="island-plan" id="island-plan">
+        <div class="container">
+          <h2 class="section-title">План острова</h2>
+          <p class="section-subtitle">Нажмите на маркер, чтобы узнать подробнее об объекте</p>
+        </div>
+        <div class="island-plan__layout">
+          <div id="island-map" class="island-plan__map"></div>
+          <div class="island-plan__sidebar">
+            <div class="island-plan__info">
+              <h3 data-content="contact_address">Тверская область, Видогощи</h3>
+              <p data-content-html="contact_address_desc">Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
+              <div class="island-plan__info-actions">
+                <a href="https://yandex.ru/maps/-/CPspj8IP" target="_blank" rel="noreferrer" class="btn btn-primary">
+                  🟢 «Остров» на карте
+                </a>
+                <a href="https://yandex.ru/maps/-/CPDirKlf" target="_blank" rel="noreferrer" class="btn btn-outline">
+                  🟠 Причал и парковка
+                </a>
+              </div>
+              <button class="btn btn-primary js-open-wizard" style="width:100%">Оставить заявку</button>
+            </div>
+            <div class="island-plan__legend">
+              <h3 class="island-plan__legend-title">Объекты</h3>
+              <div class="legend-grid" id="legend-grid"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="editorial" id="about-island">
         <img class="editorial__photo" src="/assets/sunset.jpg" alt="Закат на Иваньковском водохранилище" />
         <div class="editorial__wash-left"></div>
@@ -633,35 +662,6 @@
       </section>
 
     </main>
-
-    <section class="island-plan" id="island-plan">
-      <div class="container">
-        <h2 class="section-title">План острова</h2>
-        <p class="section-subtitle">Нажмите на маркер, чтобы узнать подробнее об объекте</p>
-      </div>
-      <div class="island-plan__layout">
-        <div id="island-map" class="island-plan__map"></div>
-        <div class="island-plan__sidebar">
-          <div class="island-plan__info">
-            <h3 data-content="contact_address">Тверская область, Видогощи</h3>
-            <p data-content-html="contact_address_desc">Иваньковское водохранилище, 133 км от Москвы. Трансфер на остров отправляется с причала <strong>Новомелково</strong>.</p>
-            <div class="island-plan__info-actions">
-              <a href="https://yandex.ru/maps/-/CPspj8IP" target="_blank" rel="noreferrer" class="btn btn-primary">
-                🟢 «Остров» на карте
-              </a>
-              <a href="https://yandex.ru/maps/-/CPDirKlf" target="_blank" rel="noreferrer" class="btn btn-outline">
-                🟠 Причал и парковка
-              </a>
-            </div>
-            <button class="btn btn-primary js-open-wizard" style="width:100%">Оставить заявку</button>
-          </div>
-          <div class="island-plan__legend">
-            <h3 class="island-plan__legend-title">Объекты</h3>
-            <div class="legend-grid" id="legend-grid"></div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <footer class="footer" id="contacts">
       <div class="footer-top footer-top--simple">

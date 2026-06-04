@@ -125,12 +125,9 @@
     var container = document.getElementById('island-map');
     if (!container || typeof L === 'undefined' || !points || !points.length) return;
 
-    var map = L.map('island-map', { zoomControl: true });
-    // Убираем флаг из стандартного префикса Leaflet, оставляя ссылку
-    map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noreferrer">Leaflet</a>');
+    var map = L.map('island-map', { zoomControl: true, attributionControl: false });
 
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      attribution: 'Спутник © <a href="https://www.google.com/maps">Google</a>',
       maxZoom: 20,
     }).addTo(map);
 
