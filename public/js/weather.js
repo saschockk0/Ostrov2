@@ -65,9 +65,32 @@
     return Math.ceil(kmh / 3.6) + ' м/с';
   }
 
+  function renderHero(data) {
+    var list = document.getElementById('heroWeatherDays');
+    if (!list || !data || !data.daily) return;
+    var d = data.daily;
+    var html = '';
+    var count = Math.min(4, d.time.length);
+    for (var i = 0; i < count; i++) {
+      var date = new Date(d.time[i] + 'T00:00:00');
+      var label = i === 0 ? 'Сег.' : WEEKDAYS[date.getDay()];
+      var meta = describe(d.weather_code[i]);
+      var wind = d.wind_speed_10m_max ? d.wind_speed_10m_max[i] : null;
+      html +=
+        '<li class="hero-weather__day">' +
+          '<span class="hero-weather__name">' + label + '</span>' +
+          '<span class="hero-weather__icon" title="' + meta[1] + '">' + meta[0] + '</span>' +
+          '<span class="hero-weather__temp">' + fmtTemp(d.temperature_2m_max[i]) + '</span>' +
+          (wind !== null ? '<span class="hero-weather__wind">💨' + fmtWind(wind) + '</span>' : '') +
+        '</li>';
+    }
+    list.innerHTML = html;
+  }
+
   function render(data) {
     var list = document.getElementById('weatherDays');
     var nowEl = document.getElementById('weatherNow');
+    renderHero(data);
     if (!list || !data || !data.daily) return;
 
     if (nowEl && data.current) {

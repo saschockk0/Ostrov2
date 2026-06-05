@@ -199,6 +199,70 @@ body {
   color: var(--ink-500);
 }
 
+.hero-weather {
+  margin-top: 12px;
+  background: var(--paper);
+  border: 1px solid var(--ink-100);
+  border-radius: 16px;
+  padding: 10px 14px;
+}
+
+.hero-weather__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.hero-weather__loading {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--ink-400);
+  text-align: center;
+  padding: 4px 0;
+}
+
+.hero-weather__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.hero-weather__day:first-child {
+  background: var(--brand-sky-050, #eef6fb);
+}
+
+.hero-weather__name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-500);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hero-weather__icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.hero-weather__temp {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.hero-weather__wind {
+  font-size: 11px;
+  color: var(--ink-400);
+}
+
 .video-card {
   position: relative;
   border-radius: 26px;
