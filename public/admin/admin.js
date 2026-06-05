@@ -340,8 +340,8 @@ async function saveContentAction() {
     msg.className = 'alert alert-success content-save-msg';
     msg.style.cssText = 'margin-bottom:16px';
     msg.textContent = 'Контент сохранён';
-    const editor = document.querySelector('.content-editor');
-    if (editor) editor.before(msg);
+    const anchor = document.querySelector('.content-nav') || document.querySelector('.content-section');
+    if (anchor) anchor.before(msg);
     setTimeout(() => msg.remove(), 3000);
   } catch (err) {
     if (btn) { btn.disabled = false; btn.textContent = 'Сохранить контент'; }
@@ -956,29 +956,112 @@ function renderPricesView() {
 
 // ── Content ───────────────────────────────────────────────────────────────
 
+const CONTENT_SECTIONS = [
+  { id: 'hero',      title: 'Hero-блок',        icon: '🎬', match: k => k.startsWith('hero_') },
+  { id: 'about',     title: 'О лагере',         icon: '🏕️', match: k => k.startsWith('about_') },
+  { id: 'events',    title: 'Мероприятия',      icon: '⛵', match: k => k.startsWith('events_') },
+  { id: 'faq',       title: 'Вопросы и ответы', icon: '❓', match: k => k.startsWith('faq_') },
+  { id: 'editorial', title: 'Блок «Закаты»',    icon: '🌅', match: k => k.startsWith('editorial_') },
+  { id: 'contact',   title: 'Контакты',         icon: '📍', match: k => k.startsWith('contact_') },
+];
+
+const capFirst = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+// Разбираем подпись вида "FAQ: вопрос 1 (вопрос|ответ)" → чистый заголовок + части + флаг HTML
+function parseContentLabel(rawLabel, key) {
+  let label = rawLabel || key;
+  const colon = label.indexOf(': ');
+  if (colon !== -1) label = label.slice(colon + 2);
+  let parts = null;
+  const m = label.match(/\(([^)]*\|[^)]*)\)\s*$/);
+  if (m) {
+    parts = m[1].split('|').map(s => s.trim());
+    label = label.slice(0, m.index).trim();
+  }
+  const html = /html/i.test(rawLabel || '');
+  label = label.replace(/\s*\(можно html\)\s*/i, '').trim();
+  return { label: capFirst(label), parts, html };
+}
+
+// Один контрол: короткое значение → input, длинное / с HTML → textarea
+function contentControl(key, value, partIndex) {
+  const v = value == null ? '' : String(value);
+  const dataPart = partIndex != null ? ` data-part="${partIndex}"` : '';
+  const isLong = v.length > 55 || /<[a-z!/]/i.test(v);
+  if (isLong) {
+    const rows = Math.max(2, Math.min(10, Math.ceil(v.length / 60)));
+    return `<textarea class="content-field content-input content-input--area" data-key="${key}"${dataPart} rows="${rows}">${esc(v)}</textarea>`;
+  }
+  return `<input class="content-field content-input" type="text" data-key="${key}"${dataPart} value="${esc(v)}">`;
+}
+
+function renderContentField(key, value, rawLabel) {
+  const { label, parts, html } = parseContentLabel(rawLabel, key);
+  if (parts) {
+    const vals = String(value == null ? '' : value).split('|');
+    const cols = parts.length === 2 ? ' cf-parts--2' : '';
+    const partsHtml = parts.map((pl, i) => `
+        <div class="cf-part">
+          <label>${esc(capFirst(pl))}</label>
+          ${contentControl(key, vals[i] ?? '', i)}
+        </div>`).join('');
+    return `
+      <div class="cf">
+        <label>${esc(label)}</label>
+        <div class="cf-parts${cols}">${partsHtml}</div>
+      </div>`;
+  }
+  const badge = html ? ' <span class="html-badge">HTML</span>' : '';
+  return `
+      <div class="cf">
+        <label>${esc(label)}${badge}</label>
+        ${contentControl(key, value, null)}
+      </div>`;
+}
+
 function renderContentView() {
   if (!state.content) return `<div class="loading"><div class="spinner"></div>Загрузка...</div>`;
   const labels = state.contentLabels || {};
-  const fields = Object.entries(state.content).map(([key, value]) => {
-    const label = labels[key] || key;
-    const rows = Math.max(2, Math.min(12, Math.ceil(String(value).length / 70)));
+  const entries = Object.entries(state.content);
+
+  const sections = [];
+  const used = new Set();
+  for (const sec of CONTENT_SECTIONS) {
+    const items = entries.filter(([k]) => sec.match(k));
+    items.forEach(([k]) => used.add(k));
+    if (items.length) sections.push({ sec, items });
+  }
+  const rest = entries.filter(([k]) => !used.has(k));
+  if (rest.length) sections.push({ sec: { id: 'other', title: 'Прочее', icon: '⚙️' }, items: rest });
+
+  const nav = sections.map(({ sec }) =>
+    `<span class="content-nav__item" data-jump="csec-${sec.id}">${sec.icon} ${esc(sec.title)}</span>`).join('');
+
+  const body = sections.map(({ sec, items }) => {
+    const fields = items.map(([key, value]) => renderContentField(key, value, labels[key])).join('');
     return `
-      <div class="field">
-        <label>${esc(label)} <span class="html-badge">HTML</span></label>
-        <textarea class="content-field content-field--code" data-key="${key}" rows="${rows}">${esc(value)}</textarea>
-      </div>`;
+      <section class="content-section" id="csec-${sec.id}">
+        <div class="content-section__head" data-collapse>
+          <span class="content-section__icon">${sec.icon}</span>
+          <h3>${esc(sec.title)}</h3>
+          <span class="content-section__count">${items.length}</span>
+          <span class="content-section__chevron">⌄</span>
+        </div>
+        <div class="content-section__body">${fields}</div>
+      </section>`;
   }).join('');
 
   return `
     <div>
       <div class="page-header"><h2>Контент сайта</h2>
         <div class="page-actions">
-          ${state.contentDirty ? '<span style="color:var(--yellow);font-size:13px;align-self:center">● Есть несохранённые изменения</span>' : ''}
+          ${state.contentDirty ? '<span class="dirty-hint" style="color:var(--yellow);font-size:13px;align-self:center">● Есть несохранённые изменения</span>' : ''}
           <button class="btn btn-primary" id="save-content-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить контент'}</button>
         </div>
       </div>
-      <p class="content-html-hint">Во всех полях поддерживается HTML — можно вставлять <code>&lt;a href="..."&gt;ссылку&lt;/a&gt;</code>, <code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code> и другие теги.</p>
-      <div class="content-editor">${fields}</div>
+      <p class="content-html-hint">Поля с пометкой <span class="html-badge">HTML</span> понимают теги: <code>&lt;a href="..."&gt;ссылка&lt;/a&gt;</code>, <code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code>, <code>&lt;br&gt;</code>. Заголовки секций можно сворачивать.</p>
+      <nav class="content-nav">${nav}</nav>
+      ${body}
     </div>`;
 }
 
@@ -1397,8 +1480,24 @@ function attachShellHandlers() {
   // Content handlers
   document.getElementById('save-content-btn')?.addEventListener('click', saveContentAction);
   root.querySelectorAll('.content-field').forEach(el => {
-    el.addEventListener('input', e => updateContentField(e.target.dataset.key, e.target.value));
+    el.addEventListener('input', e => {
+      const { key, part } = e.target.dataset;
+      if (part != null && part !== '') {
+        const parts = String(state.content[key] ?? '').split('|');
+        parts[Number(part)] = e.target.value;
+        updateContentField(key, parts.join('|'));
+      } else {
+        updateContentField(key, e.target.value);
+      }
+    });
   });
+  root.querySelectorAll('.content-section__head[data-collapse]').forEach(h =>
+    h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
+  root.querySelectorAll('.content-nav__item[data-jump]').forEach(a =>
+    a.addEventListener('click', () => {
+      const sec = document.getElementById(a.dataset.jump);
+      if (sec) { sec.classList.remove('collapsed'); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }));
 
   // Map points handlers
   document.getElementById('add-point-btn')?.addEventListener('click', () => openMapPointForm());
