@@ -676,14 +676,27 @@ th {
   background: var(--brand-leaf-900);
 }
 
-/* В опроснике все кнопки синие */
+/* Опросник в зелёном цвете: переопределяем акцентные токены внутри модалки,
+   чтобы прогресс-бар, календарь, степперы, тоглы, фокус и кнопки стали зелёными,
+   не затрагивая синий акцент на остальном сайте. */
+#wizardModal {
+  --primary: var(--brand-leaf-700);
+  --primary-hover: var(--brand-leaf-900);
+  --brand-sky-900: var(--brand-leaf-900);
+  --brand-sky-700: var(--brand-leaf-700);
+  --brand-sky-500: var(--brand-leaf-500);
+  --brand-sky-200: var(--brand-leaf-200);
+  --brand-sky-100: var(--brand-leaf-100);
+  --brand-sky-050: var(--brand-leaf-050);
+}
+
 #wizardModal .btn-outline {
   color: var(--primary);
   border-color: var(--primary);
 }
 
 #wizardModal .btn-outline:hover {
-  background: var(--brand-sky-050);
+  background: var(--brand-leaf-050);
   border-color: var(--primary-hover);
   color: var(--primary-hover);
 }
@@ -3446,6 +3459,57 @@ textarea {
   border-radius: 8px;
   margin-bottom: 8px;
   display: block;
+  cursor: zoom-in;
+}
+
+/* Лайтбокс: увеличенный просмотр картинки из попапа карты */
+.iplan-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 15, 22, 0.88);
+  cursor: zoom-out;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.iplan-lightbox.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.iplan-lightbox__img {
+  max-width: min(92vw, 1100px);
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+.iplan-lightbox__close {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.iplan-lightbox__close:hover {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .iplan-popup__desc {

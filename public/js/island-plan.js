@@ -121,6 +121,36 @@
     return html;
   }
 
+  // Лайтбокс: один общий элемент на страницу, открываем по клику на картинку
+  // в попапе. Так одновременно увеличена всегда только одна картинка.
+  var lightbox = null;
+  function ensureLightbox() {
+    if (lightbox) return lightbox;
+    lightbox = document.createElement('div');
+    lightbox.className = 'iplan-lightbox';
+    lightbox.innerHTML =
+      '<button type="button" class="iplan-lightbox__close" aria-label="Закрыть">×</button>' +
+      '<img class="iplan-lightbox__img" src="" alt="">';
+    document.body.appendChild(lightbox);
+    lightbox.addEventListener('click', function (e) {
+      // Клик по фону или крестику закрывает; клик по самой картинке — нет.
+      if (e.target.classList.contains('iplan-lightbox__img')) return;
+      closeLightbox();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+    return lightbox;
+  }
+  function openLightbox(src) {
+    var lb = ensureLightbox();
+    lb.querySelector('.iplan-lightbox__img').src = src;
+    lb.classList.add('is-open');
+  }
+  function closeLightbox() {
+    if (lightbox) lightbox.classList.remove('is-open');
+  }
+
   function build(points) {
     var container = document.getElementById('island-map');
     if (!container || typeof L === 'undefined' || !points || !points.length) return;
@@ -140,10 +170,16 @@
     var markers = {};
     var group = L.featureGroup().addTo(map);
 
+    // Клик по картинке внутри попапа — открываем её в лайтбоксе крупнее.
+    container.addEventListener('click', function (e) {
+      var img = e.target.closest && e.target.closest('.iplan-popup__img');
+      if (img && img.src) openLightbox(img.src);
+    });
+
     points.forEach(function (item) {
       var marker = L.marker([item.lat, item.lng], { icon: makeIcon(item) })
         .addTo(group)
-        .bindPopup(popupHtml(item), { maxWidth: 260 });
+        .bindPopup(popupHtml(item), { maxWidth: 260, autoClose: true, closeOnClick: true });
       markers[item.id != null ? item.id : numOf(item)] = { marker: marker, item: item };
     });
 
