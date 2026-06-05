@@ -24,6 +24,8 @@
   if (!video) return;
 
   video.muted = true;
+  // Половинная громкость по умолчанию (в 2 раза тише), когда звук включат
+  video.volume = 0.5;
 
   const playBtn = document.querySelector(".js-hero-play");
   const muteBtn = document.querySelector(".js-hero-mute");
@@ -32,17 +34,23 @@
   const mutedIcon = document.querySelector(".js-hero-muted-icon");
   const unmutedIcon = document.querySelector(".js-hero-unmuted-icon");
 
+  // Иконки — это <svg> (SVGElement), у которых нет HTML-свойства .hidden,
+  // поэтому переключаем именно атрибут через toggleAttribute.
+  const setHidden = (el, hidden) => {
+    if (el) el.toggleAttribute("hidden", hidden);
+  };
+
   const syncPlay = () => {
     const playing = !video.paused;
     if (playBtn) playBtn.setAttribute("aria-label", playing ? "Пауза" : "Воспроизведение");
-    if (pauseIcon) pauseIcon.hidden = !playing;
-    if (playIcon) playIcon.hidden = playing;
+    setHidden(pauseIcon, !playing);
+    setHidden(playIcon, playing);
   };
 
   const syncMute = () => {
     if (muteBtn) muteBtn.setAttribute("aria-label", video.muted ? "Включить звук" : "Выключить звук");
-    if (mutedIcon) mutedIcon.hidden = !video.muted;
-    if (unmutedIcon) unmutedIcon.hidden = video.muted;
+    setHidden(mutedIcon, !video.muted);
+    setHidden(unmutedIcon, video.muted);
   };
 
   if (playBtn) {
