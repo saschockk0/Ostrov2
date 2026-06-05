@@ -149,10 +149,9 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
       return res.status(400).json({ error: "Слишком длинные данные." });
     }
 
+    // Стоимость считаем, когда есть данные, но это не обязательно:
+    // форма-консультация присылает только имя и телефон — заявку всё равно сохраняем.
     const quote = calculateQuote(payload.answers || {});
-    if (!quote.isValid) {
-      return res.status(400).json({ error: "Не удалось рассчитать стоимость." });
-    }
 
     const verify = await verifyTurnstile(payload.turnstileToken, req.ip);
     if (!verify.ok) {
