@@ -142,8 +142,8 @@ body {
 
 .eyebrow {
   margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-size: 14px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--brand-leaf-700);
   font-weight: 600;
@@ -550,9 +550,9 @@ body {
 
 .event-highlight .meta {
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   color: var(--brand-leaf-700);
 }
 
@@ -674,6 +674,18 @@ th {
 
 .btn-primary.js-open-wizard:hover {
   background: var(--brand-leaf-900);
+}
+
+/* В опроснике все кнопки синие */
+#wizardModal .btn-outline {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+#wizardModal .btn-outline:hover {
+  background: var(--brand-sky-050);
+  border-color: var(--primary-hover);
+  color: var(--primary-hover);
 }
 
 .btn-outline {
@@ -2770,9 +2782,13 @@ textarea {
 
 .faq-layout {
   display: grid;
-  grid-template-columns: 0.7fr 1.3fr;
-  gap: 80px;
+  grid-template-columns: 1fr;
+  gap: 28px;
   align-items: start;
+}
+
+.faq-layout > div:first-child {
+  margin-bottom: 4px;
 }
 
 /* ============================================================
