@@ -31,7 +31,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      connectSrc: ["'self'", "https://mc.yandex.ru", "https://mc.yandex.com"],
+      connectSrc: ["'self'", "https://mc.yandex.ru", "https://mc.yandex.com", "https://api.open-meteo.com"],
       frameSrc: ["https://challenges.cloudflare.com", "https://yandex.ru"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],

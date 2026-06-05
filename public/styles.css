@@ -2672,6 +2672,138 @@ textarea {
   align-items: start;
 }
 
+/* ============================================================
+   Виджет погоды (Видогощи)
+   ============================================================ */
+.weather-widget {
+  background: linear-gradient(160deg, var(--brand-sky-050), var(--paper));
+  border: 1px solid var(--ink-200);
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-2);
+}
+
+.weather-widget__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.weather-widget__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink-900);
+}
+
+.weather-widget__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.weather-widget__now {
+  flex: 0 0 auto;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brand-sky-700);
+  white-space: nowrap;
+}
+
+.weather-widget__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.weather-widget__loading {
+  grid-column: 1 / -1;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--ink-400);
+}
+
+.weather-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  padding: 16px 8px;
+  border: 1px solid var(--ink-100);
+  border-radius: 14px;
+  background: var(--paper);
+}
+
+.weather-day__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.weather-day__icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.weather-day__desc {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.weather-day__temp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--ink-900);
+}
+
+.weather-day__temp b {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.weather-day__min {
+  color: var(--ink-400);
+  font-size: 13px;
+}
+
+/* FAQ: вопросы + контакт под ними */
+.faq-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.faq-contact {
+  margin: 20px 0 0;
+  font-size: 15px;
+  color: var(--ink-500);
+  line-height: 1.65;
+}
+
+@media (max-width: 768px) {
+  .weather-widget__days {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 96px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}
+
 .friends-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

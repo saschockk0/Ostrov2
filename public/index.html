@@ -485,15 +485,27 @@
         </div>
       </section>
 
+      <section class="section container" id="weather">
+        <div class="weather-widget" id="weatherWidget" aria-label="Прогноз погоды в деревне Видогощи">
+          <div class="weather-widget__head">
+            <div>
+              <p class="weather-widget__title">Погода в Видогощах</p>
+              <p class="weather-widget__sub">Прогноз на неделю</p>
+            </div>
+            <span class="weather-widget__now" id="weatherNow"></span>
+          </div>
+          <ul class="weather-widget__days" id="weatherDays">
+            <li class="weather-widget__loading">Загружаем прогноз…</li>
+          </ul>
+        </div>
+      </section>
+
       <section class="section container" id="faq">
         <div class="faq-layout">
           <div>
             <p class="eyebrow">Часто спрашивают</p>
-            <h2 style="margin-top:16px">Что нужно знать новичкам</h2>
-            <p style="margin-top:16px;font-size:15px;color:var(--ink-500);line-height:1.65">
-              Не нашли ответ — напишите в VK или на&nbsp;<a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>, ответим в рабочие часы.
-            </p>
           </div>
+          <div class="faq-main">
           <div class="faq" id="faqList">
             <details open data-content-faq="faq_1">
               <summary>А это правда остров?</summary>
@@ -527,6 +539,10 @@
               <summary>Есть ли детский формат? Можно ли с маленькими детьми?</summary>
               <p>Да. Специальная цена для детей 7–14 лет: 1 500 ₽ в выходные и 700 ₽ в будни. Спасжилеты детских размеров есть. Малышей берём на воду только с родителями. Лагерь отлично подходит для семейного отдыха — тихая вода, нет посторонних машин, природа.</p>
             </details>
+          </div>
+          <p class="faq-contact">
+            Не нашли ответ — напишите в VK или на&nbsp;<a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>, ответим в рабочие часы.
+          </p>
           </div>
         </div>
       </section>
@@ -873,6 +889,7 @@
       <p class="lightbox__caption" id="lightboxCaption"></p>
     </div>
 
+    <script src="/js/weather.js" defer></script>
     <script src="/landing-ui.js" defer></script>
     <script src="/app.js" defer></script>
     <script src="/js/leaflet.js"></script>
