@@ -16,6 +16,54 @@
   }
 })();
 
+// Minimal hero video player: play/pause + mute only, muted by default
+(function () {
+  "use strict";
+
+  const video = document.querySelector(".js-hero-video");
+  if (!video) return;
+
+  video.muted = true;
+
+  const playBtn = document.querySelector(".js-hero-play");
+  const muteBtn = document.querySelector(".js-hero-mute");
+  const pauseIcon = document.querySelector(".js-hero-pause-icon");
+  const playIcon = document.querySelector(".js-hero-play-icon");
+  const mutedIcon = document.querySelector(".js-hero-muted-icon");
+  const unmutedIcon = document.querySelector(".js-hero-unmuted-icon");
+
+  const syncPlay = () => {
+    const playing = !video.paused;
+    if (playBtn) playBtn.setAttribute("aria-label", playing ? "Пауза" : "Воспроизведение");
+    if (pauseIcon) pauseIcon.hidden = !playing;
+    if (playIcon) playIcon.hidden = playing;
+  };
+
+  const syncMute = () => {
+    if (muteBtn) muteBtn.setAttribute("aria-label", video.muted ? "Включить звук" : "Выключить звук");
+    if (mutedIcon) mutedIcon.hidden = !video.muted;
+    if (unmutedIcon) unmutedIcon.hidden = video.muted;
+  };
+
+  if (playBtn) {
+    playBtn.addEventListener("click", () => {
+      if (video.paused) video.play().catch(() => {});
+      else video.pause();
+    });
+  }
+  if (muteBtn) {
+    muteBtn.addEventListener("click", () => {
+      video.muted = !video.muted;
+      syncMute();
+    });
+  }
+  video.addEventListener("play", syncPlay);
+  video.addEventListener("pause", syncPlay);
+
+  syncPlay();
+  syncMute();
+})();
+
 (function () {
   "use strict";
 

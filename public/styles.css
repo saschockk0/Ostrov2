@@ -238,6 +238,49 @@ body {
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 }
 
+.video-controls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.video-ctrl {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(14, 47, 70, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.video-ctrl:hover {
+  background: rgba(14, 47, 70, 0.78);
+}
+
+.video-ctrl:active {
+  transform: scale(0.94);
+}
+
+.video-ctrl__icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.video-ctrl__icon[hidden] {
+  display: none;
+}
+
 .section {
   padding: 56px 0;
 }

@@ -244,11 +244,21 @@
         </div>
         <div class="hero-media">
           <div class="video-card">
-            <video autoplay muted loop playsinline controls preload="metadata" poster="/assets/sunset.jpg">
-              <source src="/assets/hero-opt.mp4" type="video/mp4" />
+            <video class="hero-video js-hero-video" autoplay muted loop playsinline preload="metadata" poster="/assets/hero-ostrov.jpg">
+              <source src="/assets/hero-ostrov.mp4" type="video/mp4" />
               Ваш браузер не поддерживает видео.
             </video>
             <div class="video-badge">Видео с острова</div>
+            <div class="video-controls">
+              <button type="button" class="video-ctrl js-hero-play" aria-label="Пауза">
+                <svg class="video-ctrl__icon js-hero-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+                <svg class="video-ctrl__icon js-hero-play-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M8 5v14l11-7z"></path></svg>
+              </button>
+              <button type="button" class="video-ctrl js-hero-mute" aria-label="Включить звук">
+                <svg class="video-ctrl__icon js-hero-muted-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z"></path><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+                <svg class="video-ctrl__icon js-hero-unmuted-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M11 5 6 9H3v6h3l5 4V5z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8 8 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+              </button>
+            </div>
           </div>
         </div>
       </section>
