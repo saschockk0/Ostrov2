@@ -2912,6 +2912,12 @@ textarea {
   font-size: 13px;
 }
 
+.weather-day__wind {
+  font-size: 12px;
+  color: var(--ink-500);
+  margin-top: 2px;
+}
+
 /* FAQ: вопросы + контакт под ними */
 .faq-main {
   display: flex;

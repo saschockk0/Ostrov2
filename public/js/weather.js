@@ -10,7 +10,7 @@
     '?latitude=' + LAT +
     '&longitude=' + LON +
     '&current=temperature_2m,weather_code' +
-    '&daily=weather_code,temperature_2m_max,temperature_2m_min' +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max' +
     '&timezone=Europe%2FMoscow&forecast_days=7';
 
   // WMO weather codes -> emoji + краткое описание
@@ -60,6 +60,11 @@
     return (r > 0 ? '+' : '') + r + '°';
   }
 
+  // km/h -> м/с, округляем вверх (макс. порыв за день)
+  function fmtWind(kmh) {
+    return Math.ceil(kmh / 3.6) + ' м/с';
+  }
+
   function render(data) {
     var list = document.getElementById('weatherDays');
     var nowEl = document.getElementById('weatherNow');
@@ -76,6 +81,7 @@
       var date = new Date(d.time[i] + 'T00:00:00');
       var label = i === 0 ? 'Сегодня' : WEEKDAYS[date.getDay()];
       var meta = describe(d.weather_code[i]);
+      var wind = d.wind_speed_10m_max ? d.wind_speed_10m_max[i] : null;
       html +=
         '<li class="weather-day">' +
           '<span class="weather-day__name">' + label + '</span>' +
@@ -85,6 +91,9 @@
             '<b>' + fmtTemp(d.temperature_2m_max[i]) + '</b>' +
             '<span class="weather-day__min">' + fmtTemp(d.temperature_2m_min[i]) + '</span>' +
           '</span>' +
+          (wind !== null
+            ? '<span class="weather-day__wind" title="Макс. скорость ветра">💨 ' + fmtWind(wind) + '</span>'
+            : '') +
         '</li>';
     }
     list.innerHTML = html;
