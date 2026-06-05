@@ -125,7 +125,13 @@
     var container = document.getElementById('island-map');
     if (!container || typeof L === 'undefined' || !points || !points.length) return;
 
-    var map = L.map('island-map', { zoomControl: true, attributionControl: false });
+    // scrollWheelZoom отключён: иначе прокрутка колеса над картой меняет
+    // масштаб вместо листания страницы. Зум — кнопками +/− или двойным кликом.
+    var map = L.map('island-map', {
+      zoomControl: true,
+      attributionControl: false,
+      scrollWheelZoom: false,
+    });
 
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
       maxZoom: 20,
@@ -141,15 +147,18 @@
       markers[item.id != null ? item.id : numOf(item)] = { marker: marker, item: item };
     });
 
-    // Кадрируем только по точкам острова — причал (transfer) лежит далеко
-    // на материке и иначе «сплющил» бы весь лагерь в кучку.
+    // islandBounds (без причала) нужен ниже для клика по легенде «трансфер».
     var islandLatLngs = points
       .filter(function (p) { return catOf(p) !== 'transfer'; })
       .map(function (p) { return [p.lat, p.lng]; });
     var islandBounds = islandLatLngs.length ? L.latLngBounds(islandLatLngs) : null;
 
-    if (islandLatLngs.length > 1) {
-      map.fitBounds(islandBounds.pad(0.2));
+    // Стартовый вид зафиксирован на весь маршрут — лагерь на острове и
+    // причал на материке, как на согласованном кадре. Пользователь видит
+    // общее расположение; зум остаётся доступным кнопками и кликом по легенде.
+    var allLatLngs = points.map(function (p) { return [p.lat, p.lng]; });
+    if (allLatLngs.length > 1) {
+      map.fitBounds(L.latLngBounds(allLatLngs).pad(0.1));
     } else if (points.length) {
       map.setView([points[0].lat, points[0].lng], 16);
     }
