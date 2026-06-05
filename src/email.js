@@ -41,13 +41,18 @@ function buildMailText(appId, payload, quote) {
   lines.push(`- Заезд: ${payload.answers?.arrivalDate || "-"}`);
   lines.push(`- Выезд: ${payload.answers?.departureDate || "-"}`);
   lines.push("");
-  lines.push("Расчет:");
-  for (const row of quote?.breakdown || []) {
-    lines.push(`- ${row.label}: ${money(row.amount)} ₽`);
+  if (quote && quote.isValid) {
+    lines.push("Расчет:");
+    for (const row of quote.breakdown || []) {
+      lines.push(`- ${row.label}: ${money(row.amount)} ₽`);
+    }
+    lines.push(`Итого: ${money(quote.total)} ₽`);
+    lines.push("");
+    lines.push("Финальную стоимость подтверждает менеджер.");
+  } else {
+    lines.push("Расчет: контактная заявка — клиент не считал стоимость.");
+    lines.push("Свяжитесь с клиентом и подберите вариант.");
   }
-  lines.push(`Итого: ${money(quote?.total)} ₽`);
-  lines.push("");
-  lines.push("Финальную стоимость подтверждает менеджер.");
   return lines.join("\n");
 }
 

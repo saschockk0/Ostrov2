@@ -200,6 +200,7 @@ const formMessage = document.getElementById("formMessage");
 const nextBtn = document.getElementById("nextStep");
 const prevBtn = document.getElementById("prevStep");
 const submitBtn = document.getElementById("submitApp");
+const skipExtrasBtn = document.getElementById("skipExtras");
 const quickCalcForm = document.getElementById("quickCalc");
 const quickCalcResult = document.getElementById("quickCalcResult");
 const canopyBlock = document.getElementById("canopyBlock");
@@ -218,12 +219,10 @@ let turnstileWidgetId = null;
 let turnstileScriptLoaded = false;
 let calcLeadTurnstileToken = "";
 let calcLeadTurnstileWidgetId = null;
-let campingSuggested = false;
 
+// Opt-in tent suggestion: triggered only by the «Подобрать палатки» button,
+// never silently, so the live price never jumps without a user action.
 function suggestCamping() {
-  if (campingSuggested) return;
-  campingSuggested = true;
-
   const guests = Number(form.elements.adults.value || 2) + Number(form.elements.children.value || 0);
   if (guests < 1) return;
 
@@ -238,6 +237,7 @@ function suggestCamping() {
 
   const hint = document.getElementById("campingHint");
   if (hint) hint.textContent = `Подобрано для ${guests} чел. — можно изменить`;
+  refreshLiveQuote();
 }
 
 function money(value) {
@@ -272,25 +272,27 @@ function showStep(stepNum) {
   progressBar.style.width = `${progress}%`;
   stepLabel.textContent = `Шаг ${stepNum} из ${TOTAL_STEPS}`;
 
-  if (stepNum === 5) renderTurnstile();
+  // Turnstile + price review live on the final (contacts) step
+  if (stepNum === TOTAL_STEPS) {
+    renderTurnstile();
+    updateReview();
+  }
 
   prevBtn.classList.toggle("hidden", stepNum === 1);
   nextBtn.classList.toggle("hidden", stepNum === TOTAL_STEPS);
   submitBtn.classList.toggle("hidden", stepNum !== TOTAL_STEPS);
+  skipExtrasBtn.classList.toggle("hidden", stepNum !== 2);
 
-  if (stepNum === 3) suggestCamping();
-
-  // Show live quote bar from step 3 onwards (dates + guests available)
-  if (stepNum >= 3) {
-    refreshLiveQuote();
-  } else {
-    liveQuoteBar.classList.add("hidden");
-  }
+  // Live quote bar shows whenever dates are picked (refresh self-hides if not)
+  refreshLiveQuote();
 }
 
 async function refreshLiveQuote() {
   const answers = getAnswersFromForm(form);
-  if (!answers.arrivalDate || !answers.departureDate) return;
+  if (!answers.arrivalDate || !answers.departureDate) {
+    liveQuoteBar.classList.add("hidden");
+    return;
+  }
   try {
     const quote = await getQuote(answers);
     liveQuoteTotal.textContent = money(quote.total);
@@ -318,8 +320,8 @@ function openWizard() {
   form.classList.remove("hidden");
   wizardSuccess.classList.add("hidden");
   formMessage.textContent = "";
+  clearFieldErrors();
   wizardCal.reset();
-  campingSuggested = false;
   showStep(1);
   document.body.style.overflow = "hidden";
   ymGoal("wizard_open");
@@ -380,19 +382,28 @@ function validatePhone(value) {
   return digits.length >= 10;
 }
 
+function setFieldError(input, msg) {
+  if (input) input.classList.add("is-error");
+  formMessage.textContent = msg;
+  if (input && typeof input.focus === "function") input.focus();
+}
+
+function clearFieldErrors() {
+  form.querySelectorAll(".is-error").forEach((el) => el.classList.remove("is-error"));
+}
+
 function validateStep() {
   formMessage.textContent = "";
+  clearFieldErrors();
 
+  // Step 1: guests + dates
   if (currentStep === 1) {
     const adults = Number(form.elements.adults.value || 0);
     const children = Number(form.elements.children.value || 0);
     if (adults + children < 1) {
-      formMessage.textContent = "Укажите хотя бы одного гостя.";
+      setFieldError(form.elements.adults, "Укажите хотя бы одного гостя.");
       return false;
     }
-  }
-
-  if (currentStep === 2) {
     const arrival = form.elements.arrivalDate.value;
     const departure = form.elements.departureDate.value;
     if (!arrival || !departure) {
@@ -405,20 +416,20 @@ function validateStep() {
     }
   }
 
-  if (currentStep === 5) {
+  // Step 2 (equipment/services) is optional — no validation
+
+  // Final step: contacts + consent
+  if (currentStep === TOTAL_STEPS) {
     const name = form.elements.name.value.trim();
     const phone = form.elements.phone.value.trim();
     if (!name) {
-      formMessage.textContent = "Введите имя.";
+      setFieldError(form.elements.name, "Введите имя.");
       return false;
     }
     if (!phone || !validatePhone(phone)) {
-      formMessage.textContent = "Введите корректный номер телефона (не менее 10 цифр).";
+      setFieldError(form.elements.phone, "Введите корректный номер телефона (не менее 10 цифр).");
       return false;
     }
-  }
-
-  if (currentStep === 6) {
     if (!form.elements.privacyConsent.checked) {
       formMessage.textContent = "Необходимо согласие с политикой обработки данных.";
       return false;
@@ -430,17 +441,26 @@ function validateStep() {
 
 async function updateReview() {
   const answers = getAnswersFromForm(form);
-  const quote = await getQuote(answers);
-  const lines = quote.breakdown
-    .map((row) => `<li>${row.label}: <strong>${money(row.amount)}</strong></li>`)
-    .join("");
-  reviewBlock.innerHTML = `
-    <p>Ночей: <strong>${quote.nights}</strong>, гостей: <strong>${quote.guests}</strong></p>
-    <ul>${lines}</ul>
-    <p><strong>Итого: ${money(quote.total)}</strong></p>
-    <small>${quote.disclaimer}</small>
-  `;
-  return quote;
+  if (!answers.arrivalDate || !answers.departureDate) {
+    reviewBlock.innerHTML = `<p>Даты не выбраны — менеджер рассчитает стоимость и свяжется с вами.</p>`;
+    return null;
+  }
+  try {
+    const quote = await getQuote(answers);
+    const lines = quote.breakdown
+      .map((row) => `<li>${row.label}: <strong>${money(row.amount)}</strong></li>`)
+      .join("");
+    reviewBlock.innerHTML = `
+      <p>Ночей: <strong>${quote.nights}</strong>, гостей: <strong>${quote.guests}</strong></p>
+      <ul>${lines}</ul>
+      <p><strong>Итого: ${money(quote.total)}</strong></p>
+      <small>${quote.disclaimer}</small>
+    `;
+    return quote;
+  } catch {
+    reviewBlock.innerHTML = `<p>Стоимость уточнит менеджер.</p>`;
+    return null;
+  }
 }
 
 // Wrap every number input inside a container with custom +/− stepper
@@ -490,6 +510,26 @@ function initSteppers(container) {
 initSteppers(form);
 initSteppers(quickCalcForm);
 
+// ── Phone input mask: +7 (___) ___-__-__ ─────────────────────────
+function applyPhoneMask(input) {
+  if (!input) return;
+  input.addEventListener("input", () => {
+    let digits = input.value.replace(/\D/g, "");
+    if (digits.startsWith("8")) digits = "7" + digits.slice(1);
+    if (digits && !digits.startsWith("7")) digits = "7" + digits;
+    digits = digits.slice(0, 11);
+    const rest = digits.slice(1);
+    let out = digits ? "+7" : "";
+    if (rest.length > 0) out += " (" + rest.slice(0, 3);
+    if (rest.length >= 3) out += ") " + rest.slice(3, 6);
+    if (rest.length >= 6) out += "-" + rest.slice(6, 8);
+    if (rest.length >= 8) out += "-" + rest.slice(8, 10);
+    input.value = out;
+  });
+}
+
+applyPhoneMask(form.elements.phone);
+
 // Init wizard calendar (step 2)
 const wizardCal = new RangeCalendar(
   document.getElementById("wizardCal"),
@@ -535,26 +575,26 @@ prevBtn.addEventListener("click", () => {
   if (currentStep > 1) showStep(currentStep - 1);
 });
 
-nextBtn.addEventListener("click", async () => {
+nextBtn.addEventListener("click", () => {
   if (!validateStep()) return;
-
-  // Step 3: toggle camping block on own-gear checkbox
-  if (currentStep === 3) {
-    const needCanopy = form.elements.needCanopy.checked;
-    canopyBlock.classList.toggle("hidden", !needCanopy);
-  }
-
-  // Step 5 (contacts): build review on next step
-  if (currentStep === 5) {
-    try {
-      await updateReview();
-    } catch (error) {
-      formMessage.textContent = error.message;
-      return;
-    }
-  }
-
   if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
+});
+
+// Step 2 «Пропустить» → straight to contacts (with dates already chosen on step 1)
+skipExtrasBtn.addEventListener("click", () => showStep(TOTAL_STEPS));
+
+// Short track from step 1 → contacts without requiring dates (contact-only lead)
+document.querySelectorAll(".js-skip-to-contacts").forEach((el) =>
+  el.addEventListener("click", () => showStep(TOTAL_STEPS))
+);
+
+// Opt-in tent suggestion button (step 2)
+const suggestTentsBtn = document.getElementById("suggestTentsBtn");
+if (suggestTentsBtn) suggestTentsBtn.addEventListener("click", suggestCamping);
+
+// Clear inline error highlight as the user corrects the field
+form.addEventListener("input", (e) => {
+  if (e.target && e.target.classList) e.target.classList.remove("is-error");
 });
 
 // Toggle canopy block when checkbox changes (on step 3)
@@ -571,8 +611,10 @@ form.addEventListener("submit", async (event) => {
 
   try {
     const answers = getAnswersFromForm(form);
+    const hasDates = Boolean(answers.arrivalDate && answers.departureDate);
     const payload = {
       website: form.elements.website.value,
+      clientType: hasDates ? "full" : "contact",
       name: form.elements.name.value.trim(),
       phone: form.elements.phone.value.trim(),
       messenger: form.elements.messenger.value.trim(),
@@ -1038,6 +1080,7 @@ fetch("/api/config")
 // --- Lead form after quick calculator ---
 const calcLeadForm = document.getElementById("calcLeadForm");
 const calcLeadMsg  = document.getElementById("calcLeadMsg");
+applyPhoneMask(calcLeadForm.elements.phone);
 
 calcLeadForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -1098,6 +1141,7 @@ calcLeadForm.addEventListener("submit", async (e) => {
   const popupMsg     = document.getElementById("leadPopupMsg");
   const faqSection   = document.getElementById("faq");
   if (!popup || !faqSection) return;
+  if (popupForm) applyPhoneMask(popupForm.elements.phone);
 
   let calcDone        = false;   // пользователь посчитал цену
   let faqTimer        = null;    // таймер 30 сек

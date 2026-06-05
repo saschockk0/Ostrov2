@@ -58,10 +58,13 @@ export async function POST(request) {
       return Response.json({ error: "Введите имя и телефон." }, { status: 400 });
     }
 
-    const quote = calculateQuote(payload.answers || {});
-    if (!quote.isValid) {
+    // Contact-only leads (no dates / short track) are allowed: store without a quote.
+    const isContactOnly = payload.clientType === "contact";
+    const rawQuote = calculateQuote(payload.answers || {});
+    if (!rawQuote.isValid && !isContactOnly) {
       return Response.json({ error: "Не удалось рассчитать стоимость." }, { status: 400 });
     }
+    const quote = rawQuote.isValid ? rawQuote : null;
 
     const verify = await verifyTurnstile(payload.turnstileToken, ip);
     if (!verify.ok) {
