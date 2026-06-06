@@ -195,3 +195,84 @@
     }
   }
 })();
+
+/* ─── Sticky mobile CTA ──────────────────────────────────────────
+   Показываем плавающую кнопку «Оставить заявку» после прокрутки hero.
+   Прячем, когда виден калькулятор или футер (там есть свой CTA),
+   а также когда открыт опросник. */
+(function () {
+  const cta = document.getElementById("mobileCta");
+  if (!cta || !("IntersectionObserver" in window)) return;
+
+  const hero = document.querySelector(".hero");
+  const calc = document.getElementById("calculator");
+  const footer = document.querySelector(".footer");
+  const modal = document.getElementById("wizardModal");
+
+  let pastHero = false;
+  let overCalc = false;
+  let overFooter = false;
+
+  function update() {
+    const modalOpen = modal && !modal.classList.contains("hidden");
+    cta.classList.toggle(
+      "is-visible",
+      pastHero && !overCalc && !overFooter && !modalOpen
+    );
+  }
+
+  if (hero) {
+    new IntersectionObserver(
+      ([e]) => {
+        pastHero = !e.isIntersecting;
+        update();
+      },
+      { rootMargin: "-45% 0px 0px 0px" }
+    ).observe(hero);
+  } else {
+    pastHero = true;
+  }
+
+  if (calc) {
+    new IntersectionObserver(
+      ([e]) => {
+        overCalc = e.isIntersecting;
+        update();
+      },
+      { threshold: 0.12 }
+    ).observe(calc);
+  }
+
+  if (footer) {
+    new IntersectionObserver(
+      ([e]) => {
+        overFooter = e.isIntersecting;
+        update();
+      },
+      { threshold: 0.05 }
+    ).observe(footer);
+  }
+
+  if (modal) {
+    new MutationObserver(update).observe(modal, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  }
+
+  update();
+})();
+
+/* ─── prefers-reduced-motion: не автозапускаем hero-видео ──────────
+   Пользователь с непереносимостью движения видит постер; включить
+   видео можно вручную кнопкой play. */
+(function () {
+  if (!window.matchMedia) return;
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  document.querySelectorAll("video.js-hero-video, .hero-video").forEach((v) => {
+    try {
+      v.removeAttribute("autoplay");
+      v.pause();
+    } catch (e) {}
+  });
+})();

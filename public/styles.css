@@ -74,6 +74,17 @@ body {
   padding: 0;
 }
 
+/* Отступ при переходе по якорям, чтобы sticky-хедер не перекрывал заголовок секции */
+html {
+  scroll-padding-top: 96px;
+}
+
+@media (max-width: 768px) {
+  html {
+    scroll-padding-top: 72px;
+  }
+}
+
 body {
   font-family: "Montserrat", "Segoe UI", sans-serif;
   color: var(--ink-900);
@@ -928,6 +939,18 @@ textarea {
 @media (max-width: 640px) {
   .calc-v2 { grid-template-columns: 1fr; }
   .calc-v2--card { padding: 16px; }
+
+  /* Разрешаем колонкам и календарю сжиматься до доступной ширины
+     (иначе min-width:auto у grid/flex-элементов даёт горизонтальное
+     переполнение на узких экранах ~360px) */
+  .calc-v2__left,
+  .calc-v2__right,
+  .range-cal,
+  .rc-grid,
+  .rc-weekdays,
+  .calc-v2__left .stepper {
+    min-width: 0;
+  }
 }
 
 .calc-v2__left {
@@ -1470,8 +1493,16 @@ textarea {
 }
 
 .service-row .stepper {
-  width: auto;
+  width: 132px;
   flex-shrink: 0;
+}
+
+/* Не даём дефолтной ширине number-инпута распирать степпер —
+   инпут гибко заполняет фиксированную ширину степпера */
+.service-row .stepper input[type="number"] {
+  width: 44px;
+  min-width: 0;
+  flex: 1 1 44px;
 }
 
 /* ── Stepper: custom +/− number input ───────────────────────── */
@@ -1966,15 +1997,18 @@ textarea {
   position: absolute;
   left: 38%;
   top: 50%;
+  /* центрируем по горизонтали; точку сажаем ровно на полосу */
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  z-index: 2;
+  z-index: 3;
 }
 
+/* Метку выносим из потока вверх, чтобы точка осталась на полосе,
+   а не съезжала в строку с названиями месяцев */
 .timeline-track__now-label {
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 600;
@@ -1985,6 +2019,7 @@ textarea {
 }
 
 .timeline-track__now-dot {
+  display: block;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -2878,6 +2913,20 @@ textarea {
     font-size: 8px;
   }
 
+  /* На узких экранах текстовую метку «сейчас» скрываем (полоса + точка
+     уже показывают текущий момент), а точку слегка уменьшаем и поднимаем,
+     чтобы она не наезжала на название месяца */
+  .timeline-track__now-label {
+    display: none;
+  }
+  .timeline-track__now-dot {
+    width: 12px;
+    height: 12px;
+  }
+  .timeline-track__now {
+    transform: translate(-50%, -70%);
+  }
+
   .event-featured__footer {
     flex-direction: column;
     align-items: flex-start;
@@ -2929,8 +2978,8 @@ textarea {
   left: 0;
   width: 100%;
   text-align: center;
-  font-size: 10px;
-  color: var(--ink-300);
+  font-size: 11px;
+  color: var(--ink-500);
   text-decoration: none;
   padding: 0 16px;
   overflow: hidden;
@@ -2941,7 +2990,7 @@ textarea {
 }
 
 .yandex-reviews-link:hover {
-  color: var(--ink-500);
+  color: var(--ink-700);
 }
 
 /* ============================================================
@@ -3105,6 +3154,11 @@ textarea {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    /* Подсказка о возможности скролла: правый край мягко затухает,
+       только когда контент действительно выходит за границу */
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    padding-right: 4px;
   }
 }
 
@@ -3240,13 +3294,6 @@ textarea {
 }
 
 @media (max-width: 1080px) {
-  .header-inner {
-    grid-template-columns: 1fr;
-    justify-items: start;
-    gap: 10px;
-    padding: 12px 0;
-  }
-
   .hero-split,
   .events-wrap,
   .events-grid,
@@ -3295,10 +3342,6 @@ textarea {
 
   .testimonials-stat__num {
     font-size: 52px;
-  }
-
-  .main-nav {
-    justify-content: flex-start;
   }
 
   .video-card video {
@@ -3398,7 +3441,10 @@ textarea {
   display: block;
 }
 
-@media (max-width: 768px) {
+/* Компактный бургер-хедер: включаем уже на планшетах (≤1080px),
+   чтобы убрать «высокий» трёхрядный хедер в промежуточном диапазоне.
+   Номер телефона на планшетах остаётся текстом — иконка-only только ≤768. */
+@media (max-width: 1080px) {
   .header-inner {
     grid-template-columns: auto 1fr auto !important;
     min-height: 64px !important;
@@ -3414,22 +3460,10 @@ textarea {
     display: flex;
   }
 
-  .phone-link {
-    font-size: 0 !important;
-    width: 44px;
-    height: 44px;
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--ink-200);
-    border-radius: 8px;
-    flex-shrink: 0;
-  }
-
-  .phone-link::before {
-    content: '\260E';
-    font-size: 20px;
-    color: var(--primary);
+  /* nav уходит в fixed-drawer и освобождает центральную колонку —
+     прижимаем действия (телефон/CTA/бургер) к правому краю */
+  .header-actions {
+    margin-left: auto;
   }
 
   .main-nav {
@@ -3467,6 +3501,27 @@ textarea {
   .header-actions .btn-primary {
     font-size: 13px;
     padding: 10px 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* На телефонах телефон сворачивается в иконку ради места */
+  .phone-link {
+    font-size: 0 !important;
+    width: 44px;
+    height: 44px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ink-200);
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .phone-link::before {
+    content: '\260E';
+    font-size: 20px;
+    color: var(--primary);
   }
 
   .section {
@@ -3702,6 +3757,13 @@ textarea {
     height: 340px;
   }
 
+  /* Крупнее кнопки зума карты для тача */
+  .island-plan__map .leaflet-control-zoom.leaflet-bar a {
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+  }
+
   .island-plan__sidebar {
     border-left: none;
     border-top: 1px solid var(--ink-200);
@@ -3709,5 +3771,215 @@ textarea {
 
   .island-plan__legend {
     max-height: 280px;
+  }
+}
+
+/* ============================================================
+   Sticky mobile CTA bar (≤768px)
+   ============================================================ */
+.mobile-cta {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-cta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    padding: 10px 16px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--ink-200);
+    box-shadow: 0 -6px 24px rgba(15, 27, 36, 0.10);
+    transform: translateY(130%);
+    transition: transform 0.3s ease;
+  }
+
+  .mobile-cta.is-visible {
+    transform: translateY(0);
+  }
+
+  .mobile-cta__btn {
+    flex: 1;
+    min-height: 48px;
+    background: var(--brand-leaf-700);
+  }
+
+  .mobile-cta__btn:hover {
+    background: var(--brand-leaf-900);
+  }
+
+  .mobile-cta__phone {
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ink-200);
+    border-radius: 12px;
+    color: var(--primary);
+    background: #fff;
+    text-decoration: none;
+  }
+}
+
+/* ============================================================
+   Доп. мобильные доработки: touch-таргеты и читаемость
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Крупнее зона тапа по дням календаря */
+  .rc-day {
+    padding: 14px 0;
+  }
+
+  /* Синий блок прайса: умереннее вертикальные отступы на мобиле */
+  .section.section--sky {
+    padding: 32px 20px;
+  }
+
+  /* Читаемее мелкий текст прогноза в hero */
+  .hero-weather__name,
+  .hero-weather__wind {
+    font-size: 12px;
+  }
+
+  /* Достаточная зона тапа у ссылки-пропуска в опроснике */
+  .wizard-skip-link {
+    min-height: 44px;
+  }
+
+  /* FAQ: компактнее заголовки вопросов на узких экранах */
+  .faq details summary {
+    font-size: 17px;
+    padding: 18px 18px;
+    gap: 12px;
+  }
+
+  .faq details summary::after {
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+  }
+
+  .faq details p {
+    padding: 0 18px 20px;
+  }
+}
+
+/* ============================================================
+   Опросник/модалка: комфортные touch-таргеты на телефонах
+   (ключевой путь заявки — все контролы ≥44px)
+   ============================================================ */
+@media (max-width: 768px) {
+  .modal__close {
+    width: 44px;
+    height: 44px;
+    right: 8px;
+    top: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  /* Степперы количества: выше и шире для пальца */
+  .stepper__btn {
+    width: 44px;
+  }
+
+  .stepper input[type="number"] {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-size: 16px;
+  }
+
+  /* Стрелки переключения месяца в календаре */
+  .rc-nav {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Чуть просторнее диалог по краям на узких экранах */
+  .modal {
+    padding: 14px;
+  }
+}
+
+/* ============================================================
+   Поля ввода на телефонах: 16px против iOS-зума + удобная высота
+   ============================================================ */
+@media (max-width: 768px) {
+  /* iOS Safari зумит страницу при фокусе на инпут с font-size < 16px */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Комфортная высота полей ввода (текст/телефон/почта/дата/список) */
+  input[type="text"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="date"],
+  input[type="search"],
+  select {
+    min-height: 44px;
+  }
+
+  /* Крупнее чекбокс согласия — легче попасть пальцем */
+  .privacy-consent input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Lead-попап: имя и телефон в одну колонку
+     (поле телефона получает полную ширину, плейсхолдер не режется) */
+  .calc-lead--popup .calc-lead__form {
+    grid-template-columns: 1fr;
+  }
+
+  /* Hero: поднимаем видео-карточку выше текста на телефонах —
+     постер виден сразу и ведёт hero визуалом (ключевая фишка клуба) */
+  .hero-split {
+    gap: 20px;
+  }
+
+  .hero-media {
+    order: -1;
+  }
+
+  .hero {
+    padding-top: 24px;
+  }
+}
+
+/* ============================================================
+   prefers-reduced-motion: гасим бесконечный тикер, бегущие
+   и тяжёлые анимации для пользователей с непереносимостью движения
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  /* Бесконечная бегущая строка — полностью останавливаем */
+  .hero-ticker__inner {
+    animation: none !important;
   }
 }
