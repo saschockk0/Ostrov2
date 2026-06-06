@@ -854,11 +854,19 @@ function renderFleetCard(item) {
   const photos = fleetPhotos(item);
   const hasImage = photos.length > 0;
   const clickable = photos.length > 0;
+  const multi = photos.length > 1;
+  const imgs = hasImage
+    ? photos.map((p, i) => `<img src="${escHtml(p.url)}" alt="${escHtml(item.name)}${i === 0 ? '' : ' — фото ' + (i + 1)}" loading="${i === 0 ? 'eager' : 'lazy'}" class="va-fleet-card__img${i === 0 ? ' is-active' : ''}" data-photo-index="${i}">`).join('')
+    : '';
+  const dots = multi
+    ? `<div class="va-fleet-card__dots" role="tablist" aria-label="Фото">` +
+        photos.map((_, i) => `<button type="button" class="va-fleet-card__dot${i === 0 ? ' is-active' : ''}" data-dot-index="${i}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}" aria-label="Фото ${i + 1} из ${photos.length}"></button>`).join('') +
+      `</div>`
+    : '';
   return `<article class="va-fleet-card${clickable ? ' is-clickable' : ''}"${clickable ? ' role="button" tabindex="0"' : ''}>
     <div class="va-fleet-card__media${hasImage ? '' : ' va-fleet-card__media--dark'}">
-      ${hasImage ? `<img src="${escHtml(photos[0].url)}" alt="${escHtml(item.name)}" loading="lazy">` : ''}
-      ${photos.length > 1 ? `<span class="va-fleet-card__photos">${photos.length} фото</span>` : ''}
-      ${item.count ? `<span class="va-fleet-card__count">${escHtml(item.count)}</span>` : ''}
+      ${imgs}
+      ${dots}
     </div>
     <div class="va-fleet-card__body">
       <div class="va-fleet-card__name">${escHtml(item.name)}</div>
@@ -872,6 +880,35 @@ function renderFleetCard(item) {
       ${item.note ? `<div class="va-fleet-card__note">${escHtml(item.note)}</div>` : ''}
     </div>
   </article>`;
+}
+
+function renderFleetSkeleton() {
+  const grid = document.getElementById('fleetGrid');
+  if (!grid) return;
+  const card = '<div class="va-fleet-card va-fleet-card--skeleton" aria-hidden="true">' +
+    '<div class="va-fleet-card__media va-skeleton"></div>' +
+    '<div class="va-fleet-card__body">' +
+      '<div class="va-skeleton va-skeleton--line va-skeleton--w70"></div>' +
+      '<div class="va-skeleton va-skeleton--line va-skeleton--w40"></div>' +
+      '<div class="va-fleet-card__divider"></div>' +
+      '<div class="va-fleet-card__specs">' +
+        '<div><div class="va-skeleton va-skeleton--line va-skeleton--w30"></div><div class="va-skeleton va-skeleton--line va-skeleton--w50"></div></div>' +
+        '<div><div class="va-skeleton va-skeleton--line va-skeleton--w30"></div><div class="va-skeleton va-skeleton--line va-skeleton--w50"></div></div>' +
+      '</div>' +
+    '</div></div>';
+  grid.innerHTML = card.repeat(3);
+}
+
+function renderFleetError() {
+  const grid = document.getElementById('fleetGrid');
+  if (!grid) return;
+  grid.innerHTML =
+    '<div class="va-fleet-empty">' +
+      '<p>Не удалось загрузить флот. Проверьте соединение и попробуйте снова.</p>' +
+      '<button type="button" class="va-fleet-empty__retry" id="fleetRetryBtn">Повторить</button>' +
+    '</div>';
+  const btn = document.getElementById('fleetRetryBtn');
+  if (btn) btn.addEventListener('click', loadFleet);
 }
 
 function renderFleetSection(items) {
@@ -891,27 +928,50 @@ function renderFleetSection(items) {
 
   grid.innerHTML = items.length
     ? items.map(renderFleetCard).join('')
-    : '<p style="text-align:center;color:#6b7280;padding:32px">Информация о флоте скоро появится</p>';
+    : '<div class="va-fleet-empty"><p>Информация о флоте скоро появится</p></div>';
 
   // Make cards with photos open the shared lightbox (honest affordance for the hover lift)
-  const cards = grid.querySelectorAll('.va-fleet-card');
+  const cards = grid.querySelectorAll('.va-fleet-card:not(.va-fleet-card--skeleton)');
   items.forEach((item, i) => {
     const card = cards[i];
     if (!card) return;
     const photos = fleetPhotos(item);
     if (!photos.length) return;
-    const open = () => Lightbox.open(photos, 0);
+    let activeIndex = 0;
+    const imgs = card.querySelectorAll('.va-fleet-card__img');
+    const dots = card.querySelectorAll('.va-fleet-card__dot');
+    const setActive = (idx) => {
+      if (idx < 0 || idx >= photos.length || idx === activeIndex) return;
+      imgs[activeIndex] && imgs[activeIndex].classList.remove('is-active');
+      dots[activeIndex] && dots[activeIndex].classList.remove('is-active');
+      dots[activeIndex] && dots[activeIndex].setAttribute('aria-selected', 'false');
+      activeIndex = idx;
+      imgs[activeIndex] && imgs[activeIndex].classList.add('is-active');
+      dots[activeIndex] && dots[activeIndex].classList.add('is-active');
+      dots[activeIndex] && dots[activeIndex].setAttribute('aria-selected', 'true');
+    };
+    dots.forEach((dot, di) => {
+      dot.addEventListener('click', (e) => { e.stopPropagation(); setActive(di); });
+    });
+    const open = () => Lightbox.open(photos, activeIndex);
     card.addEventListener('click', open);
     card.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); setActive(activeIndex + 1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); setActive(activeIndex - 1); }
     });
   });
 }
 
-fetch('/api/fleet')
-  .then(r => r.json())
-  .then(items => renderFleetSection(Array.isArray(items) ? items : []))
-  .catch(() => renderFleetSection([]));
+function loadFleet() {
+  renderFleetSkeleton();
+  fetch('/api/fleet')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(items => renderFleetSection(Array.isArray(items) ? items : []))
+    .catch(() => renderFleetError());
+}
+
+loadFleet();
 
 // Content: dynamic text substitution from /api/content
 function applyContent(content) {
