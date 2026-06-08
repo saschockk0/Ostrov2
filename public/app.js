@@ -566,8 +566,10 @@ modal.addEventListener("click", (e) => {
   if (e.target === modal) closeWizard();
 });
 
-// Close on ESC
+// Close on ESC (но не если поверх открыта модалка деталей шатра — её закроет свой хендлер)
 document.addEventListener("keydown", (e) => {
+  const tentModal = document.getElementById("tentModal");
+  if (tentModal && tentModal.classList.contains("is-open")) return;
   if (e.key === "Escape" && !modal.classList.contains("hidden")) closeWizard();
 });
 
@@ -972,6 +974,123 @@ function loadFleet() {
 }
 
 loadFleet();
+
+// ── Canopy (tent) cards in the wizard ──────────────────────────────────────
+// Заменяют прежний <select name="canopyType">. Клик по карточке = выбор (пишем
+// price_key в скрытый input canopyType), кнопка «Подробнее» = модалка с деталями.
+// Фоллбэк-список держит калькулятор рабочим, если /api/tents недоступен.
+const CANOPY_FALLBACK = [
+  { price_key: 'canopySmall',   name: 'Кухня малая',           capacity: 'до 8 чел.',  note: 'от 600 ₽/сутки',   length_m: '', image_url: '', images: '' },
+  { price_key: 'canopyMedium',  name: 'Кухня средняя',         capacity: '',           note: 'от 1 600 ₽/сутки', length_m: '', image_url: '', images: '' },
+  { price_key: 'canopyLarge',   name: 'Кухня большая',         capacity: '20–25 чел.', note: 'от 3 000 ₽/сутки', length_m: '', image_url: '', images: '' },
+  { price_key: 'canopyEverest', name: 'Кухня-шатёр «Эверест»', capacity: '',           note: 'от 4 000 ₽/сутки', length_m: '', image_url: '', images: '' },
+];
+
+let canopyItems = [];
+
+function tentPhotos(item) {
+  const urls = [];
+  if (item.image_url) urls.push(item.image_url);
+  if (item.images) String(item.images).split('\n').map(s => s.trim()).filter(Boolean).forEach(u => urls.push(u));
+  return urls.map(url => ({ url, caption: item.name }));
+}
+
+function renderCanopyCards(items) {
+  const wrap = document.getElementById('canopyCards');
+  const hidden = form.elements.canopyType;
+  if (!wrap || !hidden) return;
+  canopyItems = items;
+  let selectedKey = hidden.value;
+  if (!items.some(it => it.price_key === selectedKey)) {
+    selectedKey = items[0] ? items[0].price_key : '';
+    hidden.value = selectedKey;
+  }
+
+  wrap.innerHTML = items.map((item, i) => {
+    const isSel = item.price_key === selectedKey;
+    const hasPhotos = tentPhotos(item).length > 0;
+    const meta = [item.capacity, item.note].filter(Boolean).join(' · ');
+    return `<div class="canopy-card${isSel ? ' is-selected' : ''}" role="button" tabindex="0" data-price-key="${escHtml(item.price_key)}" aria-pressed="${isSel ? 'true' : 'false'}">
+      <span class="canopy-card__check" aria-hidden="true"></span>
+      <span class="canopy-card__name">${escHtml(item.name)}</span>
+      ${meta ? `<span class="canopy-card__meta">${escHtml(meta)}</span>` : ''}
+      <button type="button" class="canopy-card__more" data-more="${i}">Подробнее${hasPhotos ? ' · фото' : ''}</button>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.canopy-card').forEach((card) => {
+    const select = () => {
+      hidden.value = card.dataset.priceKey;
+      wrap.querySelectorAll('.canopy-card').forEach((c) => {
+        const on = c === card;
+        c.classList.toggle('is-selected', on);
+        c.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      refreshLiveQuote();
+    };
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.canopy-card__more')) return;
+      select();
+    });
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); }
+    });
+  });
+  wrap.querySelectorAll('.canopy-card__more').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openTentDetails(canopyItems[Number(btn.dataset.more)]);
+    });
+  });
+}
+
+function openTentDetails(item) {
+  if (!item) return;
+  const tentModal = document.getElementById('tentModal');
+  const body = document.getElementById('tentModalBody');
+  if (!tentModal || !body) return;
+  const photos = tentPhotos(item);
+  const gallery = photos.length
+    ? `<div class="tent-modal__gallery">${photos.map((p, i) => `<img src="${escHtml(p.url)}" alt="${escHtml(item.name)}${i === 0 ? '' : ' — фото ' + (i + 1)}" loading="lazy" data-photo="${i}">`).join('')}</div>`
+    : `<div class="tent-modal__placeholder"><span class="tent-modal__placeholder-icon">⛺</span><span>Фотографии скоро появятся</span></div>`;
+  const specs = [['Вместимость', item.capacity], ['Длина', item.length_m]].filter(([, v]) => v);
+  body.innerHTML =
+    `<h3 class="tent-modal__title">${escHtml(item.name)}</h3>` +
+    gallery +
+    (specs.length ? `<dl class="tent-modal__specs">${specs.map(([k, v]) => `<div><dt>${escHtml(k)}</dt><dd>${escHtml(v)}</dd></div>`).join('')}</dl>` : '') +
+    (item.note ? `<p class="tent-modal__note">${escHtml(item.note)}</p>` : '');
+  body.querySelectorAll('.tent-modal__gallery img').forEach((img) => {
+    img.addEventListener('click', () => Lightbox.open(photos, Number(img.dataset.photo)));
+  });
+  tentModal.classList.add('is-open');
+  tentModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeTentDetails() {
+  const tentModal = document.getElementById('tentModal');
+  if (!tentModal) return;
+  tentModal.classList.remove('is-open');
+  tentModal.setAttribute('aria-hidden', 'true');
+}
+
+(function initTentModal() {
+  const tentModal = document.getElementById('tentModal');
+  const closeBtn = document.getElementById('tentModalClose');
+  if (closeBtn) closeBtn.addEventListener('click', closeTentDetails);
+  if (tentModal) tentModal.addEventListener('click', (e) => { if (e.target === tentModal) closeTentDetails(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && tentModal && tentModal.classList.contains('is-open')) closeTentDetails();
+  });
+})();
+
+function loadCanopyCards() {
+  fetch('/api/tents')
+    .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then((items) => renderCanopyCards(Array.isArray(items) && items.length ? items : CANOPY_FALLBACK))
+    .catch(() => renderCanopyCards(CANOPY_FALLBACK));
+}
+
+loadCanopyCards();
 
 // Content: dynamic text substitution from /api/content
 function applyContent(content) {

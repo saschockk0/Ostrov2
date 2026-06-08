@@ -133,7 +133,46 @@ function initDb() {
       created_at VARCHAR(30) NOT NULL
     )
   `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tents (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      name VARCHAR(255) NOT NULL,
+      price_key VARCHAR(50) NOT NULL DEFAULT '',
+      image_url VARCHAR(500),
+      images TEXT,
+      length_m VARCHAR(50),
+      capacity VARCHAR(50),
+      note TEXT,
+      active INT NOT NULL DEFAULT 1,
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at VARCHAR(30) NOT NULL
+    )
+  `);
+  // Seed the four canopy options once (keep the calculator working out of the box)
+  seedTents(db);
   return db;
+}
+
+// Default tent rows mapped to the fixed pricing keys in data/prices.json.
+// Inserted only when the table is empty so admin edits are never overwritten.
+function seedTents(db) {
+  const defaults = [
+    { name: "Кухня малая",        price_key: "canopySmall",   capacity: "до 8 чел.",    note: "от 600 ₽/сутки",   sort_order: 1 },
+    { name: "Кухня средняя",      price_key: "canopyMedium",  capacity: "",             note: "от 1 600 ₽/сутки", sort_order: 2 },
+    { name: "Кухня большая",      price_key: "canopyLarge",   capacity: "20–25 чел.",   note: "от 3 000 ₽/сутки", sort_order: 3 },
+    { name: "Кухня-шатёр «Эверест»", price_key: "canopyEverest", capacity: "",          note: "от 4 000 ₽/сутки", sort_order: 4 },
+  ];
+  db.get("SELECT COUNT(*) AS c FROM tents", [], function onCount(err, row) {
+    if (err || !row || row.c > 0) return;
+    const now = new Date().toISOString();
+    defaults.forEach(function (t) {
+      db.run(
+        "INSERT INTO tents (name, price_key, image_url, images, length_m, capacity, note, active, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [t.name, t.price_key, "", "", "", t.capacity, t.note, 1, t.sort_order, now],
+        function () {}
+      );
+    });
+  });
 }
 
 function run(db, sql, params = []) {

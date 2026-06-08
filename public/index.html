@@ -785,14 +785,9 @@
               </span>
             </label>
             <div id="canopyBlock" class="hidden">
-              <label style="margin-top:8px">Вариант шатра
-                <select name="canopyType">
-                  <option value="canopySmall">Кухня малая (до 8 чел.) — от 600 ₽/сутки</option>
-                  <option value="canopyMedium">Кухня средняя — от 1 600 ₽/сутки</option>
-                  <option value="canopyLarge">Кухня большая (20–25 чел.) — от 3 000 ₽/сутки</option>
-                  <option value="canopyEverest">Кухня-шатёр «Эверест» — от 4 000 ₽/сутки</option>
-                </select>
-              </label>
+              <div class="field-label" style="margin-top:8px">Вариант шатра</div>
+              <input type="hidden" name="canopyType" value="canopySmall" />
+              <div id="canopyCards" class="canopy-cards"></div>
               <div class="grid grid-2" style="margin-top:12px">
                 <label>Плитка <input type="number" min="0" name="stove" value="0" /></label>
                 <label>Газовые баллончики <input type="number" min="0" name="gasCanister" value="0" /></label>
@@ -897,6 +892,14 @@
         <img class="lightbox__img" id="lightboxImg" src="" alt="">
       </div>
       <p class="lightbox__caption" id="lightboxCaption"></p>
+    </div>
+
+    <!-- Модалка подробностей о шатре -->
+    <div id="tentModal" class="tent-modal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="tent-modal__box">
+        <button class="tent-modal__close" id="tentModalClose" aria-label="Закрыть">✕</button>
+        <div class="tent-modal__body" id="tentModalBody"></div>
+      </div>
     </div>
 
     <!-- Sticky mobile CTA (показывается на ≤768px после прокрутки hero) -->

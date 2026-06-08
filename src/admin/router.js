@@ -14,6 +14,7 @@ const { listEvents, getEvent, createEvent, updateEvent, deleteEvent } = require(
 const { getAllContent, setManyContent, CONTENT_LABELS } = require('./content-db');
 const { listPhotos, getPhoto, createPhoto, updatePhoto, deletePhoto } = require('./gallery-db');
 const { listFleet, getFleetItem, createFleetItem, updateFleetItem, deleteFleetItem } = require('./fleet-db');
+const { listTents, createTentItem, updateTentItem, deleteTentItem } = require('./tents-db');
 const { listMapPoints, createMapPoint, updateMapPoint, deleteMapPoint } = require('./map-points-db');
 const { getPrices, savePrices } = require('../pricing');
 
@@ -272,6 +273,38 @@ function createAdminRouter(db) {
   router.delete('/api/fleet/:id', async (req, res) => {
     try { await deleteFleetItem(db, Number(req.params.id)); res.json({ ok: true }); }
     catch (err) { console.error('Delete fleet error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  // ── Tents (шатры) ──────────────────────────────────────────────────────
+
+  router.get('/api/tents', async (req, res) => {
+    try { res.json(await listTents(db)); }
+    catch (err) { console.error('List tents error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.post('/api/tents', async (req, res) => {
+    try {
+      if (!req.body?.name) return res.status(400).json({ error: 'Название обязательно' });
+      if (!isValidUrl(req.body.image_url)) return res.status(400).json({ error: 'Недопустимый URL изображения' });
+      if (!areValidImageUrls(req.body.images)) return res.status(400).json({ error: 'Недопустимый URL в списке доп. фото' });
+      res.status(201).json(await createTentItem(db, req.body));
+    } catch (err) { console.error('Create tent error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.patch('/api/tents/:id', async (req, res) => {
+    try {
+      if (req.body?.image_url !== undefined && !isValidUrl(req.body.image_url))
+        return res.status(400).json({ error: 'Недопустимый URL изображения' });
+      if (req.body?.images !== undefined && !areValidImageUrls(req.body.images))
+        return res.status(400).json({ error: 'Недопустимый URL в списке доп. фото' });
+      res.json(await updateTentItem(db, Number(req.params.id), req.body || {}));
+    }
+    catch (err) { console.error('Update tent error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.delete('/api/tents/:id', async (req, res) => {
+    try { await deleteTentItem(db, Number(req.params.id)); res.json({ ok: true }); }
+    catch (err) { console.error('Delete tent error:', err); res.status(500).json({ error: GENERIC_ERR }); }
   });
 
   // ── Map points (план острова) ──────────────────────────────────────────

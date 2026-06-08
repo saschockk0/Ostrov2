@@ -15,6 +15,7 @@ const { listEvents } = require("./admin/events-db");
 const { getAllContent, DEFAULT_CONTENT } = require("./admin/content-db");
 const { listPhotos } = require("./admin/gallery-db");
 const { listFleet } = require("./admin/fleet-db");
+const { listTents } = require("./admin/tents-db");
 const { listMapPoints, ensureMapPoints } = require("./admin/map-points-db");
 
 const app = express();
@@ -92,6 +93,11 @@ app.get("/api/gallery", async (req, res) => {
 app.get("/api/fleet", async (req, res) => {
   try { res.json(await listFleet(db, true)); }
   catch (err) { console.error("GET /api/fleet error:", err); res.status(500).json({ error: GENERIC_ERR }); }
+});
+
+app.get("/api/tents", async (req, res) => {
+  try { res.json(await listTents(db, true)); }
+  catch (err) { console.error("GET /api/tents error:", err); res.status(500).json({ error: GENERIC_ERR }); }
 });
 
 app.get("/api/map-points", async (req, res) => {

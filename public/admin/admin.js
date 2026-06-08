@@ -36,6 +36,7 @@ let state = {
   filters: { status: 'all', search: '' },
   events: [], selectedEvent: null, eventForm: null,
   fleet: [], fleetForm: null,
+  tents: [], tentForm: null,
   prices: null, pricesDirty: false,
   content: null, contentLabels: null, contentDirty: false,
   gallery: [], galleryPhotoForm: null,
@@ -105,7 +106,7 @@ async function doLogin(login, password) {
 
 async function doLogout() {
   await api('POST', '/api/logout').catch(() => {});
-  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, events: [], fleet: [], fleetForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null, mapPoints: [], mapPointForm: null });
+  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, events: [], fleet: [], fleetForm: null, tents: [], tentForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null, mapPoints: [], mapPointForm: null });
 }
 
 // ── Loaders ───────────────────────────────────────────────────────────────
@@ -138,6 +139,11 @@ async function loadEvents() {
 async function loadFleet() {
   try { setState({ fleet: await api('GET', '/api/fleet'), view: 'fleet' }); }
   catch (err) { setState({ error: err.message, view: 'fleet', fleet: [] }); }
+}
+
+async function loadTents() {
+  try { setState({ tents: await api('GET', '/api/tents'), view: 'tents' }); }
+  catch (err) { setState({ error: err.message, view: 'tents', tents: [] }); }
 }
 
 async function loadPrices() {
@@ -275,6 +281,42 @@ async function deleteFleetItem(id) {
   try {
     await api('DELETE', `/api/fleet/${id}`);
     setState({ fleet: state.fleet.filter(e => e.id !== id), fleetForm: null });
+  } catch (err) { setState({ error: err.message }); }
+}
+
+// ── Tents actions ─────────────────────────────────────────────────────────
+
+function openTentForm(item = null) {
+  setState({
+    tentForm: item ? { ...item } : { name: '', price_key: 'canopySmall', image_url: '', images: '', length_m: '', capacity: '', note: '', active: true, sort_order: 0 },
+  });
+}
+
+async function saveTentItem() {
+  const f = state.tentForm;
+  if (!f?.name) { setState({ error: 'Введите название шатра' }); return; }
+  setState({ saving: true });
+  try {
+    let item;
+    if (f.id) item = await api('PATCH', `/api/tents/${f.id}`, f);
+    else       item = await api('POST', '/api/tents', f);
+    const tents = f.id ? state.tents.map(e => e.id === f.id ? item : e) : [item, ...state.tents];
+    setState({ tents, tentForm: null, saving: false });
+  } catch (err) { setState({ saving: false, error: err.message }); }
+}
+
+async function toggleTentActive(id, active) {
+  try {
+    const item = await api('PATCH', `/api/tents/${id}`, { active });
+    setState({ tents: state.tents.map(e => e.id === id ? item : e) });
+  } catch (err) { setState({ error: err.message }); }
+}
+
+async function deleteTentItem(id) {
+  if (!confirm('Удалить шатёр?')) return;
+  try {
+    await api('DELETE', `/api/tents/${id}`);
+    setState({ tents: state.tents.filter(e => e.id !== id), tentForm: null });
   } catch (err) { setState({ error: err.message }); }
 }
 
@@ -553,6 +595,7 @@ function renderShell() {
   else if (view === 'applications') content = renderApplicationsList();
   else if (view === 'events')       content = renderEventsView();
   else if (view === 'fleet')        content = renderFleetView();
+  else if (view === 'tents')        content = renderTentsView();
   else if (view === 'prices')       content = renderPricesView();
   else if (view === 'content')      content = renderContentView();
   else if (view === 'gallery')      content = renderGalleryView();
@@ -563,6 +606,7 @@ function renderShell() {
   const overlayOpen  = state.selectedApp ? ' open' : '';
   const eventModal        = state.eventForm        ? renderEventModal()       : '';
   const fleetModal        = state.fleetForm         ? renderFleetModal()       : '';
+  const tentModal         = state.tentForm          ? renderTentModal()        : '';
   const newAppModal       = state.showNewAppModal  ? renderNewAppModal()      : '';
   const galleryPhotoModal = state.galleryPhotoForm ? renderGalleryPhotoModal() : '';
   const mapPointModal     = state.mapPointForm     ? renderMapPointModal()     : '';
@@ -579,6 +623,7 @@ function renderShell() {
           ${navItem('applications', 'Заявки', badgeHtml)}
           ${navItem('events',       'Мероприятия')}
           ${navItem('fleet',        'Флот')}
+          ${navItem('tents',        'Шатры')}
           ${navItem('prices',       'Цены')}
           ${navItem('content',      'Контент')}
           ${navItem('gallery',      'Галерея')}
@@ -593,7 +638,7 @@ function renderShell() {
     </div>
     <div class="drawer-overlay${overlayOpen}" id="drawer-overlay"></div>
     <aside class="detail-drawer${drawerOpen}" id="detail-drawer">${drawerHtml}</aside>
-    ${eventModal}${fleetModal}${newAppModal}${galleryPhotoModal}${mapPointModal}`;
+    ${eventModal}${fleetModal}${tentModal}${newAppModal}${galleryPhotoModal}${mapPointModal}`;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -889,6 +934,100 @@ function renderFleetModal() {
           ${isEdit ? `<button class="btn btn-danger" id="delete-fleet-btn">Удалить</button>` : ''}
           <button class="btn btn-secondary" id="cancel-fleet-modal">Отмена</button>
           <button class="btn btn-primary" id="save-fleet-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Tents (шатры) ───────────────────────────────────────────────────────────
+
+// price_key → как считается цена (ключи из data/prices.json)
+const TENT_PRICE_KEYS = {
+  canopySmall:   'Кухня малая',
+  canopyMedium:  'Кухня средняя',
+  canopyLarge:   'Кухня большая',
+  canopyEverest: 'Кухня-шатёр «Эверест»',
+};
+
+function renderTentsView() {
+  const { tents } = state;
+  const rows = tents.length ? tents.map(e => `
+    <tr>
+      <td>${e.image_url ? `<img src="${esc(e.image_url)}" style="height:36px;width:52px;border-radius:4px;object-fit:cover">` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><strong>${esc(e.name)}</strong></td>
+      <td>${esc(TENT_PRICE_KEYS[e.price_key] || e.price_key || '—')}</td>
+      <td>${esc(e.length_m || '—')}</td>
+      <td>${esc(e.capacity || '—')}</td>
+      <td><span class="badge ${e.active ? 'badge-confirmed' : 'badge-rejected'}">${e.active ? 'Активно' : 'Скрыто'}</span></td>
+      <td>
+        <button class="btn btn-sm btn-secondary" data-edit-tent="${e.id}">Изменить</button>
+        <button class="btn btn-sm" style="background:var(--bg);border:1px solid var(--border)" data-toggle-tent="${e.id}" data-tent-active="${e.active ? 0 : 1}">${e.active ? 'Скрыть' : 'Показать'}</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" data-delete-tent="${e.id}">✕</button>
+      </td>
+    </tr>`).join('') : `<tr><td class="table-empty" colspan="7">Шатров нет. Добавьте первый.</td></tr>`;
+
+  return `
+    <div>
+      <div class="page-header"><h2>Шатры</h2>
+        <button class="btn btn-primary" id="add-tent-btn">+ Добавить шатёр</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Фото</th><th>Название</th><th>Вариант цены</th><th>Длина</th><th>Вместимость</th><th>Статус</th><th>Действия</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+      </div>
+    </div>`;
+}
+
+function renderTentModal() {
+  const f = state.tentForm;
+  const isEdit = !!f.id;
+  const priceOpts = Object.entries(TENT_PRICE_KEYS).map(([key, label]) =>
+    `<option value="${key}" ${f.price_key === key ? 'selected' : ''}>${label}</option>`).join('');
+  return `
+    <div class="modal-overlay" id="tent-modal-overlay">
+      <div class="modal">
+        <div class="modal-head"><h3>${isEdit ? 'Редактировать' : 'Новый'} шатёр</h3><button class="btn-icon" id="close-tent-modal">✕</button></div>
+        <div class="modal-body">
+          ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ''}
+          <div class="fields-row">
+            <div class="field"><label>Название *</label><input id="tf-name" type="text" value="${esc(f.name)}" placeholder="Кухня малая"></div>
+            <div class="field"><label>Вариант цены</label>
+              <select id="tf-pricekey">${priceOpts}</select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Фотография</label>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <input id="tf-image" type="text" value="${esc(f.image_url || '')}" placeholder="/images/uploads/tent.jpg" style="flex:1">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap">
+                Загрузить<input type="file" id="tf-file" accept="image/*" style="display:none">
+              </label>
+            </div>
+            ${f.image_url ? `<img src="${esc(f.image_url)}" style="margin-top:8px;max-height:80px;border-radius:6px;object-fit:cover">` : ''}
+          </div>
+          <div class="field">
+            <label>Доп. фото (по одному URL на строку)</label>
+            <textarea id="tf-images" rows="3" placeholder="/images/uploads/tent-2.jpg&#10;/images/uploads/tent-3.jpg">${esc(f.images || '')}</textarea>
+          </div>
+          <div class="fields-row">
+            <div class="field"><label>Длина</label><input id="tf-length" type="text" value="${esc(f.length_m || '')}" placeholder="4 × 4 м"></div>
+            <div class="field"><label>Вместимость</label><input id="tf-capacity" type="text" value="${esc(f.capacity || '')}" placeholder="до 8 чел."></div>
+          </div>
+          <div class="field"><label>Примечание / описание</label><textarea id="tf-note" rows="2" placeholder="от 600 ₽/сутки">${esc(f.note || '')}</textarea></div>
+          <div class="fields-row">
+            <div class="field"><label>Порядок сортировки</label><input id="tf-order" type="number" value="${f.sort_order || 0}"></div>
+            <div class="field"><label>Статус</label>
+              <select id="tf-active">
+                <option value="1" ${f.active ? 'selected' : ''}>Активно</option>
+                <option value="0" ${!f.active ? 'selected' : ''}>Скрыто</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          ${isEdit ? `<button class="btn btn-danger" id="delete-tent-btn">Удалить</button>` : ''}
+          <button class="btn btn-secondary" id="cancel-tent-modal">Отмена</button>
+          <button class="btn btn-primary" id="save-tent-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить'}</button>
         </div>
       </div>
     </div>`;
@@ -1286,6 +1425,7 @@ function attachShellHandlers() {
       if      (v === 'applications') { setState({ view: 'applications', selectedApp: null }); loadApps(); }
       else if (v === 'events')       { setState({ view: 'events', eventForm: null });         loadEvents(); }
       else if (v === 'fleet')        { setState({ view: 'fleet', fleetForm: null });          loadFleet(); }
+      else if (v === 'tents')        { setState({ view: 'tents', tentForm: null });           loadTents(); }
       else if (v === 'prices')       { setState({ view: 'prices' }); loadPrices(); }
       else if (v === 'content')      { setState({ view: 'content' }); loadContent(); }
       else if (v === 'gallery')      { setState({ view: 'gallery', galleryPhotoForm: null }); loadGallery(); }
@@ -1423,6 +1563,57 @@ function attachShellHandlers() {
       const preview = document.querySelector('#fleet-modal-overlay img');
       if (preview) { preview.src = url; } else {
         const imgContainer = document.getElementById('ff-image').parentElement;
+        const img = document.createElement('img');
+        img.src = url; img.style.cssText = 'margin-top:8px;max-height:80px;border-radius:6px;object-fit:cover';
+        imgContainer.parentElement.appendChild(img);
+      }
+    } catch (err) { setState({ error: err.message }); }
+  });
+
+  // Tents handlers
+  document.getElementById('add-tent-btn')?.addEventListener('click', () => openTentForm());
+  root.querySelectorAll('[data-edit-tent]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const item = state.tents.find(e => e.id === Number(btn.dataset.editTent));
+      if (item) openTentForm(item);
+    }));
+  root.querySelectorAll('[data-toggle-tent]').forEach(btn =>
+    btn.addEventListener('click', () => toggleTentActive(Number(btn.dataset.toggleTent), Number(btn.dataset.tentActive) === 1)));
+  root.querySelectorAll('[data-delete-tent]').forEach(btn =>
+    btn.addEventListener('click', () => deleteTentItem(Number(btn.dataset.deleteTent))));
+
+  // Tent modal handlers
+  document.getElementById('close-tent-modal')?.addEventListener('click', () => setState({ tentForm: null, error: null }));
+  document.getElementById('cancel-tent-modal')?.addEventListener('click', () => setState({ tentForm: null, error: null }));
+  document.getElementById('tent-modal-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) setState({ tentForm: null, error: null });
+  });
+  document.getElementById('save-tent-btn')?.addEventListener('click', () => {
+    if (!state.tentForm) return;
+    state.tentForm.name = document.getElementById('tf-name').value.trim();
+    state.tentForm.price_key = document.getElementById('tf-pricekey').value;
+    state.tentForm.image_url = document.getElementById('tf-image').value.trim();
+    state.tentForm.images = document.getElementById('tf-images').value.trim();
+    state.tentForm.length_m = document.getElementById('tf-length').value.trim();
+    state.tentForm.capacity = document.getElementById('tf-capacity').value.trim();
+    state.tentForm.note = document.getElementById('tf-note').value.trim();
+    state.tentForm.sort_order = Number(document.getElementById('tf-order').value) || 0;
+    state.tentForm.active = Number(document.getElementById('tf-active').value) === 1;
+    saveTentItem();
+  });
+  document.getElementById('delete-tent-btn')?.addEventListener('click', () => {
+    if (state.tentForm?.id) deleteTentItem(state.tentForm.id);
+  });
+  document.getElementById('tf-file')?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      document.getElementById('tf-image').value = url;
+      state.tentForm.image_url = url;
+      const preview = document.querySelector('#tent-modal-overlay img');
+      if (preview) { preview.src = url; } else {
+        const imgContainer = document.getElementById('tf-image').parentElement;
         const img = document.createElement('img');
         img.src = url; img.style.cssText = 'margin-top:8px;max-height:80px;border-radius:6px;object-fit:cover';
         imgContainer.parentElement.appendChild(img);
