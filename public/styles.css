@@ -4414,3 +4414,21 @@ textarea {
     animation: none !important;
   }
 }
+
+/* «Осталось N свободных мест» в калькуляторе и опроснике */
+.calc-spots {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--brand-leaf-050, #f1f8e9);
+  color: var(--brand-leaf-900, #1a4d1d);
+  border: 1px solid var(--brand-leaf-200, #c8e0c5);
+  font-weight: 600;
+}
+.calc-spots strong { color: var(--brand-leaf-700, #256b29); }
+.calc-spots--low {
+  background: #fdece6;
+  color: #8a2b12;
+  border-color: #f0c2b2;
+}
+.calc-spots--low strong { color: var(--accent-buoy, #d9633b); }

@@ -150,6 +150,31 @@ function initDb() {
   `);
   // Seed the four canopy options once (keep the calculator working out of the box)
   seedTents(db);
+  // Учёт наличия: ёмкость ресурсов (места в лагере, арендные палатки, шатры-кухни).
+  // resource_key совпадает с ключами perDay в answers_json (campSpots — особый: гости = adults+children).
+  db.run(`
+    CREATE TABLE IF NOT EXISTS inventory (
+      resource_key VARCHAR(50) PRIMARY KEY,
+      kind         VARCHAR(30) NOT NULL DEFAULT 'item',
+      capacity     INT NOT NULL DEFAULT 0,
+      sort_order   INT NOT NULL DEFAULT 0,
+      updated_at   VARCHAR(30) NOT NULL
+    )
+  `);
+  seedInventory(db);
+  // Ручные блокировки/брони: снимают qty единиц ресурса на каждый день [start,end).
+  // resource_key='all' = дата закрыта целиком.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS date_blocks (
+      id           INT PRIMARY KEY AUTO_INCREMENT,
+      resource_key VARCHAR(50) NOT NULL,
+      start_date   VARCHAR(30) NOT NULL,
+      end_date     VARCHAR(30) NOT NULL,
+      qty          INT NOT NULL DEFAULT 0,
+      reason       VARCHAR(255),
+      created_at   VARCHAR(30) NOT NULL
+    )
+  `);
   // Предоплаты по СБП (ЮKassa). Суммы храним в копейках, чтобы не терять точность на float.
   db.run(`
     CREATE TABLE IF NOT EXISTS payments (
@@ -192,6 +217,32 @@ function seedTents(db) {
       db.run(
         "INSERT INTO tents (name, price_key, image_url, images, length_m, capacity, note, active, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [t.name, t.price_key, "", "", "", t.capacity, t.note, 1, t.sort_order, now],
+        function () {}
+      );
+    });
+  });
+}
+
+// Default capacities, inserted only when the table is empty so admin edits survive restarts.
+// Keys mirror perDay keys in answers_json; campSpots is the total island guest limit.
+function seedInventory(db) {
+  const defaults = [
+    { resource_key: "campSpots",     kind: "camp",   capacity: 100, sort_order: 1 },
+    { resource_key: "tent1",         kind: "tent",   capacity: 10,  sort_order: 2 },
+    { resource_key: "tent2",         kind: "tent",   capacity: 15,  sort_order: 3 },
+    { resource_key: "tent3",         kind: "tent",   capacity: 8,   sort_order: 4 },
+    { resource_key: "canopyEverest", kind: "canopy", capacity: 1,   sort_order: 5 },
+    { resource_key: "canopyLarge",   kind: "canopy", capacity: 1,   sort_order: 6 },
+    { resource_key: "canopyMedium",  kind: "canopy", capacity: 1,   sort_order: 7 },
+    { resource_key: "canopySmall",   kind: "canopy", capacity: 1,   sort_order: 8 },
+  ];
+  db.get("SELECT COUNT(*) AS c FROM inventory", [], function onCount(err, row) {
+    if (err || !row || row.c > 0) return;
+    const now = new Date().toISOString();
+    defaults.forEach(function (r) {
+      db.run(
+        "INSERT INTO inventory (resource_key, kind, capacity, sort_order, updated_at) VALUES (?, ?, ?, ?, ?)",
+        [r.resource_key, r.kind, r.capacity, r.sort_order, now],
         function () {}
       );
     });

@@ -16,6 +16,9 @@ const { listPhotos, getPhoto, createPhoto, updatePhoto, deletePhoto } = require(
 const { listFleet, getFleetItem, createFleetItem, updateFleetItem, deleteFleetItem } = require('./fleet-db');
 const { listTents, createTentItem, updateTentItem, deleteTentItem } = require('./tents-db');
 const { listMapPoints, createMapPoint, updateMapPoint, deleteMapPoint } = require('./map-points-db');
+const { listInventory, saveInventory } = require('./inventory-db');
+const { listBlocks, createBlock, deleteBlock } = require('./blocks-db');
+const { computeAvailability } = require('../availability');
 const { getPrices, savePrices } = require('../pricing');
 const yookassa = require('../payments/yookassa');
 const {
@@ -47,6 +50,17 @@ function areValidImageUrls(images) {
   if (!images) return true;
   return String(images).split('\n').map(s => s.trim()).filter(Boolean).every(isValidUrl);
 }
+
+// Дата в формате YYYY-MM-DD и валидна как Date.
+function isValidDateStr(s) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s || ''))) return false;
+  return !Number.isNaN(new Date(s).getTime());
+}
+
+const BLOCK_RESOURCE_KEYS = new Set([
+  'all', 'campSpots', 'tent1', 'tent2', 'tent3',
+  'canopyEverest', 'canopyLarge', 'canopyMedium', 'canopySmall',
+]);
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -409,6 +423,62 @@ function createAdminRouter(db) {
   router.delete('/api/map-points/:id', async (req, res) => {
     try { await deleteMapPoint(db, Number(req.params.id)); res.json({ ok: true }); }
     catch (err) { console.error('Delete map point error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  // ── Inventory (ёмкости) + Availability (загрузка) ──────────────────────
+
+  router.get('/api/inventory', async (req, res) => {
+    try { res.json(await listInventory(db)); }
+    catch (err) { console.error('List inventory error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.put('/api/inventory', async (req, res) => {
+    try {
+      const items = Array.isArray(req.body) ? req.body : (req.body?.items || []);
+      if (!Array.isArray(items)) return res.status(400).json({ error: 'Неверный формат данных' });
+      for (const it of items) {
+        if (it && it.capacity !== undefined && (!Number.isFinite(Number(it.capacity)) || Number(it.capacity) < 0))
+          return res.status(400).json({ error: 'Ёмкость должна быть числом ≥ 0' });
+      }
+      res.json(await saveInventory(db, items));
+    } catch (err) { console.error('Save inventory error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.get('/api/availability', async (req, res) => {
+    try {
+      const { from, to } = req.query;
+      if (!isValidDateStr(from) || !isValidDateStr(to) || !(new Date(from) < new Date(to)))
+        return res.status(400).json({ error: 'Укажите корректный период (from < to, YYYY-MM-DD)' });
+      res.json(await computeAvailability(db, { from, to, statuses: ['confirmed'] }));
+    } catch (err) { console.error('Availability error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  // ── Manual blocks (ручные блокировки дат) ──────────────────────────────
+
+  router.get('/api/blocks', async (req, res) => {
+    try {
+      const { from, to } = req.query;
+      const range = isValidDateStr(from) && isValidDateStr(to) ? { from, to } : {};
+      res.json(await listBlocks(db, range));
+    } catch (err) { console.error('List blocks error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.post('/api/blocks', async (req, res) => {
+    try {
+      const b = req.body || {};
+      const resource_key = String(b.resource_key || 'all');
+      if (!BLOCK_RESOURCE_KEYS.has(resource_key)) return res.status(400).json({ error: 'Неизвестный ресурс' });
+      if (!isValidDateStr(b.start_date) || !isValidDateStr(b.end_date) || !(new Date(b.start_date) < new Date(b.end_date)))
+        return res.status(400).json({ error: 'Укажите корректный период (начало < конец)' });
+      if (resource_key !== 'all' && (!Number.isFinite(Number(b.qty)) || Number(b.qty) < 1))
+        return res.status(400).json({ error: 'Укажите количество ≥ 1' });
+      res.status(201).json(await createBlock(db, b));
+    } catch (err) { console.error('Create block error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.delete('/api/blocks/:id', async (req, res) => {
+    try { await deleteBlock(db, Number(req.params.id)); res.json({ ok: true }); }
+    catch (err) { console.error('Delete block error:', err); res.status(500).json({ error: GENERIC_ERR }); }
   });
 
   // ── File upload ────────────────────────────────────────────────────────

@@ -23,6 +23,7 @@ const { listPhotos } = require("./admin/gallery-db");
 const { listFleet } = require("./admin/fleet-db");
 const { listTents } = require("./admin/tents-db");
 const { listMapPoints, ensureMapPoints } = require("./admin/map-points-db");
+const { computeAvailability, checkAvailability, violationMessage } = require("./availability");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -121,6 +122,29 @@ app.post("/api/quote", (req, res) => {
   return res.json(quote);
 });
 
+// Публичная доступность на выбранные даты. Отдаём только свободные остатки
+// (минимум по дням окна), без внутренней статистики занятости.
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+app.get("/api/availability", async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    if (!DATE_RE.test(from || "") || !DATE_RE.test(to || "") || !(new Date(from) < new Date(to))) {
+      return res.status(400).json({ error: "Укажите корректный период." });
+    }
+    // Ограничиваем окно, чтобы публичный эндпоинт нельзя было раскрутить на годы вперёд.
+    const days = (new Date(to) - new Date(from)) / 86400000;
+    if (days > 120) return res.status(400).json({ error: "Слишком большой период." });
+
+    const avail = await computeAvailability(db, { from, to, statuses: ["confirmed"] });
+    const resources = avail.resources.map((r) => ({ key: r.key, kind: r.kind, label: r.label, free: r.minFree }));
+    const camp = resources.find((r) => r.key === "campSpots");
+    res.json({ from, to, campFree: camp ? camp.free : null, resources });
+  } catch (err) {
+    console.error("GET /api/availability error:", err);
+    res.status(500).json({ error: GENERIC_ERR });
+  }
+});
+
 async function verifyTurnstile(token, ip) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) return { ok: true, skipped: true };
@@ -170,6 +194,19 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
     const verify = await verifyTurnstile(payload.turnstileToken, req.ip);
     if (!verify.ok) {
       return res.status(400).json({ error: "Проверка безопасности не пройдена." });
+    }
+
+    // Защита от овербукинга: если на выбранные даты не хватает мест/палаток/шатров
+    // (с учётом подтверждённых заявок и ручных блокировок) — не принимаем заявку.
+    // Консультации без дат сюда не попадают (checkAvailability вернёт ok).
+    try {
+      const avail = await checkAvailability(db, payload.answers || {}, ["confirmed"]);
+      if (!avail.ok) {
+        return res.status(409).json({ error: violationMessage(avail.violations), overbooked: true });
+      }
+    } catch (availErr) {
+      // Не валим заявку, если расчёт наличия упал — лучше принять лид, чем потерять.
+      console.error("Availability check error (non-fatal):", availErr.message);
     }
 
     const appId = await insertApplication(db, {

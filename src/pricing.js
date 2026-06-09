@@ -158,4 +158,5 @@ module.exports = {
   getPrices,
   savePrices,
   calculateQuote,
+  dateRangeDays,
 };

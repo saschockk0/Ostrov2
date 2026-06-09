@@ -395,6 +395,31 @@ async function getQuote(payload) {
   return response.json();
 }
 
+// Свободные места на выбранные даты (тихо возвращает null при ошибке — это лишь подсказка).
+async function getAvailability(from, to) {
+  try {
+    const r = await fetch(`/api/availability?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+function pluralRu(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
+// «Осталось N свободных мест» по местам в лагере на выбранные даты (или '' если нет данных).
+function spotsLineHtml(avail) {
+  if (!avail || !Number.isFinite(avail.campFree)) return "";
+  const n = Math.max(0, avail.campFree);
+  const word = pluralRu(n, "свободное место", "свободных места", "свободных мест");
+  const low = n <= 5 ? " calc-spots--low" : "";
+  return `<p class="calc-spots${low}">Осталось <strong>${n}</strong> ${word} на эти даты</p>`;
+}
+
 function getAnswersFromForm(sourceForm) {
   const fd = new FormData(sourceForm);
   return {
@@ -496,11 +521,13 @@ async function updateReview() {
   }
   try {
     const quote = await getQuote(answers);
+    const avail = await getAvailability(answers.arrivalDate, answers.departureDate);
     const lines = quote.breakdown
       .map((row) => `<li>${row.label}: <strong>${money(row.amount)}</strong></li>`)
       .join("");
     reviewBlock.innerHTML = `
       <p>Ночей: <strong>${quote.nights}</strong>, гостей: <strong>${quote.guests}</strong></p>
+      ${spotsLineHtml(avail)}
       <ul>${lines}</ul>
       <p><strong>Итого: ${money(quote.total)}</strong></p>
       <small>${quote.disclaimer}</small>
@@ -713,10 +740,12 @@ quickCalcForm.addEventListener("submit", async (event) => {
       fixed: {},
       storeTripPeople: 0,
     });
+    const avail = await getAvailability(arrivalDate, departureDate);
     quickCalcResult.classList.remove("hidden");
     quickCalcResult.innerHTML = `
       <p>Ночей: <strong>${quote.nights}</strong></p>
       <p>Предварительная стоимость: <strong>${money(quote.total)}</strong></p>
+      ${spotsLineHtml(avail)}
       <small>${quote.disclaimer}</small>
     `;
     document.getElementById("calcLead").classList.remove("hidden");

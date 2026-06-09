@@ -46,6 +46,8 @@ let state = {
   content: null, contentLabels: null, contentDirty: false,
   gallery: [], galleryPhotoForm: null,
   mapPoints: [], mapPointForm: null,
+  availability: null, inventory: [], blocks: [], availFrom: '', availTo: '', invDirty: false,
+  dashAvail: null,
   showNewAppModal: false,
   saving: false, savingNote: false, noteText: '',
   error: null, successMsg: null,
@@ -111,13 +113,14 @@ async function doLogin(login, password) {
 
 async function doLogout() {
   await api('POST', '/api/logout').catch(() => {});
-  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, appPayments: [], events: [], fleet: [], fleetForm: null, tents: [], tentForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null, mapPoints: [], mapPointForm: null });
+  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, appPayments: [], events: [], fleet: [], fleetForm: null, tents: [], tentForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null, mapPoints: [], mapPointForm: null, availability: null, inventory: [], blocks: [], dashAvail: null });
 }
 
 // ── Loaders ───────────────────────────────────────────────────────────────
 
 async function loadStats() {
   try { setState({ stats: await api('GET', '/api/stats') }); } catch { /* non-critical */ }
+  loadDashAvail();
 }
 
 let searchTimer = null;
@@ -179,6 +182,95 @@ async function loadMapPoints() {
     setState({ mapPoints: Array.isArray(data) ? data : [], view: 'map', error: null });
   }
   catch (err) { setState({ error: err.message, view: 'map', mapPoints: [] }); }
+}
+
+// ── Availability ──────────────────────────────────────────────────────────
+
+function ymd(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+function addDaysStr(s, n) { const d = new Date(s); d.setDate(d.getDate() + n); return ymd(d); }
+
+async function loadAvailability() {
+  if (!state.availFrom || !state.availTo) {
+    const today = new Date();
+    state.availFrom = ymd(today);
+    state.availTo = addDaysStr(state.availFrom, 35); // ~5 ближайших выходных
+  }
+  state.view = 'availability';
+  try {
+    const qs = `from=${state.availFrom}&to=${state.availTo}`;
+    const [availability, inventory, blocks] = await Promise.all([
+      api('GET', `/api/availability?${qs}`),
+      api('GET', '/api/inventory'),
+      api('GET', `/api/blocks?${qs}`),
+    ]);
+    setState({ availability, inventory, blocks, invDirty: false, error: null });
+  } catch (err) { setState({ error: err.message, availability: null }); }
+}
+
+// Виджет загрузки на дашборде: ближайшие ~3 недели.
+async function loadDashAvail() {
+  try {
+    const from = ymd(new Date());
+    const to = addDaysStr(from, 21);
+    setState({ dashAvail: await api('GET', `/api/availability?from=${from}&to=${to}`) });
+  } catch { /* виджет не критичен */ }
+}
+
+function updateInvCapacity(key, value) {
+  const row = state.inventory.find(r => r.resource_key === key);
+  if (!row) return;
+  row.capacity = Math.max(0, Math.floor(Number(value) || 0));
+  state.invDirty = true;
+  const hint = document.getElementById('inv-dirty-hint');
+  if (hint) hint.style.visibility = 'visible';
+}
+
+async function saveInventoryAction() {
+  setState({ saving: true });
+  try {
+    const items = state.inventory.map(r => ({ resource_key: r.resource_key, capacity: r.capacity }));
+    await api('PUT', '/api/inventory', { items });
+    state.saving = false; state.invDirty = false; state.successMsg = 'Ёмкости сохранены';
+    await loadAvailability();
+    setTimeout(() => setState({ successMsg: null }), 3000);
+  } catch (err) { setState({ saving: false, error: err.message }); }
+}
+
+async function addBlockAction() {
+  const resource_key = document.getElementById('blk-resource').value;
+  const start_date = document.getElementById('blk-from').value;
+  const end_date = document.getElementById('blk-to').value;
+  const qty = Number(document.getElementById('blk-qty').value) || 0;
+  const reason = document.getElementById('blk-reason').value.trim();
+  if (!start_date || !end_date || start_date >= end_date) { setState({ error: 'Укажите корректный период (начало < конец)' }); return; }
+  if (resource_key !== 'all' && qty < 1) { setState({ error: 'Укажите количество ≥ 1' }); return; }
+  try {
+    await api('POST', '/api/blocks', { resource_key, start_date, end_date, qty, reason });
+    setState({ successMsg: 'Блокировка добавлена', error: null });
+    await loadAvailability();
+    setTimeout(() => setState({ successMsg: null }), 3000);
+  } catch (err) { setState({ error: err.message }); }
+}
+
+async function removeBlockAction(id) {
+  if (!confirm('Удалить блокировку?')) return;
+  try {
+    await api('DELETE', `/api/blocks/${id}`);
+    await loadAvailability();
+  } catch (err) { setState({ error: err.message }); }
+}
+
+function applyAvailRange() {
+  const from = document.getElementById('avail-from').value;
+  const to = document.getElementById('avail-to').value;
+  if (!from || !to || from >= to) { setState({ error: 'Укажите корректный период (начало < конец)' }); return; }
+  state.availFrom = from; state.availTo = to;
+  loadAvailability();
 }
 
 // ── Application actions ───────────────────────────────────────────────────
@@ -640,6 +732,7 @@ function renderShell() {
   else if (view === 'events')       content = renderEventsView();
   else if (view === 'fleet')        content = renderFleetView();
   else if (view === 'tents')        content = renderTentsView();
+  else if (view === 'availability') content = renderAvailabilityView();
   else if (view === 'prices')       content = renderPricesView();
   else if (view === 'content')      content = renderContentView();
   else if (view === 'gallery')      content = renderGalleryView();
@@ -668,6 +761,7 @@ function renderShell() {
           ${navItem('events',       'Мероприятия')}
           ${navItem('fleet',        'Флот')}
           ${navItem('tents',        'Шатры')}
+          ${navItem('availability', 'Загрузка')}
           ${navItem('prices',       'Цены')}
           ${navItem('content',      'Контент')}
           ${navItem('gallery',      'Галерея')}
@@ -702,12 +796,43 @@ function renderDashboard() {
         ${stat(s?.confirmedRevenue ? fmtMoney(s.confirmedRevenue) : '0 ₽', 'Выручка (подтв.)', ' stat-card--green')}
         ${stat(s?.rejected, 'Отказов', ' stat-card--red')}
       </div>
+      ${renderDashAvailWidget()}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary" data-nav="applications">Заявки →</button>
+        <button class="btn btn-secondary" data-nav="availability">Загрузка →</button>
         <button class="btn btn-secondary" data-nav="events">Мероприятия →</button>
         <button class="btn btn-secondary" data-nav="prices">Цены →</button>
         <button class="btn btn-secondary" data-nav="content">Контент →</button>
       </div>
+    </div>`;
+}
+
+// Виджет «загрузка ближайших выходных» на дашборде.
+function renderDashAvailWidget() {
+  const a = state.dashAvail;
+  if (!a || !a.weekends || !a.weekends.length) return '';
+  const resByKey = Object.fromEntries(a.resources.map(r => [r.key, r]));
+  const cards = a.weekends.slice(0, 3).map(w => {
+    const c = w.resources.campSpots || { free: 0, capacity: 0 };
+    const tents = a.resources.filter(r => r.kind === 'tent').map(r => {
+      const cell = w.resources[r.key] || { free: r.capacity };
+      return `${esc(r.label.replace('Палатка ', ''))}: <b>${cell.free}</b>`;
+    }).join(' · ');
+    return `
+      <div class="avail-card">
+        <div class="avail-card__head">
+          <span class="avail-card__title">${esc(w.label)}</span>
+          <span class="avail-card__pct">${w.loadPct}%</span>
+        </div>
+        <div class="load-bar"><div class="load-bar__fill ${loadBarClass(w.loadPct)}" style="width:${Math.min(100, w.loadPct)}%"></div></div>
+        <div class="avail-card__camp">Места: <b>${c.free}</b> своб. из ${c.capacity}</div>
+        <div class="avail-card__mini" style="color:var(--muted)">${tents}</div>
+      </div>`;
+  }).join('');
+  return `
+    <div style="margin:8px 0 20px">
+      <h3 style="font-size:15px;margin-bottom:10px;color:var(--blue-dark)">Загрузка ближайших выходных</h3>
+      <div class="avail-cards">${cards}</div>
     </div>`;
 }
 
@@ -1114,6 +1239,170 @@ function renderTentModal() {
     </div>`;
 }
 
+// ── Availability (Загрузка) ─────────────────────────────────────────────────
+
+const WD_SHORT = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+const BLOCK_RESOURCE_OPTS = [
+  ['all', 'Вся дата (полное закрытие)'],
+  ['campSpots', 'Места в лагере'],
+  ['tent1', 'Палатка 1-местная'], ['tent2', 'Палатка 2-местная'], ['tent3', 'Палатка 3-местная'],
+  ['canopyEverest', 'Кухня-шатёр «Эверест»'], ['canopyLarge', 'Кухня большая'],
+  ['canopyMedium', 'Кухня средняя'], ['canopySmall', 'Кухня малая'],
+];
+
+function loadCellClass(occupied, capacity, closed) {
+  if (closed) return 'cell-closed';
+  if (!capacity) return 'cell-ok';
+  if (occupied >= capacity) return 'cell-full';
+  const pct = occupied / capacity;
+  if (pct >= 0.9) return 'cell-hot';
+  if (pct >= 0.6) return 'cell-warm';
+  return 'cell-ok';
+}
+function loadBarClass(pct) {
+  if (pct >= 100) return 'is-full';
+  if (pct >= 90) return 'is-hot';
+  if (pct >= 60) return 'is-warm';
+  return 'is-ok';
+}
+function fmtDayCol(dk) {
+  const d = new Date(dk);
+  return `${WD_SHORT[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function renderAvailabilityView() {
+  const a = state.availability;
+  const from = state.availFrom, to = state.availTo;
+  const rangeBar = `
+    <div class="page-header"><h2>Загрузка</h2>
+      <div class="page-actions" style="gap:8px;align-items:center">
+        <input type="date" id="avail-from" value="${esc(from)}" style="max-width:160px">
+        <span style="color:var(--muted)">—</span>
+        <input type="date" id="avail-to" value="${esc(to)}" style="max-width:160px">
+        <button class="btn btn-primary" id="avail-apply">Показать</button>
+      </div>
+    </div>`;
+
+  if (!a) return `<div>${rangeBar}<div class="loading"><div class="spinner"></div>Загрузка данных...</div></div>`;
+
+  const resByKey = Object.fromEntries(a.resources.map(r => [r.key, r]));
+  const labelFor = k => k === 'all' ? 'Вся дата' : (resByKey[k]?.label || k);
+  const camp = resByKey.campSpots;
+  const tents = a.resources.filter(r => r.kind === 'tent');
+  const canopies = a.resources.filter(r => r.kind === 'canopy');
+
+  // 1. Карточки по выходным
+  const miniRow = (list, wRes) => list.map(r => {
+    const cell = wRes[r.key] || { free: r.capacity, capacity: r.capacity };
+    return `<span class="avail-mini ${cell.free <= 0 ? 'is-zero' : ''}">${esc(r.label.replace(/^Кухня[\s-]?/, '').replace(/^Палатка /, ''))}: <b>${cell.free}</b>/${cell.capacity}</span>`;
+  }).join('');
+
+  const weekendCards = a.weekends.length ? a.weekends.map(w => {
+    const c = w.resources.campSpots || { free: 0, capacity: 0, occupied: 0 };
+    return `
+      <div class="avail-card">
+        <div class="avail-card__head">
+          <span class="avail-card__title">${esc(w.label)}</span>
+          <span class="avail-card__pct">${w.loadPct}%</span>
+        </div>
+        <div class="load-bar"><div class="load-bar__fill ${loadBarClass(w.loadPct)}" style="width:${Math.min(100, w.loadPct)}%"></div></div>
+        <div class="avail-card__camp">Места: <b>${c.free}</b> своб. из ${c.capacity}</div>
+        <div class="avail-card__mini">${miniRow(tents, w.resources)}</div>
+        <div class="avail-card__mini">${miniRow(canopies, w.resources)}</div>
+      </div>`;
+  }).join('') : `<div class="table-empty" style="padding:16px">В выбранном периоде нет выходных (пт–вс).</div>`;
+
+  // 2. Таблица по дням
+  const dayCols = a.days.map(dk => {
+    const d = new Date(dk);
+    const we = [5, 6, 0].includes(d.getDay());
+    return `<th class="${we ? 'col-weekend' : ''}">${fmtDayCol(dk)}</th>`;
+  }).join('');
+  const dayRows = a.resources.map(r => {
+    const cells = a.days.map(dk => {
+      const cell = r.byDay[dk];
+      const cls = loadCellClass(cell.occupied, r.capacity, cell.closed);
+      const content = cell.closed ? '×' : cell.free;
+      return `<td class="avail-cell ${cls}" title="занято ${cell.occupied} из ${r.capacity}">${content}</td>`;
+    }).join('');
+    return `<tr><td class="avail-rowlabel">${esc(r.label)} <span class="avail-cap">(${r.capacity})</span></td>${cells}</tr>`;
+  }).join('');
+
+  const dayTable = `
+    <div class="price-section">
+      <h3 class="price-section-title">Свободно по дням</h3>
+      <div class="avail-legend">
+        <span><i class="lg cell-ok"></i>свободно</span>
+        <span><i class="lg cell-warm"></i>&ge;60%</span>
+        <span><i class="lg cell-hot"></i>&ge;90%</span>
+        <span><i class="lg cell-full"></i>занято</span>
+        <span><i class="lg cell-closed"></i>закрыто</span>
+      </div>
+      <div class="table-wrap">
+        <table class="avail-table"><thead><tr><th class="avail-rowlabel">Ресурс</th>${dayCols}</tr></thead>
+        <tbody>${dayRows}</tbody></table>
+      </div>
+    </div>`;
+
+  // 3. Редактор ёмкостей
+  const invRows = state.inventory.map(r => `
+    <tr>
+      <td>${esc(r.label)}</td>
+      <td><input class="price-input inv-input" type="number" min="0" data-inv-key="${esc(r.resource_key)}" value="${r.capacity}"></td>
+    </tr>`).join('');
+  const invEditor = `
+    <div class="price-section">
+      <h3 class="price-section-title">Ёмкости (вместимость)
+        <span id="inv-dirty-hint" style="color:var(--yellow);font-size:12px;font-weight:400;visibility:${state.invDirty ? 'visible' : 'hidden'}">● не сохранено</span>
+      </h3>
+      <div class="table-wrap">
+        <table><thead><tr><th>Ресурс</th><th>Всего</th></tr></thead><tbody>${invRows}</tbody></table>
+      </div>
+      <button class="btn btn-primary" id="save-inv-btn" style="margin-top:12px" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить ёмкости'}</button>
+    </div>`;
+
+  // 4. Ручные блокировки
+  const blockRows = state.blocks.length ? state.blocks.map(b => `
+    <tr>
+      <td>${esc(labelFor(b.resource_key))}</td>
+      <td>${esc(fmtDate(b.start_date))} – ${esc(fmtDate(b.end_date))}</td>
+      <td>${b.resource_key === 'all' ? '—' : esc(String(b.qty))}</td>
+      <td>${esc(b.reason || '—')}</td>
+      <td><button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" data-del-block="${b.id}">✕</button></td>
+    </tr>`).join('') : `<tr><td class="table-empty" colspan="5">Блокировок нет.</td></tr>`;
+  const blockResOpts = BLOCK_RESOURCE_OPTS.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('');
+  const blocksManager = `
+    <div class="price-section">
+      <h3 class="price-section-title">Ручные блокировки</h3>
+      <div class="table-wrap">
+        <table><thead><tr><th>Ресурс</th><th>Период</th><th>Кол-во</th><th>Причина</th><th></th></tr></thead>
+        <tbody>${blockRows}</tbody></table>
+      </div>
+      <div class="block-form">
+        <select id="blk-resource">${blockResOpts}</select>
+        <input type="date" id="blk-from" title="Начало (включительно)">
+        <input type="date" id="blk-to" title="Конец (исключительно)">
+        <input type="number" id="blk-qty" min="0" value="1" placeholder="Кол-во" style="max-width:90px">
+        <input type="text" id="blk-reason" placeholder="Причина (ремонт, бронь по телефону)" style="flex:1;min-width:160px">
+        <button class="btn btn-primary" id="add-block-btn">Добавить</button>
+      </div>
+      <p style="color:var(--muted);font-size:12px;margin-top:8px">Конец периода — исключительно (на ночь с пятницы на воскресенье укажите пт → вс). «Вся дата» закрывает все ресурсы.</p>
+    </div>`;
+
+  return `
+    <div>
+      ${rangeBar}
+      <div class="avail-cards">${weekendCards}</div>
+      <div class="prices-grid" style="margin-top:8px">
+        ${dayTable}
+      </div>
+      <div class="prices-grid">
+        ${invEditor}
+        ${blocksManager}
+      </div>
+    </div>`;
+}
+
 // ── Prices ────────────────────────────────────────────────────────────────
 
 function renderPricesView() {
@@ -1507,6 +1796,7 @@ function attachShellHandlers() {
       else if (v === 'events')       { setState({ view: 'events', eventForm: null });         loadEvents(); }
       else if (v === 'fleet')        { setState({ view: 'fleet', fleetForm: null });          loadFleet(); }
       else if (v === 'tents')        { setState({ view: 'tents', tentForm: null });           loadTents(); }
+      else if (v === 'availability') { setState({ view: 'availability', error: null });        loadAvailability(); }
       else if (v === 'prices')       { setState({ view: 'prices' }); loadPrices(); }
       else if (v === 'content')      { setState({ view: 'content' }); loadContent(); }
       else if (v === 'gallery')      { setState({ view: 'gallery', galleryPhotoForm: null }); loadGallery(); }
@@ -1711,6 +2001,15 @@ function attachShellHandlers() {
       }
     } catch (err) { setState({ error: err.message }); }
   });
+
+  // Availability handlers
+  document.getElementById('avail-apply')?.addEventListener('click', applyAvailRange);
+  root.querySelectorAll('.inv-input').forEach(input =>
+    input.addEventListener('change', e => updateInvCapacity(e.target.dataset.invKey, e.target.value)));
+  document.getElementById('save-inv-btn')?.addEventListener('click', saveInventoryAction);
+  document.getElementById('add-block-btn')?.addEventListener('click', addBlockAction);
+  root.querySelectorAll('[data-del-block]').forEach(btn =>
+    btn.addEventListener('click', () => removeBlockAction(Number(btn.dataset.delBlock))));
 
   // Gallery handlers
   document.getElementById('add-photo-btn')?.addEventListener('click', () => openGalleryPhotoForm());
