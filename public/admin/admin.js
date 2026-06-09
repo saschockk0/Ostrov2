@@ -7,6 +7,11 @@ const STATUS_LABELS = {
 };
 const STATUS_ORDER = ['new', 'in_progress', 'confirmed', 'rejected'];
 
+const PAYMENT_STATUS_LABELS = {
+  pending: 'Ожидает оплаты', waiting_for_capture: 'Удержан',
+  succeeded: 'Оплачено', canceled: 'Отменён', refunded: 'Возврат',
+};
+
 const SEASON_LABELS = {
   maySept: 'Май, Сентябрь', june: 'Июнь', julyAug: 'Июль–Август', child: 'Дети 7–14',
 };
@@ -32,7 +37,7 @@ let state = {
   view: 'loading',
   user: null,
   stats: null,
-  apps: [], selectedApp: null,
+  apps: [], selectedApp: null, appPayments: [],
   filters: { status: 'all', search: '' },
   events: [], selectedEvent: null, eventForm: null,
   fleet: [], fleetForm: null,
@@ -106,7 +111,7 @@ async function doLogin(login, password) {
 
 async function doLogout() {
   await api('POST', '/api/logout').catch(() => {});
-  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, events: [], fleet: [], fleetForm: null, tents: [], tentForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null, mapPoints: [], mapPointForm: null });
+  setState({ view: 'login', user: null, apps: [], stats: null, selectedApp: null, appPayments: [], events: [], fleet: [], fleetForm: null, tents: [], tentForm: null, prices: null, content: null, gallery: [], galleryPhotoForm: null, mapPoints: [], mapPointForm: null });
 }
 
 // ── Loaders ───────────────────────────────────────────────────────────────
@@ -179,8 +184,47 @@ async function loadMapPoints() {
 // ── Application actions ───────────────────────────────────────────────────
 
 async function openApp(id) {
-  try { setState({ selectedApp: await api('GET', `/api/applications/${id}`), noteText: '' }); }
+  try {
+    setState({ selectedApp: await api('GET', `/api/applications/${id}`), noteText: '', appPayments: [] });
+    loadAppPayments(id);
+  }
   catch { /* ignore */ }
+}
+
+async function loadAppPayments(id) {
+  try { setState({ appPayments: await api('GET', `/api/applications/${id}/payments`) }); }
+  catch { /* non-critical */ }
+}
+
+async function createManagerPayment() {
+  if (!state.selectedApp) return;
+  const amountRub = Number(document.getElementById('pay-amount')?.value);
+  const sendToClient = !!document.getElementById('pay-send-email')?.checked;
+  if (!amountRub || amountRub <= 0) { setState({ error: 'Введите сумму счёта' }); return; }
+  const btn = document.getElementById('create-payment-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Создаём…'; }
+  try {
+    const r = await api('POST', `/api/applications/${state.selectedApp.id}/payment`, { amountRub, sendToClient });
+    if (r.confirmationUrl) { try { await navigator.clipboard.writeText(r.confirmationUrl); } catch {} }
+    await loadAppPayments(state.selectedApp.id);
+    let msg = 'Счёт создан, ссылка скопирована в буфер.';
+    if (r.emailed) msg = 'Счёт создан и отправлен клиенту на email.';
+    setState({ successMsg: msg, error: null });
+    setTimeout(() => setState({ successMsg: null }), 4000);
+  } catch (err) {
+    setState({ error: err.message });
+    if (btn) { btn.disabled = false; btn.textContent = 'Выставить счёт'; }
+  }
+}
+
+async function refundPayment(id) {
+  if (!confirm('Оформить возврат по этому платежу?')) return;
+  try {
+    await api('POST', `/api/payments/${id}/refund`);
+    await loadAppPayments(state.selectedApp.id);
+    setState({ successMsg: 'Возврат оформлен', error: null });
+    setTimeout(() => setState({ successMsg: null }), 3000);
+  } catch (err) { setState({ error: err.message }); }
 }
 
 async function saveStatus(id, status) {
@@ -752,6 +796,7 @@ function renderAppDrawer(app) {
         <table class="breakdown-table"><tbody>${breakdownRows}</tbody></table>
         <div class="breakdown-total"><span>Итого</span><span>${fmtMoney(quote.total)}</span></div>
       </div>` : ''}
+      ${renderPaymentsSection(app, quote)}
       <div class="info-section"><h4>Статус</h4>
         <div class="status-buttons">${statusBtns}</div>
       </div>
@@ -761,6 +806,42 @@ function renderAppDrawer(app) {
           <button class="btn btn-secondary btn-sm" id="save-note-btn" ${state.savingNote ? 'disabled' : ''}>${state.savingNote ? 'Сохранение...' : 'Сохранить заметку'}</button>
         </div>
       </div>
+    </div>`;
+}
+
+function renderPaymentsSection(app, quote) {
+  const list = Array.isArray(state.appPayments) ? state.appPayments : [];
+  const paid = list.filter(p => p.status === 'succeeded').reduce((s, p) => s + (p.amount_kopecks || 0), 0);
+  const suggested = quote && quote.total ? Math.round(quote.total * 0.3) : '';
+
+  const rows = list.length ? `<table class="breakdown-table"><tbody>${list.map(p => {
+    const canCopy = p.confirmation_url && p.status !== 'succeeded' && p.status !== 'refunded' && p.status !== 'canceled';
+    return `<tr>
+      <td>${fmtMoney((p.amount_kopecks || 0) / 100)}
+        <div style="font-size:11px;color:var(--muted)">${p.source === 'manager' ? 'счёт менеджера' : 'онлайн'} · ${fmtDate(p.created_at)}</div></td>
+      <td class="amount">
+        <span class="badge ${p.status === 'succeeded' ? 'badge-confirmed' : (p.status === 'canceled' || p.status === 'refunded' ? 'badge-rejected' : '')}">${esc(PAYMENT_STATUS_LABELS[p.status] || p.status)}</span>
+        ${canCopy ? `<button class="btn btn-sm btn-secondary" data-copy-pay="${esc(p.confirmation_url)}" style="margin-left:6px">Ссылка</button>` : ''}
+        ${p.status === 'succeeded' ? `<button class="btn btn-sm" style="margin-left:6px;background:#fee2e2;color:#991b1b;border:none" data-refund-pay="${p.id}">Возврат</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('')}</tbody></table>` : '<div style="color:var(--muted);font-size:13px">Платежей пока нет</div>';
+
+  return `
+    <div class="info-section"><h4>Платежи (СБП)</h4>
+      ${paid > 0 ? `<div class="breakdown-total" style="margin-bottom:8px"><span>Оплачено</span><span>${fmtMoney(paid / 100)}</span></div>` : ''}
+      ${rows}
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div class="field" style="flex:1;min-width:130px;margin:0">
+          <label style="font-size:12px">Сумма счёта, ₽</label>
+          <input id="pay-amount" type="number" min="1" step="1" placeholder="напр. 5000" value="${suggested}">
+        </div>
+        <label style="display:flex;gap:6px;align-items:center;font-size:13px;white-space:nowrap">
+          <input type="checkbox" id="pay-send-email" ${app.email ? 'checked' : 'disabled'}>На email
+        </label>
+        <button class="btn btn-primary btn-sm" id="create-payment-btn">Выставить счёт</button>
+      </div>
+      ${app.email ? '' : '<div style="font-size:12px;color:var(--muted);margin-top:6px">У заявки нет email — ссылку отправьте клиенту вручную (она копируется автоматически).</div>'}
     </div>`;
 }
 
@@ -1448,6 +1529,16 @@ function attachShellHandlers() {
     btn.addEventListener('click', () => state.selectedApp && saveStatus(state.selectedApp.id, btn.dataset.setStatus)));
   document.getElementById('note-textarea')?.addEventListener('input', e => { state.noteText = e.target.value; });
   document.getElementById('save-note-btn')?.addEventListener('click', () => state.selectedApp && saveNote(state.selectedApp.id));
+  // Payments
+  document.getElementById('create-payment-btn')?.addEventListener('click', createManagerPayment);
+  root.querySelectorAll('[data-copy-pay]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(btn.dataset.copyPay)
+        .then(() => { const t = btn.textContent; btn.textContent = 'Скопировано'; setTimeout(() => { btn.textContent = t; }, 1500); })
+        .catch(() => setState({ error: 'Не удалось скопировать ссылку' }));
+    }));
+  root.querySelectorAll('[data-refund-pay]').forEach(btn =>
+    btn.addEventListener('click', () => refundPayment(Number(btn.dataset.refundPay))));
   document.getElementById('new-app-btn')?.addEventListener('click', () => setState({ showNewAppModal: true, error: null }));
   document.getElementById('close-modal')?.addEventListener('click', () => setState({ showNewAppModal: false, error: null }));
   document.getElementById('cancel-modal')?.addEventListener('click', () => setState({ showNewAppModal: false, error: null }));

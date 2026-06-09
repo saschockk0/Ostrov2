@@ -736,7 +736,11 @@
           <div class="wizard-success__icon">✓</div>
           <h3>Заявка отправлена!</h3>
           <p id="successMessage"></p>
-          <button type="button" class="btn btn-primary" id="closeWizardSuccess">Отлично, закрыть</button>
+          <div id="prepayBlock" class="hidden" style="margin:16px 0">
+            <button type="button" class="btn btn-primary" id="prepayBtn">Внести предоплату по СБП</button>
+            <p id="prepayHint" class="muted" style="font-size:13px;margin-top:8px"></p>
+          </div>
+          <button type="button" class="btn btn-secondary" id="closeWizardSuccess">Закрыть</button>
         </div>
 
         <form id="applicationForm" novalidate>

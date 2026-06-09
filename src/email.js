@@ -78,6 +78,75 @@ async function sendApplicationEmail(appId, payload, quote) {
   return { sent: true };
 }
 
+function moneyK(kopecks) {
+  return Number((kopecks || 0) / 100).toLocaleString("ru-RU");
+}
+
+// Письмо клиенту со ссылкой на оплату предоплаты по СБП.
+async function sendPaymentLink({ to, applicationId, amountKopecks, confirmationUrl }) {
+  const transporter = createTransporter();
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  if (!transporter || !to || !from) return { sent: false, reason: "SMTP_NOT_CONFIGURED" };
+  if (!confirmationUrl) return { sent: false, reason: "NO_LINK" };
+
+  const text = [
+    `Здравствуйте!`,
+    ``,
+    `Спасибо за заявку #${applicationId} в Парусный Клуб «Остров».`,
+    `Чтобы закрепить бронь, внесите предоплату ${moneyK(amountKopecks)} ₽ по СБП:`,
+    ``,
+    confirmationUrl,
+    ``,
+    `Ссылка ведёт на защищённую страницу оплаты ЮKassa. После оплаты мы свяжемся с вами для подтверждения деталей.`,
+  ].join("\n");
+
+  await transporter.sendMail({
+    from,
+    to,
+    subject: `Оплата предоплаты по заявке #${applicationId} — Парусный Клуб «Остров»`,
+    text,
+  });
+  return { sent: true };
+}
+
+// Уведомление об успешной оплате — менеджеру всегда, клиенту при наличии email.
+async function sendPaymentSucceeded({ applicationId, amountKopecks, clientEmail }) {
+  const transporter = createTransporter();
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const manager = process.env.MANAGER_EMAIL;
+  if (!transporter || !from) return { sent: false, reason: "SMTP_NOT_CONFIGURED" };
+
+  const results = {};
+  if (manager) {
+    await transporter.sendMail({
+      from,
+      to: manager,
+      subject: `Оплата получена — заявка #${applicationId}`,
+      text: `По заявке #${applicationId} поступила оплата ${moneyK(amountKopecks)} ₽ через СБП (ЮKassa).`,
+    });
+    results.manager = true;
+  }
+  if (clientEmail) {
+    await transporter.sendMail({
+      from,
+      to: clientEmail,
+      subject: `Оплата получена — Парусный Клуб «Остров»`,
+      text: [
+        `Здравствуйте!`,
+        ``,
+        `Мы получили вашу предоплату ${moneyK(amountKopecks)} ₽ по заявке #${applicationId}.`,
+        `Бронь закреплена. Менеджер свяжется с вами для уточнения деталей.`,
+        ``,
+        `Чек об оплате придёт отдельным письмом от ЮKassa.`,
+      ].join("\n"),
+    });
+    results.client = true;
+  }
+  return { sent: true, ...results };
+}
+
 module.exports = {
   sendApplicationEmail,
+  sendPaymentLink,
+  sendPaymentSucceeded,
 };

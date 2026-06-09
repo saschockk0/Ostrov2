@@ -150,6 +150,29 @@ function initDb() {
   `);
   // Seed the four canopy options once (keep the calculator working out of the box)
   seedTents(db);
+  // Предоплаты по СБП (ЮKassa). Суммы храним в копейках, чтобы не терять точность на float.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      application_id INT NOT NULL,
+      yookassa_id VARCHAR(64),
+      amount_kopecks INT NOT NULL,
+      currency VARCHAR(3) NOT NULL DEFAULT 'RUB',
+      status VARCHAR(32) NOT NULL DEFAULT 'pending',
+      description VARCHAR(255),
+      confirmation_url VARCHAR(500),
+      source VARCHAR(20) NOT NULL DEFAULT 'auto',
+      created_at VARCHAR(30) NOT NULL,
+      paid_at VARCHAR(30),
+      refunded_at VARCHAR(30),
+      metadata_json TEXT,
+      raw_event_json TEXT,
+      INDEX idx_app (application_id),
+      INDEX idx_yk (yookassa_id)
+    )
+  `);
+  // Сумма успешно оплаченного по заявке (агрегат по succeeded-платежам).
+  db.run("ALTER TABLE applications ADD COLUMN paid_amount_kopecks INT NOT NULL DEFAULT 0", [], function (err) {});
   return db;
 }
 

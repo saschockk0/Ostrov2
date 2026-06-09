@@ -207,8 +207,15 @@ const canopyBlock = document.getElementById("canopyBlock");
 const turnstileContainer = document.getElementById("turnstileContainer");
 const wizardSuccess = document.getElementById("wizardSuccess");
 const successMessage = document.getElementById("successMessage");
+const prepayBlock = document.getElementById("prepayBlock");
+const prepayBtn = document.getElementById("prepayBtn");
+const prepayHint = document.getElementById("prepayHint");
 const liveQuoteBar = document.getElementById("liveQuoteBar");
 const liveQuoteTotal = document.getElementById("liveQuoteTotal");
+
+// Настройки предоплаты по СБП (приходят из /api/config)
+let prepayEnabled = false;
+let prepayPercent = 30;
 
 const TOTAL_STEPS = steps.length;
 let currentStep = 1;
@@ -302,7 +309,9 @@ async function refreshLiveQuote() {
   }
 }
 
-function showSuccess(applicationId) {
+let successPrepay = { appId: null, amount: 0 };
+
+function showSuccess(applicationId, quote) {
   form.classList.add("hidden");
   wizardSuccess.classList.remove("hidden");
   successMessage.textContent = `Заявка #${applicationId} принята. Мы свяжемся с вами в ближайшее время.`;
@@ -312,6 +321,46 @@ function showSuccess(applicationId) {
   nextBtn.classList.add("hidden");
   submitBtn.classList.add("hidden");
   liveQuoteBar.classList.add("hidden");
+
+  // Предлагаем предоплату по СБП, если она включена и есть рассчитанная сумма.
+  const total = quote && quote.isValid ? Number(quote.total) || 0 : 0;
+  const amount = Math.round((total * prepayPercent) / 100);
+  if (prepayBlock) {
+    if (prepayEnabled && amount > 0) {
+      successPrepay = { appId: applicationId, amount };
+      prepayHint.textContent = `Закрепите бронь предоплатой ${prepayPercent}% — ${amount.toLocaleString("ru-RU")} ₽ по СБП. Остаток оплатите на месте.`;
+      prepayBtn.disabled = false;
+      prepayBtn.textContent = "Внести предоплату по СБП";
+      prepayBlock.classList.remove("hidden");
+    } else {
+      prepayBlock.classList.add("hidden");
+    }
+  }
+}
+
+if (prepayBtn) {
+  prepayBtn.addEventListener("click", async () => {
+    if (!successPrepay.appId) return;
+    prepayBtn.disabled = true;
+    prepayBtn.textContent = "Готовим оплату…";
+    try {
+      const response = await fetch(`/api/applications/${successPrepay.appId}/payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.confirmationUrl) {
+        throw new Error(data.error || "Не удалось создать платёж.");
+      }
+      ymGoal("prepay_start", { applicationId: successPrepay.appId, amount: successPrepay.amount });
+      window.location.href = data.confirmationUrl;
+    } catch (error) {
+      prepayHint.textContent = error.message;
+      prepayBtn.disabled = false;
+      prepayBtn.textContent = "Внести предоплату по СБП";
+    }
+  });
 }
 
 function openWizard() {
@@ -635,7 +684,7 @@ form.addEventListener("submit", async (event) => {
     if (!response.ok) throw new Error(data.error || "Не удалось отправить заявку.");
 
     form.reset();
-    showSuccess(data.applicationId);
+    showSuccess(data.applicationId, data.quote);
     ymGoal("wizard_submit", { applicationId: data.applicationId });
   } catch (error) {
     formMessage.textContent = error.message;
@@ -1244,6 +1293,8 @@ fetch("/api/config")
   .then((r) => r.json())
   .then((cfg) => {
     turnstileSiteKey = cfg.turnstileSiteKey || "";
+    prepayEnabled = Boolean(cfg.prepayEnabled);
+    if (cfg.prepayPercent) prepayPercent = Number(cfg.prepayPercent);
     if (!turnstileSiteKey) {
       const placeholder = "Turnstile можно включить через TURNSTILE_SITE_KEY и TURNSTILE_SECRET_KEY.";
       turnstileContainer.textContent = placeholder;

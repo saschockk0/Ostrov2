@@ -8,7 +8,13 @@ const rateLimit = require("express-rate-limit");
 const { calculateQuote, getPrices } = require("./pricing");
 const { initDb, insertApplication } = require("./database");
 const { sendToGoogleSheets } = require("./googleSheets");
-const { sendApplicationEmail } = require("./email");
+const { sendApplicationEmail, sendPaymentSucceeded } = require("./email");
+const yookassa = require("./payments/yookassa");
+const {
+  insertPayment, updatePayment, getPaymentByYookassaId,
+  listPaymentsForApplication, recalcPaidAmount,
+} = require("./payments/payments-db");
+const { getApplication, updateApplication } = require("./admin/db");
 const { fetchFromYandex } = require("./yandex-reviews");
 const { createAdminRouter } = require("./admin/router");
 const { listEvents } = require("./admin/events-db");
@@ -70,6 +76,8 @@ app.get("/api/config", (req, res) => {
     turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || "",
     perDayItems: prices.perDayItems,
     fixedItems:  prices.fixedItems,
+    prepayEnabled: yookassa.isConfigured(),
+    prepayPercent: Number(process.env.SBP_DEFAULT_PREPAY_PERCENT || 30),
   });
 });
 
@@ -192,6 +200,152 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
   } catch (error) {
     console.error("Application submit error:", error);
     return res.status(500).json({ error: "Ошибка сервера. Попробуйте позже." });
+  }
+});
+
+// ── Предоплата по СБП (ЮKassa) ──────────────────────────────────────────────
+
+const paymentLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Слишком много попыток оплаты. Попробуйте позже." },
+});
+
+function prepayKopecks(quote) {
+  const percent = Number(process.env.SBP_DEFAULT_PREPAY_PERCENT || 30);
+  const rub = Math.round(((Number(quote?.total) || 0) * percent) / 100);
+  return { percent, kopecks: rub * 100 };
+}
+
+function buildReturnUrl(req, appId) {
+  const base = process.env.SBP_RETURN_URL || `${req.protocol}://${req.get("host")}/payment-result.html`;
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}app=${appId}`;
+}
+
+// Авто-сценарий: клиент сам инициирует предоплату по % от расчёта.
+app.post("/api/applications/:id/payment", paymentLimiter, async (req, res) => {
+  try {
+    if (!yookassa.isConfigured()) {
+      return res.status(503).json({ error: "Онлайн-оплата временно недоступна." });
+    }
+    const appId = Number(req.params.id);
+    if (!Number.isInteger(appId) || appId <= 0) {
+      return res.status(400).json({ error: "Некорректная заявка." });
+    }
+    const application = await getApplication(db, appId);
+    if (!application) return res.status(404).json({ error: "Заявка не найдена." });
+
+    const quote = application.quote || {};
+    if (!quote.isValid || !(quote.total > 0)) {
+      return res.status(400).json({ error: "Для этой заявки нельзя рассчитать предоплату." });
+    }
+
+    const existing = await listPaymentsForApplication(db, appId);
+    if (existing.some((p) => p.status === "succeeded")) {
+      return res.status(409).json({ error: "Заявка уже оплачена." });
+    }
+
+    const { percent, kopecks } = prepayKopecks(quote);
+    if (kopecks <= 0) return res.status(400).json({ error: "Сумма предоплаты равна нулю." });
+
+    const description = `Предоплата ${percent}% по заявке #${appId} — Парусный Клуб «Остров»`;
+    const paymentId = await insertPayment(db, {
+      applicationId: appId, amountKopecks: kopecks, description, source: "auto",
+      metadata: { prepayPercent: percent },
+    });
+
+    const yk = await yookassa.createPayment({
+      amountKopecks: kopecks,
+      description,
+      returnUrl: buildReturnUrl(req, appId),
+      email: application.email,
+      phone: application.phone,
+      metadata: { applicationId: appId, paymentId },
+    });
+
+    await updatePayment(db, paymentId, {
+      yookassa_id: yk.id,
+      status: yk.status,
+      confirmation_url: yk.confirmation?.confirmation_url || null,
+    });
+
+    return res.status(201).json({
+      ok: true,
+      amount: kopecks / 100,
+      percent,
+      confirmationUrl: yk.confirmation?.confirmation_url || null,
+    });
+  } catch (error) {
+    console.error("Create payment error:", error.message);
+    return res.status(502).json({ error: "Не удалось создать платёж. Попробуйте позже." });
+  }
+});
+
+// Обрабатывает событие ЮKassa. Статус берём из API (не доверяем телу запроса).
+async function handleWebhookEvent(event) {
+  const type = event.event || "";
+  const obj = event.object || {};
+
+  if (type.startsWith("refund")) {
+    const payment = await getPaymentByYookassaId(db, obj.payment_id);
+    if (!payment) return;
+    if (obj.status === "succeeded") {
+      await updatePayment(db, payment.id, {
+        status: "refunded",
+        refunded_at: new Date().toISOString(),
+        raw_event_json: JSON.stringify(event),
+      });
+      await recalcPaidAmount(db, payment.application_id);
+    }
+    return;
+  }
+
+  // payment.* — перепроверяем статус через API как источник истины.
+  let truth = obj;
+  try {
+    if (obj.id) truth = await yookassa.getPayment(obj.id);
+  } catch (e) {
+    console.warn("getPayment in webhook failed, using body:", e.message);
+  }
+
+  const payment = await getPaymentByYookassaId(db, truth.id);
+  if (!payment) return;
+
+  const wasSucceeded = payment.status === "succeeded";
+  const patch = { status: truth.status, raw_event_json: JSON.stringify(event) };
+  if (truth.status === "succeeded" && !payment.paid_at) patch.paid_at = new Date().toISOString();
+  await updatePayment(db, payment.id, patch);
+
+  if (truth.status === "succeeded" && !wasSucceeded) {
+    await recalcPaidAmount(db, payment.application_id);
+    const application = await getApplication(db, payment.application_id);
+    // Двигаем «Новая» → «В работе»; ручной статус менеджера не перетираем.
+    if (application && application.status === "new") {
+      await updateApplication(db, payment.application_id, { status: "in_progress" });
+    }
+    sendPaymentSucceeded({
+      applicationId: payment.application_id,
+      amountKopecks: payment.amount_kopecks,
+      clientEmail: application?.email || "",
+    }).catch((err) => console.error("Payment success email error:", err.message));
+  }
+}
+
+app.post("/api/webhooks/yookassa", async (req, res) => {
+  try {
+    if (process.env.YOOKASSA_WEBHOOK_IP_CHECK !== "false" && !yookassa.isTrustedWebhookIp(req.ip)) {
+      console.warn("Rejected YooKassa webhook from untrusted IP:", req.ip);
+      return res.status(200).json({ ok: true }); // подтверждаем, но игнорируем
+    }
+    await handleWebhookEvent(req.body || {});
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    // Всегда отвечаем 200, чтобы ЮKassa не зациклила ретраи; ошибку логируем.
+    console.error("Webhook error:", error.message);
+    return res.status(200).json({ ok: true });
   }
 });
 

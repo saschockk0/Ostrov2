@@ -17,6 +17,12 @@ const { listFleet, getFleetItem, createFleetItem, updateFleetItem, deleteFleetIt
 const { listTents, createTentItem, updateTentItem, deleteTentItem } = require('./tents-db');
 const { listMapPoints, createMapPoint, updateMapPoint, deleteMapPoint } = require('./map-points-db');
 const { getPrices, savePrices } = require('../pricing');
+const yookassa = require('../payments/yookassa');
+const {
+  insertPayment, updatePayment, getPaymentById,
+  listPaymentsForApplication, recalcPaidAmount,
+} = require('../payments/payments-db');
+const { sendPaymentLink } = require('../email');
 
 const ADMIN_STATIC = path.join(__dirname, '..', '..', 'public', 'admin');
 const VALID_STATUSES = new Set(['new', 'in_progress', 'confirmed', 'rejected']);
@@ -152,6 +158,75 @@ function createAdminRouter(db) {
       const id = await insertManualApplication(db, body);
       res.status(201).json(await getApplication(db, id));
     } catch (err) { console.error('Create app error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  // ── Payments (предоплата по СБП / ЮKassa) ──────────────────────────────
+
+  router.get('/api/applications/:id/payments', async (req, res) => {
+    try {
+      res.json(await listPaymentsForApplication(db, Number(req.params.id)));
+    } catch (err) { console.error('List payments error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  // Менеджер выставляет счёт на произвольную сумму.
+  router.post('/api/applications/:id/payment', async (req, res) => {
+    try {
+      if (!yookassa.isConfigured()) return res.status(503).json({ error: 'ЮKassa не настроена (нет ключей).' });
+      const appId = Number(req.params.id);
+      const application = await getApplication(db, appId);
+      if (!application) return res.status(404).json({ error: 'Заявка не найдена' });
+
+      const rub = Number(req.body?.amountRub);
+      if (!Number.isFinite(rub) || rub <= 0) return res.status(400).json({ error: 'Введите сумму больше нуля' });
+      if (rub > 1000000) return res.status(400).json({ error: 'Слишком большая сумма' });
+      const kopecks = Math.round(rub * 100);
+      const description = String(req.body?.description || `Предоплата по заявке #${appId} — Парусный Клуб «Остров»`).slice(0, 128);
+
+      const paymentId = await insertPayment(db, {
+        applicationId: appId, amountKopecks: kopecks, description, source: 'manager', metadata: { manual: true },
+      });
+
+      const returnUrl = `${req.protocol}://${req.get('host')}/payment-result.html?app=${appId}`;
+      const yk = await yookassa.createPayment({
+        amountKopecks: kopecks, description, returnUrl,
+        email: application.email, phone: application.phone,
+        metadata: { applicationId: appId, paymentId },
+      });
+
+      const confirmationUrl = yk.confirmation?.confirmation_url || null;
+      await updatePayment(db, paymentId, { yookassa_id: yk.id, status: yk.status, confirmation_url: confirmationUrl });
+
+      let emailed = false;
+      if (req.body?.sendToClient && application.email && confirmationUrl) {
+        try {
+          const r = await sendPaymentLink({ to: application.email, applicationId: appId, amountKopecks: kopecks, confirmationUrl });
+          emailed = !!r.sent;
+        } catch (e) { console.error('Payment link email error:', e.message); }
+      }
+      res.status(201).json({ ok: true, paymentId, confirmationUrl, amount: rub, emailed });
+    } catch (err) {
+      console.error('Manager create payment error:', err.message);
+      res.status(502).json({ error: 'Не удалось создать счёт. Проверьте ключи ЮKassa.' });
+    }
+  });
+
+  router.post('/api/payments/:id/refund', async (req, res) => {
+    try {
+      if (!yookassa.isConfigured()) return res.status(503).json({ error: 'ЮKassa не настроена.' });
+      const payment = await getPaymentById(db, Number(req.params.id));
+      if (!payment) return res.status(404).json({ error: 'Платёж не найден' });
+      if (payment.status !== 'succeeded') return res.status(400).json({ error: 'Возврат возможен только по успешному платежу' });
+
+      const refund = await yookassa.createRefund({ paymentId: payment.yookassa_id, amountKopecks: payment.amount_kopecks });
+      if (refund.status === 'succeeded') {
+        await updatePayment(db, payment.id, { status: 'refunded', refunded_at: new Date().toISOString() });
+        await recalcPaidAmount(db, payment.application_id);
+      }
+      res.json({ ok: true, status: refund.status });
+    } catch (err) {
+      console.error('Refund error:', err.message);
+      res.status(502).json({ error: 'Не удалось оформить возврат.' });
+    }
   });
 
   // ── Events ─────────────────────────────────────────────────────────────
