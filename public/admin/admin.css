@@ -443,3 +443,16 @@ tr:hover td { background: var(--blue-light); }
 
 .block-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
 .block-form input, .block-form select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+
+/* ── Capacity editor (Загрузка → Вместимость) ─────────────────────────── */
+.cap-intro { font-size: 13px; color: var(--muted); margin: -2px 0 4px; max-width: 760px; }
+.cap-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.cap-group { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.cap-group__title { font-size: 14px; font-weight: 700; color: var(--text); }
+.cap-group__unit { font-weight: 400; font-size: 12px; color: var(--muted); }
+.cap-group__hint { font-size: 12px; color: var(--muted); margin: 4px 0 10px; }
+.cap-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 7px 0; border-top: 1px solid var(--border); }
+.cap-row:first-of-type { border-top: none; }
+.cap-row__label { font-size: 13px; color: var(--text); }
+.cap-input--big { width: 110px; font-size: 18px; font-weight: 700; padding: 7px 10px; }

@@ -1344,21 +1344,37 @@ function renderAvailabilityView() {
       </div>
     </div>`;
 
-  // 3. Редактор ёмкостей
-  const invRows = state.inventory.map(r => `
-    <tr>
-      <td>${esc(r.label)}</td>
-      <td><input class="price-input inv-input" type="number" min="0" data-inv-key="${esc(r.resource_key)}" value="${r.capacity}"></td>
-    </tr>`).join('');
+  // 3. Редактор вместимости — три понятные группы (места / палатки / шатры)
+  const TENT_LABELS = { tent1: '1-местная', tent2: '2-местная', tent3: '3-местная' };
+  const capLabel = r => TENT_LABELS[r.resource_key] || r.label;
+  const capRow = (r, big) => `
+    <div class="cap-row">
+      <span class="cap-row__label">${esc(capLabel(r))}</span>
+      <input class="price-input inv-input${big ? ' cap-input--big' : ''}" type="number" min="0" inputmode="numeric"
+             data-inv-key="${esc(r.resource_key)}" value="${r.capacity}">
+    </div>`;
+  const capGroup = (title, hint, list, unit, big) => list.length ? `
+    <div class="cap-group">
+      <div class="cap-group__title">${esc(title)} <span class="cap-group__unit">${esc(unit)}</span></div>
+      <div class="cap-group__hint">${esc(hint)}</div>
+      ${list.map(r => capRow(r, big)).join('')}
+    </div>` : '';
+  const campRes = state.inventory.filter(r => r.kind === 'camp');
+  const tentRes = state.inventory.filter(r => r.kind === 'tent');
+  const canopyRes = state.inventory.filter(r => r.kind === 'canopy');
   const invEditor = `
     <div class="price-section">
-      <h3 class="price-section-title">Ёмкости (вместимость)
+      <h3 class="price-section-title">Вместимость
         <span id="inv-dirty-hint" style="color:var(--yellow);font-size:12px;font-weight:400;visibility:${state.invDirty ? 'visible' : 'hidden'}">● не сохранено</span>
       </h3>
-      <div class="table-wrap">
-        <table><thead><tr><th>Ресурс</th><th>Всего</th></tr></thead><tbody>${invRows}</tbody></table>
+      <p class="cap-intro">Укажите, сколько у вас всего ресурсов. Эти числа задают предел бронирования —
+        на их основе считается, сколько мест свободно на каждый день и выходные ниже.</p>
+      <div class="cap-groups">
+        ${capGroup('Места для гостей', 'Сколько всего человек можно разместить на острове.', campRes, 'чел.', true)}
+        ${capGroup('Палатки в аренду', 'Сколько палаток каждого типа вы сдаёте гостям.', tentRes, 'шт.')}
+        ${capGroup('Шатры', 'Сколько шатров каждого вида доступно.', canopyRes, 'шт.')}
       </div>
-      <button class="btn btn-primary" id="save-inv-btn" style="margin-top:12px" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить ёмкости'}</button>
+      <button class="btn btn-primary" id="save-inv-btn" style="margin-top:14px" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить вместимость'}</button>
     </div>`;
 
   // 4. Ручные блокировки
@@ -1392,12 +1408,12 @@ function renderAvailabilityView() {
   return `
     <div>
       ${rangeBar}
-      <div class="avail-cards">${weekendCards}</div>
+      ${invEditor}
+      <div class="avail-cards" style="margin-top:20px">${weekendCards}</div>
       <div class="prices-grid" style="margin-top:8px">
         ${dayTable}
       </div>
       <div class="prices-grid">
-        ${invEditor}
         ${blocksManager}
       </div>
     </div>`;
