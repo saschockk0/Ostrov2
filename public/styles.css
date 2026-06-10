@@ -486,34 +486,110 @@ body {
 
 .va-fleet__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
-.va-fleet-card {
-  background: var(--paper, #fff);
-  border-radius: 20px;
-  overflow: hidden;
+/* Компактная строка судна: клик открывает модалку с фото и характеристиками */
+.va-fleet-chip {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: var(--paper, #fff);
   border: 1px solid var(--ink-200, #e2e5e9);
+  border-radius: 16px;
+  padding: 10px 16px 10px 10px;
+  cursor: pointer;
   transition: box-shadow 0.2s, transform 0.2s;
 }
 
-.va-fleet-card:hover {
+.va-fleet-chip:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
-.va-fleet-card.is-clickable { cursor: pointer; }
+.va-fleet-chip:focus-visible {
+  outline: 2px solid var(--brand-sky-700, #1b4f72);
+  outline-offset: 2px;
+}
+
+.va-fleet-chip__thumb {
+  width: 76px;
+  height: 58px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #dce6f0 0%, #b8cfe0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.va-fleet-chip__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.va-fleet-chip__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.va-fleet-chip__name {
+  display: block;
+  font-family: var(--font-display, "Lora", serif);
+  font-size: 17px;
+  color: var(--ink-900, #1a2b3c);
+  letter-spacing: -0.02em;
+}
+
+.va-fleet-chip__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--ink-500, #6b7280);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.va-fleet-chip__arrow {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-200, #e2e5e9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--ink-900, #1a2b3c);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.va-fleet-chip:hover .va-fleet-chip__arrow {
+  background: var(--ink-900, #1a2b3c);
+  border-color: var(--ink-900, #1a2b3c);
+  color: #fff;
+}
 
 /* Интерактивная сцена флота: лодки-слои поверх фото, hover подсвечивает лодку */
 .fleet-scene {
   position: relative;
   aspect-ratio: 1920 / 1078;
+  /* Лодки спозиционированы в % от сцены — уменьшаем пропорционально, не обрезая фон */
+  max-width: 760px;
+  margin: 0 auto 28px;
   border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 32px;
   box-shadow: 0 12px 40px rgba(14, 47, 70, 0.16);
 }
 
@@ -631,246 +707,19 @@ body {
   .fleet-scene__boat, .fleet-scene__dim, .fleet-scene__card { transition: none; }
 }
 
-.va-fleet-card.is-clickable:focus-visible {
-  outline: 2px solid var(--brand-sky-700, #1b4f72);
-  outline-offset: 2px;
-}
-
-.va-fleet-card__photos {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  background: rgba(20, 50, 70, 0.78);
-  backdrop-filter: blur(4px);
-  border-radius: 99px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.03em;
-}
-
-.va-fleet-card__photos::before {
-  content: "";
-  width: 12px;
-  height: 10px;
-  border-radius: 2px;
-  border: 1.5px solid currentColor;
-}
-
-.va-fleet-card__media {
-  height: 200px;
-  position: relative;
-  overflow: hidden;
-  border-radius: 14px;
-  margin: 12px 12px 0;
-  background: linear-gradient(135deg, #dce6f0 0%, #b8cfe0 100%);
-}
-
-.va-fleet-card__media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 14px;
-}
-
-/* Photo carousel: all imgs stacked, only .is-active visible */
-.va-fleet-card__media .va-fleet-card__img {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  pointer-events: none;
-}
-.va-fleet-card__media .va-fleet-card__img.is-active {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.va-fleet-card__dots {
-  position: absolute;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
-  display: inline-flex;
-  gap: 6px;
-  padding: 5px 9px;
-  background: rgba(20, 50, 70, 0.55);
-  backdrop-filter: blur(4px);
-  border-radius: 99px;
-  z-index: 2;
-}
-.va-fleet-card__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  border: 0;
-  padding: 0;
-  background: rgba(255, 255, 255, 0.55);
-  cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
-}
-.va-fleet-card__dot:hover { background: rgba(255, 255, 255, 0.85); }
-.va-fleet-card__dot.is-active {
-  background: #fff;
-  transform: scale(1.25);
-}
-.va-fleet-card__dot:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
-
-.va-fleet-card__media--dark {
-  background: linear-gradient(135deg, #2a5a6e 0%, #1b3a4b 100%);
-}
-
-.va-fleet-card__count {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 99px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-900, #1a2b3c);
-  font-family: var(--font-mono, "JetBrains Mono", monospace);
-  letter-spacing: 0.05em;
-}
-
-.va-fleet-card__label {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  padding: 6px 12px;
-  background: rgba(20, 50, 70, 0.75);
-  backdrop-filter: blur(4px);
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  line-height: 1.3;
-}
-
-.va-fleet-card__label::before {
-  content: "photo";
-  display: block;
-  font-size: 9px;
-  font-weight: 400;
-  opacity: 0.7;
-  letter-spacing: 0.12em;
-  margin-bottom: 1px;
-}
-
-.va-fleet-card__body {
-  padding: 20px 20px 22px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.va-fleet-card__name {
-  font-family: var(--font-display, "Lora", serif);
-  font-size: 20px;
-  color: var(--ink-900, #1a2b3c);
-  letter-spacing: -0.02em;
-}
-
-.va-fleet-card__kind {
-  font-size: 13px;
-  color: var(--ink-500, #6b7280);
-  margin-top: 2px;
-}
-
-.va-fleet-card__divider {
-  margin: 16px 0;
-  height: 1px;
-  background: var(--ink-200, #e2e5e9);
-}
-
-.va-fleet-card__specs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--ink-700, #3a4a5c);
-}
-
-.va-fleet-card__specs label {
-  display: block;
-  color: var(--ink-500, #6b7280);
-  margin-bottom: 2px;
-  font-size: 11px;
-}
-
-.va-fleet-card__specs strong {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.va-fleet-card__specs .span-2 {
-  grid-column: 1 / span 2;
-}
-
-.va-fleet-card__note {
-  margin-top: auto;
-  padding-top: 14px;
-  font-size: 12px;
-  color: var(--ink-600, #4b5563);
-  line-height: 1.5;
-  font-style: italic;
-  flex: 1;
-}
-
-.va-fleet-card__arrow {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.va-fleet-card__arrow span {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--ink-200, #e2e5e9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  color: var(--ink-900, #1a2b3c);
-  transition: background 0.15s, color 0.15s;
-}
-
-.va-fleet-card:hover .va-fleet-card__arrow span {
-  background: var(--ink-900, #1a2b3c);
-  color: #fff;
-  border-color: var(--ink-900, #1a2b3c);
-}
-
-@media (max-width: 1024px) {
-  .va-fleet__grid { grid-template-columns: repeat(2, 1fr); }
-}
-
 @media (max-width: 640px) {
   .va-fleet__grid { grid-template-columns: 1fr; }
 }
 
 /* Fleet: skeleton loader + empty/error states */
-.va-fleet-card--skeleton { pointer-events: none; border-color: var(--ink-100, #eef1f4); }
-.va-fleet-card--skeleton .va-fleet-card__media { background: transparent; }
+.va-fleet-chip--skeleton { pointer-events: none; border-color: var(--ink-100, #eef1f4); }
+.va-fleet-chip--skeleton .va-fleet-chip__thumb { background: none; border-radius: 10px; }
 .va-skeleton {
   background: linear-gradient(90deg, #eef1f4 0%, #f6f8fa 50%, #eef1f4 100%);
   background-size: 200% 100%;
   border-radius: 6px;
   animation: vaSkeletonShimmer 1.4s ease-in-out infinite;
 }
-.va-fleet-card--skeleton .va-fleet-card__media.va-skeleton { border-radius: 14px; height: 200px; }
 .va-skeleton--line { height: 12px; margin: 8px 0; }
 .va-skeleton--w70 { width: 70%; }
 .va-skeleton--w50 { width: 50%; }

@@ -930,53 +930,49 @@ function fleetPhotos(item) {
   return urls.map(url => ({ url, caption: item.name }));
 }
 
-function renderFleetCard(item) {
+// Компактная строка судна; подробности открываются в модалке по клику
+function renderFleetChip(item) {
   const photos = fleetPhotos(item);
-  const hasImage = photos.length > 0;
-  const clickable = photos.length > 0;
-  const multi = photos.length > 1;
-  const imgs = hasImage
-    ? photos.map((p, i) => `<img src="${escHtml(p.url)}" alt="${escHtml(item.name)}${i === 0 ? '' : ' — фото ' + (i + 1)}" loading="${i === 0 ? 'eager' : 'lazy'}" class="va-fleet-card__img${i === 0 ? ' is-active' : ''}" data-photo-index="${i}">`).join('')
-    : '';
-  const dots = multi
-    ? `<div class="va-fleet-card__dots" role="tablist" aria-label="Фото">` +
-        photos.map((_, i) => `<button type="button" class="va-fleet-card__dot${i === 0 ? ' is-active' : ''}" data-dot-index="${i}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}" aria-label="Фото ${i + 1} из ${photos.length}"></button>`).join('') +
-      `</div>`
-    : '';
-  return `<article class="va-fleet-card${clickable ? ' is-clickable' : ''}"${clickable ? ' role="button" tabindex="0"' : ''}>
-    <div class="va-fleet-card__media${hasImage ? '' : ' va-fleet-card__media--dark'}">
-      ${imgs}
-      ${dots}
-    </div>
-    <div class="va-fleet-card__body">
-      <div class="va-fleet-card__name">${escHtml(item.name)}</div>
-      ${item.kind ? `<div class="va-fleet-card__kind">${escHtml(item.kind)}</div>` : ''}
-      <div class="va-fleet-card__divider"></div>
-      <div class="va-fleet-card__specs">
-        <div><label>Длина</label><strong>${escHtml(item.length_m || '—')}</strong></div>
-        <div><label>Парусность</label><strong>${escHtml(item.sail_area || '—')}</strong></div>
-        <div class="span-2"><label>Экипаж</label><strong>${escHtml(item.crew || '—')}</strong></div>
-      </div>
-      ${item.note ? `<div class="va-fleet-card__note">${escHtml(item.note)}</div>` : ''}
-    </div>
-  </article>`;
+  const thumb = photos.length
+    ? `<img src="${escHtml(photos[0].url)}" alt="" loading="lazy">`
+    : '⛵';
+  const meta = [item.kind, item.crew ? 'экипаж ' + item.crew : ''].filter(Boolean).join(' · ');
+  return `<button type="button" class="va-fleet-chip" aria-haspopup="dialog">
+    <span class="va-fleet-chip__thumb">${thumb}</span>
+    <span class="va-fleet-chip__text">
+      <span class="va-fleet-chip__name">${escHtml(item.name)}</span>
+      ${meta ? `<span class="va-fleet-chip__meta">${escHtml(meta)}</span>` : ''}
+    </span>
+    <span class="va-fleet-chip__arrow">→</span>
+  </button>`;
+}
+
+function openFleetDetails(item) {
+  if (!item) return;
+  openDetailsModal({
+    title: item.name,
+    photos: fleetPhotos(item),
+    specs: [
+      ['Тип', item.kind],
+      ['Длина', item.length_m],
+      ['Парусность', item.sail_area],
+      ['Экипаж', item.crew],
+    ].filter(([, v]) => v),
+    note: item.note,
+    icon: '⛵',
+  });
 }
 
 function renderFleetSkeleton() {
   const grid = document.getElementById('fleetGrid');
   if (!grid) return;
-  const card = '<div class="va-fleet-card va-fleet-card--skeleton" aria-hidden="true">' +
-    '<div class="va-fleet-card__media va-skeleton"></div>' +
-    '<div class="va-fleet-card__body">' +
-      '<div class="va-skeleton va-skeleton--line va-skeleton--w70"></div>' +
+  const chip = '<div class="va-fleet-chip va-fleet-chip--skeleton" aria-hidden="true">' +
+    '<div class="va-fleet-chip__thumb va-skeleton"></div>' +
+    '<div class="va-fleet-chip__text">' +
       '<div class="va-skeleton va-skeleton--line va-skeleton--w40"></div>' +
-      '<div class="va-fleet-card__divider"></div>' +
-      '<div class="va-fleet-card__specs">' +
-        '<div><div class="va-skeleton va-skeleton--line va-skeleton--w30"></div><div class="va-skeleton va-skeleton--line va-skeleton--w50"></div></div>' +
-        '<div><div class="va-skeleton va-skeleton--line va-skeleton--w30"></div><div class="va-skeleton va-skeleton--line va-skeleton--w50"></div></div>' +
-      '</div>' +
+      '<div class="va-skeleton va-skeleton--line va-skeleton--w70"></div>' +
     '</div></div>';
-  grid.innerHTML = card.repeat(3);
+  grid.innerHTML = chip.repeat(4);
 }
 
 function renderFleetError() {
@@ -1007,39 +1003,11 @@ function renderFleetSection(items) {
   }
 
   grid.innerHTML = items.length
-    ? items.map(renderFleetCard).join('')
+    ? items.map(renderFleetChip).join('')
     : '<div class="va-fleet-empty"><p>Информация о флоте скоро появится</p></div>';
 
-  // Make cards with photos open the shared lightbox (honest affordance for the hover lift)
-  const cards = grid.querySelectorAll('.va-fleet-card:not(.va-fleet-card--skeleton)');
-  items.forEach((item, i) => {
-    const card = cards[i];
-    if (!card) return;
-    const photos = fleetPhotos(item);
-    if (!photos.length) return;
-    let activeIndex = 0;
-    const imgs = card.querySelectorAll('.va-fleet-card__img');
-    const dots = card.querySelectorAll('.va-fleet-card__dot');
-    const setActive = (idx) => {
-      if (idx < 0 || idx >= photos.length || idx === activeIndex) return;
-      imgs[activeIndex] && imgs[activeIndex].classList.remove('is-active');
-      dots[activeIndex] && dots[activeIndex].classList.remove('is-active');
-      dots[activeIndex] && dots[activeIndex].setAttribute('aria-selected', 'false');
-      activeIndex = idx;
-      imgs[activeIndex] && imgs[activeIndex].classList.add('is-active');
-      dots[activeIndex] && dots[activeIndex].classList.add('is-active');
-      dots[activeIndex] && dots[activeIndex].setAttribute('aria-selected', 'true');
-    };
-    dots.forEach((dot, di) => {
-      dot.addEventListener('click', (e) => { e.stopPropagation(); setActive(di); });
-    });
-    const open = () => Lightbox.open(photos, activeIndex);
-    card.addEventListener('click', open);
-    card.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); setActive(activeIndex + 1); }
-      else if (e.key === 'ArrowLeft') { e.preventDefault(); setActive(activeIndex - 1); }
-    });
+  grid.querySelectorAll('.va-fleet-chip').forEach((chip, i) => {
+    chip.addEventListener('click', () => openFleetDetails(items[i]));
   });
 }
 
@@ -1181,26 +1149,36 @@ function renderCanopyCards(items) {
   });
 }
 
-function openTentDetails(item) {
-  if (!item) return;
-  const tentModal = document.getElementById('tentModal');
+// Общая модалка деталей (#tentModal): фото-галерея + характеристики.
+// Используется и шатрами, и флотом.
+function openDetailsModal({ title, photos, specs, note, icon }) {
+  const modal = document.getElementById('tentModal');
   const body = document.getElementById('tentModalBody');
-  if (!tentModal || !body) return;
-  const photos = tentPhotos(item);
+  if (!modal || !body) return;
   const gallery = photos.length
-    ? `<div class="tent-modal__gallery">${photos.map((p, i) => `<img src="${escHtml(p.url)}" alt="${escHtml(item.name)}${i === 0 ? '' : ' — фото ' + (i + 1)}" loading="lazy" data-photo="${i}">`).join('')}</div>`
-    : `<div class="tent-modal__placeholder"><span class="tent-modal__placeholder-icon">⛺</span><span>Фотографии скоро появятся</span></div>`;
-  const specs = [['Вместимость', item.capacity], ['Длина', item.length_m]].filter(([, v]) => v);
+    ? `<div class="tent-modal__gallery">${photos.map((p, i) => `<img src="${escHtml(p.url)}" alt="${escHtml(title)}${i === 0 ? '' : ' — фото ' + (i + 1)}" loading="lazy" data-photo="${i}">`).join('')}</div>`
+    : `<div class="tent-modal__placeholder"><span class="tent-modal__placeholder-icon">${icon}</span><span>Фотографии скоро появятся</span></div>`;
   body.innerHTML =
-    `<h3 class="tent-modal__title">${escHtml(item.name)}</h3>` +
+    `<h3 class="tent-modal__title">${escHtml(title)}</h3>` +
     gallery +
     (specs.length ? `<dl class="tent-modal__specs">${specs.map(([k, v]) => `<div><dt>${escHtml(k)}</dt><dd>${escHtml(v)}</dd></div>`).join('')}</dl>` : '') +
-    (item.note ? `<p class="tent-modal__note">${escHtml(item.note)}</p>` : '');
+    (note ? `<p class="tent-modal__note">${escHtml(note)}</p>` : '');
   body.querySelectorAll('.tent-modal__gallery img').forEach((img) => {
     img.addEventListener('click', () => Lightbox.open(photos, Number(img.dataset.photo)));
   });
-  tentModal.classList.add('is-open');
-  tentModal.setAttribute('aria-hidden', 'false');
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function openTentDetails(item) {
+  if (!item) return;
+  openDetailsModal({
+    title: item.name,
+    photos: tentPhotos(item),
+    specs: [['Вместимость', item.capacity], ['Длина', item.length_m]].filter(([, v]) => v),
+    note: item.note,
+    icon: '⛺',
+  });
 }
 
 function closeTentDetails() {
