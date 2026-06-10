@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Флот клуба — демо интерактивной сцены</title>
+  <style>
+    :root {
+      --sky-900: #0e2f46;
+      --sky-700: #1b4f72;
+      --sky-500: #3e7ba8;
+      --ink-500: #4f5f6d;
+      --leaf-700: #256b29;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #f6fafd;
+      color: var(--sky-900);
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 20px 80px; }
+    h1 { font-size: 32px; margin: 0 0 8px; }
+    .sub { margin: 0 0 24px; color: var(--ink-500); font-size: 15px; }
+    .fleet-scene {
+      position: relative;
+      aspect-ratio: 4096 / 2298;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(14, 47, 70, 0.18);
+    }
+    .fleet-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .fleet-dim {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 30, 46, 0);
+      transition: background 0.35s ease;
+      pointer-events: none;
+    }
+    .fleet-scene.focus .fleet-dim { background: rgba(10, 30, 46, 0.45); }
+    .fleet-boat {
+      position: absolute;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: filter 0.35s ease, transform 0.35s ease;
+    }
+    .fleet-boat img { width: 100%; height: auto; display: block; pointer-events: none; }
+    .fleet-scene.focus .fleet-boat:not(.on) { filter: brightness(0.5); }
+    .fleet-boat.on {
+      filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.85)) drop-shadow(0 10px 18px rgba(10, 30, 46, 0.4));
+      animation: boat-float 3.2s ease-in-out infinite;
+      z-index: 3;
+    }
+    @keyframes boat-float {
+      0%, 100% { transform: translateY(0) rotate(-0.6deg); }
+      50% { transform: translateY(-1.2%) rotate(0.8deg); }
+    }
+    .fleet-card {
+      position: absolute;
+      width: 240px;
+      max-width: 44%;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 10px 30px rgba(10, 30, 46, 0.28);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+      z-index: 4;
+    }
+    .fleet-card.show { opacity: 1; transform: translateY(0); }
+    .fleet-card h3 { margin: 0 0 4px; font-size: 16px; }
+    .fleet-card p { margin: 0 0 6px; font-size: 13px; color: var(--ink-500); line-height: 1.45; }
+    .fleet-card p:last-child { margin-bottom: 0; }
+    .fleet-card .fact { color: var(--sky-700); font-weight: 600; }
+    .fleet-hint {
+      position: absolute;
+      left: 0; right: 0; bottom: 10px;
+      text-align: center;
+      font-size: 13px;
+      color: #ffffff;
+      text-shadow: 0 1px 6px rgba(10, 30, 46, 0.7);
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .fleet-scene.focus .fleet-hint { opacity: 0; }
+    @media (max-width: 720px) {
+      h1 { font-size: 24px; }
+      .fleet-card { padding: 10px 12px; }
+      .fleet-card h3 { font-size: 14px; }
+      .fleet-card p { font-size: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fleet-boat.on { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Флот клуба</h1>
+    <p class="sub">Наведите курсор на катамаран — или коснитесь его на телефоне</p>
+    <div class="fleet-scene" id="fleetScene">
+      <img class="fleet-bg" src="/assets/fleet/fleet-bg.webp" alt="Катамараны «Бриз», «Ветер» и «Витамин» на воде Иваньковского водохранилища" />
+      <div class="fleet-dim"></div>
+      <button type="button" class="fleet-boat" data-boat="Бриз" data-card="cardBriz" style="left: 13.35%; top: 45.78%; width: 15.28%;" aria-label="Катамаран «Бриз» — подробнее">
+        <img src="/assets/fleet/fleet-boat-b.webp" alt="" />
+      </button>
+      <button type="button" class="fleet-boat" data-boat="Ветер" data-card="cardVeter" style="left: 40.16%; top: 45.78%; width: 16.67%;" aria-label="Катамаран «Ветер» — подробнее">
+        <img src="/assets/fleet/fleet-boat-a.webp" alt="" />
+      </button>
+      <button type="button" class="fleet-boat" data-boat="Витамин" data-card="cardVitamin" style="left: 60.4%; top: 42.08%; width: 23.63%;" aria-label="Катамаран «Витамин» — подробнее">
+        <img src="/assets/fleet/fleet-boat-c.webp" alt="" />
+      </button>
+      <aside class="fleet-card" id="cardBriz" style="left: 3%; top: 8%;">
+        <h3>«Бриз»</h3>
+        <p data-field="kind">Парусный катамаран</p>
+        <p class="fact" data-field="note">Для гостей острова — бесплатно</p>
+      </aside>
+      <aside class="fleet-card" id="cardVeter" style="left: 31%; top: 6%;">
+        <h3>«Ветер»</h3>
+        <p data-field="kind">Учебный катамаран</p>
+        <p class="fact" data-field="note">Обучение с инструктором — 2 000 ₽</p>
+      </aside>
+      <aside class="fleet-card" id="cardVitamin" style="left: 55%; top: 5%;">
+        <h3>«Витамин»</h3>
+        <p data-field="kind">Парусный катамаран</p>
+        <p class="fact" data-field="note">Выходы с капитаном клуба</p>
+      </aside>
+      <p class="fleet-hint">Наведите на катамаран</p>
+    </div>
+  </main>
+  <script src="/fleet-demo.js"></script>
+</body>
+</html>

@@ -337,6 +337,35 @@
             <h2 id="fleetTitle">Наш флот</h2>
           </div>
         </div>
+        <div class="fleet-scene" id="fleetScene">
+          <img class="fleet-scene__bg" src="/assets/fleet/fleet-bg.webp" alt="Катамараны «Бриз», «Ветер» и «Витамин» под парусами на Иваньковском водохранилище" loading="lazy" width="1920" height="1078" />
+          <div class="fleet-scene__dim"></div>
+          <button type="button" class="fleet-scene__boat" data-boat="Бриз" data-card="fleetCardBriz" style="left: 13.35%; top: 45.78%; width: 15.28%;" aria-label="Катамаран «Бриз» — подробнее">
+            <img src="/assets/fleet/fleet-boat-b.webp" alt="" loading="lazy" />
+          </button>
+          <button type="button" class="fleet-scene__boat" data-boat="Ветер" data-card="fleetCardVeter" style="left: 40.16%; top: 45.78%; width: 16.67%;" aria-label="Катамаран «Ветер» — подробнее">
+            <img src="/assets/fleet/fleet-boat-a.webp" alt="" loading="lazy" />
+          </button>
+          <button type="button" class="fleet-scene__boat" data-boat="Витамин" data-card="fleetCardVitamin" style="left: 60.4%; top: 42.08%; width: 23.63%;" aria-label="Катамаран «Витамин» — подробнее">
+            <img src="/assets/fleet/fleet-boat-c.webp" alt="" loading="lazy" />
+          </button>
+          <aside class="fleet-scene__card fleet-scene__card--briz" id="fleetCardBriz">
+            <h3>«Бриз»</h3>
+            <p data-field="kind">Парусный катамаран</p>
+            <p class="fleet-scene__fact" data-field="note">Для гостей острова — бесплатно</p>
+          </aside>
+          <aside class="fleet-scene__card fleet-scene__card--veter" id="fleetCardVeter">
+            <h3>«Ветер»</h3>
+            <p data-field="kind">Учебный катамаран</p>
+            <p class="fleet-scene__fact" data-field="note">Обучение с инструктором — 2 000 ₽</p>
+          </aside>
+          <aside class="fleet-scene__card fleet-scene__card--vitamin" id="fleetCardVitamin">
+            <h3>«Витамин»</h3>
+            <p data-field="kind">Парусный катамаран</p>
+            <p class="fleet-scene__fact" data-field="note">Выходы с капитаном клуба</p>
+          </aside>
+          <p class="fleet-scene__hint">Наведите курсор или коснитесь катамарана</p>
+        </div>
         <div class="va-fleet__grid" id="fleetGrid">
           <!-- Загружается динамически из /api/fleet -->
         </div>

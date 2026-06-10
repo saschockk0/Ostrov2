@@ -1043,14 +1043,73 @@ function renderFleetSection(items) {
   });
 }
 
+// Интерактивная сцена флота: затемнение, подсветка лодки и карточка по hover/tap
+function initFleetScene() {
+  const scene = document.getElementById('fleetScene');
+  if (!scene) return;
+  const boats = scene.querySelectorAll('.fleet-scene__boat');
+  const cards = scene.querySelectorAll('.fleet-scene__card');
+  const clear = () => {
+    scene.classList.remove('is-focus');
+    boats.forEach(b => b.classList.remove('is-on'));
+    cards.forEach(c => c.classList.remove('is-show'));
+  };
+  const activate = (boat) => {
+    clear();
+    scene.classList.add('is-focus');
+    boat.classList.add('is-on');
+    const card = document.getElementById(boat.dataset.card);
+    if (card) card.classList.add('is-show');
+  };
+  boats.forEach(boat => {
+    boat.addEventListener('mouseenter', () => activate(boat));
+    boat.addEventListener('focus', () => activate(boat));
+    boat.addEventListener('mouseleave', clear);
+    boat.addEventListener('blur', clear);
+    boat.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (boat.classList.contains('is-on')) clear(); else activate(boat);
+    });
+  });
+  scene.addEventListener('click', clear);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') clear(); });
+}
+
+// Заполняет всплывающие карточки сцены данными из /api/fleet (матчинг по имени лодки)
+function fillFleetScene(items) {
+  const scene = document.getElementById('fleetScene');
+  if (!scene || !items.length) return;
+  scene.querySelectorAll('.fleet-scene__boat').forEach(boat => {
+    const name = (boat.dataset.boat || '').toLowerCase();
+    const item = items.find(f => (f.name || '').toLowerCase().includes(name));
+    if (!item) return;
+    const card = document.getElementById(boat.dataset.card);
+    if (!card) return;
+    const specs = [];
+    if (item.length_m) specs.push('длина ' + item.length_m + ' м');
+    if (item.sail_area) specs.push('парус ' + item.sail_area + ' м²');
+    if (item.crew) specs.push('экипаж ' + item.crew);
+    const kindLine = [item.kind, specs.join(' · ')].filter(Boolean).join(' · ');
+    const kindEl = card.querySelector('[data-field="kind"]');
+    const noteEl = card.querySelector('[data-field="note"]');
+    if (kindEl && kindLine) kindEl.textContent = kindLine;
+    if (noteEl && item.note) noteEl.textContent = item.note;
+  });
+}
+
 function loadFleet() {
   renderFleetSkeleton();
   fetch('/api/fleet')
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(items => renderFleetSection(Array.isArray(items) ? items : []))
+    .then(items => {
+      const list = Array.isArray(items) ? items : [];
+      fillFleetScene(list);
+      renderFleetSection(list);
+    })
     .catch(() => renderFleetError());
 }
 
+initFleetScene();
 loadFleet();
 
 // ── Canopy (tent) cards in the wizard ──────────────────────────────────────
