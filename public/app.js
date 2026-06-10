@@ -930,23 +930,6 @@ function fleetPhotos(item) {
   return urls.map(url => ({ url, caption: item.name }));
 }
 
-// Компактная строка судна; подробности открываются в модалке по клику
-function renderFleetChip(item) {
-  const photos = fleetPhotos(item);
-  const thumb = photos.length
-    ? `<img src="${escHtml(photos[0].url)}" alt="" loading="lazy">`
-    : '⛵';
-  const meta = [item.kind, item.crew ? 'экипаж ' + item.crew : ''].filter(Boolean).join(' · ');
-  return `<button type="button" class="va-fleet-chip" aria-haspopup="dialog">
-    <span class="va-fleet-chip__thumb">${thumb}</span>
-    <span class="va-fleet-chip__text">
-      <span class="va-fleet-chip__name">${escHtml(item.name)}</span>
-      ${meta ? `<span class="va-fleet-chip__meta">${escHtml(meta)}</span>` : ''}
-    </span>
-    <span class="va-fleet-chip__arrow">→</span>
-  </button>`;
-}
-
 function openFleetDetails(item) {
   if (!item) return;
   openDetailsModal({
@@ -963,52 +946,16 @@ function openFleetDetails(item) {
   });
 }
 
-function renderFleetSkeleton() {
-  const grid = document.getElementById('fleetGrid');
-  if (!grid) return;
-  const chip = '<div class="va-fleet-chip va-fleet-chip--skeleton" aria-hidden="true">' +
-    '<div class="va-fleet-chip__thumb va-skeleton"></div>' +
-    '<div class="va-fleet-chip__text">' +
-      '<div class="va-skeleton va-skeleton--line va-skeleton--w40"></div>' +
-      '<div class="va-skeleton va-skeleton--line va-skeleton--w70"></div>' +
-    '</div></div>';
-  grid.innerHTML = chip.repeat(4);
-}
-
-function renderFleetError() {
-  const grid = document.getElementById('fleetGrid');
-  if (!grid) return;
-  grid.innerHTML =
-    '<div class="va-fleet-empty">' +
-      '<p>Не удалось загрузить флот. Проверьте соединение и попробуйте снова.</p>' +
-      '<button type="button" class="va-fleet-empty__retry" id="fleetRetryBtn">Повторить</button>' +
-    '</div>';
-  const btn = document.getElementById('fleetRetryBtn');
-  if (btn) btn.addEventListener('click', loadFleet);
-}
-
-function renderFleetSection(items) {
-  const grid = document.getElementById('fleetGrid');
+function updateFleetTitle(items) {
   const title = document.getElementById('fleetTitle');
-  if (!grid) return;
-
-  if (title && items.length > 0) {
-    const total = items.reduce((sum, i) => {
-      const n = parseInt(String(i.count).replace(/[^\d]/g, ''), 10);
-      return sum + (n > 0 ? n : 1);
-    }, 0);
-    const labels = items.map(i => i.kind || '').filter(Boolean);
-    const unique = [...new Set(labels)];
-    title.innerHTML = total + ' ' + (unique.length > 1 ? 'судов' : (unique[0] || 'судов')) + '.<br>Каждый под свою задачу.';
-  }
-
-  grid.innerHTML = items.length
-    ? items.map(renderFleetChip).join('')
-    : '<div class="va-fleet-empty"><p>Информация о флоте скоро появится</p></div>';
-
-  grid.querySelectorAll('.va-fleet-chip').forEach((chip, i) => {
-    chip.addEventListener('click', () => openFleetDetails(items[i]));
-  });
+  if (!title || !items.length) return;
+  const total = items.reduce((sum, i) => {
+    const n = parseInt(String(i.count).replace(/[^\d]/g, ''), 10);
+    return sum + (n > 0 ? n : 1);
+  }, 0);
+  const labels = items.map(i => i.kind || '').filter(Boolean);
+  const unique = [...new Set(labels)];
+  title.innerHTML = total + ' ' + (unique.length > 1 ? 'судов' : (unique[0] || 'судов')) + '.<br>Каждый под свою задачу.';
 }
 
 // Интерактивная сцена флота: затемнение, подсветка лодки и карточка по hover/tap
@@ -1036,6 +983,8 @@ function initFleetScene() {
     boat.addEventListener('blur', clear);
     boat.addEventListener('click', (e) => {
       e.stopPropagation();
+      // Данные подгружены — открываем подробную карточку; иначе фолбэк на подсветку
+      if (boat._fleetItem) { clear(); openFleetDetails(boat._fleetItem); return; }
       if (boat.classList.contains('is-on')) clear(); else activate(boat);
     });
   });
@@ -1051,6 +1000,7 @@ function fillFleetScene(items) {
     const name = (boat.dataset.boat || '').toLowerCase();
     const item = items.find(f => (f.name || '').toLowerCase().includes(name));
     if (!item) return;
+    boat._fleetItem = item;
     const card = document.getElementById(boat.dataset.card);
     if (!card) return;
     const specs = [];
@@ -1066,15 +1016,14 @@ function fillFleetScene(items) {
 }
 
 function loadFleet() {
-  renderFleetSkeleton();
   fetch('/api/fleet')
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(items => {
       const list = Array.isArray(items) ? items : [];
       fillFleetScene(list);
-      renderFleetSection(list);
+      updateFleetTitle(list);
     })
-    .catch(() => renderFleetError());
+    .catch(() => {});
 }
 
 initFleetScene();

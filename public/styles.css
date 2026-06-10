@@ -484,113 +484,24 @@ body {
   margin-bottom: 48px;
 }
 
-.va-fleet__grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  max-width: 760px;
-  margin: 0 auto;
-}
-
-/* Компактная строка судна: клик открывает модалку с фото и характеристиками */
-.va-fleet-chip {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  text-align: left;
-  font: inherit;
-  background: var(--paper, #fff);
-  border: 1px solid var(--ink-200, #e2e5e9);
-  border-radius: 16px;
-  padding: 10px 16px 10px 10px;
-  cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-
-.va-fleet-chip:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
-}
-
-.va-fleet-chip:focus-visible {
-  outline: 2px solid var(--brand-sky-700, #1b4f72);
-  outline-offset: 2px;
-}
-
-.va-fleet-chip__thumb {
-  width: 76px;
-  height: 58px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #dce6f0 0%, #b8cfe0 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.va-fleet-chip__thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.va-fleet-chip__text {
-  flex: 1;
-  min-width: 0;
-}
-
-.va-fleet-chip__name {
-  display: block;
-  font-family: var(--font-display, "Lora", serif);
-  font-size: 17px;
-  color: var(--ink-900, #1a2b3c);
-  letter-spacing: -0.02em;
-}
-
-.va-fleet-chip__meta {
-  display: block;
-  margin-top: 2px;
-  font-size: 12.5px;
-  color: var(--ink-500, #6b7280);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.va-fleet-chip__arrow {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1px solid var(--ink-200, #e2e5e9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  color: var(--ink-900, #1a2b3c);
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.va-fleet-chip:hover .va-fleet-chip__arrow {
-  background: var(--ink-900, #1a2b3c);
-  border-color: var(--ink-900, #1a2b3c);
-  color: #fff;
-}
-
 /* Интерактивная сцена флота: лодки-слои поверх фото, hover подсвечивает лодку */
 .fleet-scene {
   position: relative;
-  aspect-ratio: 1920 / 1078;
-  /* Лодки спозиционированы в % от сцены — уменьшаем пропорционально, не обрезая фон */
-  max-width: 760px;
-  margin: 0 auto 28px;
+  height: min(46vw, 440px);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 12px 40px rgba(14, 47, 70, 0.16);
+}
+
+/* Слой с фоном и лодками держит пропорции исходного фото и кадрируется по центру —
+   так позиции лодок (в % от слоя) не разъезжаются при изменении высоты сцены */
+.fleet-scene__canvas {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  transform: translateY(-50%);
+  aspect-ratio: 1920 / 1078;
 }
 
 .fleet-scene__bg {
@@ -620,6 +531,8 @@ body {
   background: transparent;
   cursor: pointer;
   transition: filter 0.35s ease, transform 0.35s ease;
+  /* Постоянная обводка по контуру — подсказывает, что катамаран кликабелен */
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 12px rgba(150, 215, 255, 0.65));
 }
 
 .fleet-scene__boat img {
@@ -684,7 +597,9 @@ body {
 .fleet-scene.is-focus .fleet-scene__hint { opacity: 0; }
 
 @media (max-width: 720px) {
-  .fleet-scene { border-radius: 14px; margin-bottom: 24px; }
+  /* На мобиле кадрирование не нужно — показываем фото целиком */
+  .fleet-scene { border-radius: 14px; height: auto; aspect-ratio: 1920 / 1078; }
+  .fleet-scene__canvas { top: 0; transform: none; }
   .fleet-scene__card,
   .fleet-scene__card--briz,
   .fleet-scene__card--veter,
@@ -705,65 +620,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .fleet-scene__boat.is-on { animation: none; }
   .fleet-scene__boat, .fleet-scene__dim, .fleet-scene__card { transition: none; }
-}
-
-@media (max-width: 640px) {
-  .va-fleet__grid { grid-template-columns: 1fr; }
-}
-
-/* Fleet: skeleton loader + empty/error states */
-.va-fleet-chip--skeleton { pointer-events: none; border-color: var(--ink-100, #eef1f4); }
-.va-fleet-chip--skeleton .va-fleet-chip__thumb { background: none; border-radius: 10px; }
-.va-skeleton {
-  background: linear-gradient(90deg, #eef1f4 0%, #f6f8fa 50%, #eef1f4 100%);
-  background-size: 200% 100%;
-  border-radius: 6px;
-  animation: vaSkeletonShimmer 1.4s ease-in-out infinite;
-}
-.va-skeleton--line { height: 12px; margin: 8px 0; }
-.va-skeleton--w70 { width: 70%; }
-.va-skeleton--w50 { width: 50%; }
-.va-skeleton--w40 { width: 40%; }
-.va-skeleton--w30 { width: 30%; }
-@keyframes vaSkeletonShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .va-skeleton { animation: none; }
-}
-
-.va-fleet-empty {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  text-align: center;
-  color: var(--ink-500, #6b7280);
-  padding: 40px 24px;
-  border: 1px dashed var(--ink-200, #e2e5e9);
-  border-radius: 16px;
-}
-.va-fleet-empty p { margin: 0; }
-.va-fleet-empty__retry {
-  border: 1px solid var(--brand-sky-700, #1b4f72);
-  background: transparent;
-  color: var(--brand-sky-700, #1b4f72);
-  padding: 8px 18px;
-  border-radius: 99px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.va-fleet-empty__retry:hover {
-  background: var(--brand-sky-700, #1b4f72);
-  color: #fff;
-}
-.va-fleet-empty__retry:focus-visible {
-  outline: 2px solid var(--brand-sky-700, #1b4f72);
-  outline-offset: 2px;
 }
 
 .events-wrap {
