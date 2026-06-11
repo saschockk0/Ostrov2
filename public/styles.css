@@ -1170,6 +1170,48 @@ textarea {
   color: #fff;
 }
 
+.footer-friends {
+  padding: 40px 36px 8px;
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  text-align: center;
+}
+
+.footer-friends__title {
+  color: var(--brand-sky-200);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+}
+
+.footer-friends .friends-grid {
+  width: 100%;
+  max-width: 880px;
+}
+
+.footer-friends .friend-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(184, 216, 236, 0.24);
+  box-shadow: none;
+  padding: 18px;
+}
+
+.footer-friends .friend-card:hover {
+  border-color: rgba(184, 216, 236, 0.6);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.footer-friends .friend-card__abbr {
+  color: #fff;
+}
+
+.footer-friends .friend-card__name {
+  color: var(--brand-sky-200);
+}
+
 .footer-top {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
