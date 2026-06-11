@@ -2940,6 +2940,14 @@ textarea {
   margin-bottom: 0;
 }
 
+.gallery-filters {
+  margin-top: 20px;
+}
+
+.gallery-filters:not([hidden]) + .gallery-grid {
+  margin-top: 16px;
+}
+
 .gallery-grid {
   columns: 3;
   column-gap: 8px;

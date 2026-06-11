@@ -1684,31 +1684,57 @@ const Lightbox = (function () {
 (function initGallery() {
   const section = document.getElementById('gallery');
   const grid = document.getElementById('galleryGrid');
+  const filters = document.getElementById('galleryFilters');
   if (!section || !grid) return;
+
+  const CAT_LABELS = { all: 'Все фото', regatta: 'Регаты', bonfire: 'Костёр', sunset: 'Закаты' };
+
+  function renderGrid(list) {
+    grid.innerHTML = '';
+    list.forEach((photo, idx) => {
+      const item = document.createElement('div');
+      item.className = 'gallery-item';
+      const img = document.createElement('img');
+      img.src = photo.url;
+      img.alt = photo.caption || 'Фото с острова';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      item.appendChild(img);
+      if (photo.caption) {
+        const cap = document.createElement('span');
+        cap.className = 'gallery-item__caption';
+        cap.textContent = photo.caption;
+        item.appendChild(cap);
+      }
+      item.addEventListener('click', () => Lightbox.open(list, idx));
+      grid.appendChild(item);
+    });
+  }
 
   fetch('/api/gallery')
     .then(r => r.ok ? r.json() : Promise.reject())
-    .then(data => {
-      const photos = data;
+    .then(photos => {
       if (!photos.length) { section.hidden = true; return; }
-      photos.forEach((photo, idx) => {
-        const item = document.createElement('div');
-        item.className = 'gallery-item';
-        const img = document.createElement('img');
-        img.src = photo.url;
-        img.alt = photo.caption || 'Фото с острова';
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        item.appendChild(img);
-        if (photo.caption) {
-          const cap = document.createElement('span');
-          cap.className = 'gallery-item__caption';
-          cap.textContent = photo.caption;
-          item.appendChild(cap);
-        }
-        item.addEventListener('click', () => Lightbox.open(photos, idx));
-        grid.appendChild(item);
+      renderGrid(photos);
+
+      if (!filters) return;
+      // Вкладки только для категорий, в которых есть фото
+      const present = ['regatta', 'bonfire', 'sunset'].filter(c => photos.some(p => p.category === c));
+      if (!present.length) return;
+
+      ['all'].concat(present).forEach((cat, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-tab' + (i === 0 ? ' is-active' : '');
+        btn.dataset.filter = cat;
+        btn.setAttribute('role', 'tab');
+        btn.textContent = CAT_LABELS[cat];
+        btn.addEventListener('click', () => {
+          filters.querySelectorAll('.filter-tab').forEach(b => b.classList.toggle('is-active', b === btn));
+          renderGrid(cat === 'all' ? photos : photos.filter(p => p.category === cat));
+        });
+        filters.appendChild(btn);
       });
+      filters.hidden = false;
     })
     .catch(() => { section.hidden = true; });
 })();

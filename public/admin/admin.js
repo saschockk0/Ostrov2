@@ -25,6 +25,9 @@ const MAP_CAT_LABELS = {
   nav: 'Навигация', infra: 'Инфраструктура', camp: 'Жильё',
   food: 'Питание', safety: 'Безопасность', leisure: 'Отдых', transfer: 'Трансфер',
 };
+// Галерея — категории фото (слаги совпадают с public/app.js и бэкендом)
+const GALLERY_CATS = { '': 'Без категории', regatta: 'Регаты', bonfire: 'Костёр', sunset: 'Закаты' };
+
 const SAT_TILES = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
 const SAT_ATTR = 'Спутник © <a href="https://www.google.com/maps">Google</a>';
 
@@ -44,7 +47,7 @@ let state = {
   tents: [], tentForm: null,
   prices: null, pricesDirty: false,
   content: null, contentLabels: null, contentDirty: false,
-  gallery: [], galleryPhotoForm: null,
+  gallery: [], galleryPhotoForm: null, galleryFilter: 'all', galleryBulkForm: null,
   mapPoints: [], mapPointForm: null,
   availability: null, inventory: [], blocks: [], availFrom: '', availTo: '', invDirty: false,
   dashAvail: null,
@@ -533,8 +536,32 @@ function openGalleryPhotoForm(photo = null) {
   setState({
     galleryPhotoForm: photo
       ? { ...photo }
-      : { url: '', caption: '', active: true, sort_order: 0 },
+      : { url: '', caption: '', category: '', active: true, sort_order: 0 },
   });
+}
+
+// Массовая загрузка: файлы держим вне state (File-объекты не сериализуем)
+let galleryBulkFiles = [];
+
+function openGalleryBulkForm() {
+  galleryBulkFiles = [];
+  setState({ galleryBulkForm: { category: '' }, error: null });
+}
+
+async function uploadGalleryBulk() {
+  if (!galleryBulkFiles.length) { setState({ error: 'Выберите файлы для загрузки' }); return; }
+  setState({ saving: true });
+  try {
+    const fd = new FormData();
+    galleryBulkFiles.forEach(f => fd.append('files', f));
+    fd.append('category', state.galleryBulkForm.category || '');
+    const res = await fetch(BASE + '/api/gallery/bulk', { method: 'POST', body: fd, credentials: 'same-origin' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    const current = Array.isArray(state.gallery) ? state.gallery : [];
+    galleryBulkFiles = [];
+    setState({ gallery: [...data, ...current], galleryBulkForm: null, saving: false, error: null });
+  } catch (err) { setState({ saving: false, error: err.message }); }
 }
 
 async function saveGalleryPhoto() {
@@ -746,6 +773,7 @@ function renderShell() {
   const tentModal         = state.tentForm          ? renderTentModal()        : '';
   const newAppModal       = state.showNewAppModal  ? renderNewAppModal()      : '';
   const galleryPhotoModal = state.galleryPhotoForm ? renderGalleryPhotoModal() : '';
+  const galleryBulkModal  = state.galleryBulkForm  ? renderGalleryBulkModal()  : '';
   const mapPointModal     = state.mapPointForm     ? renderMapPointModal()     : '';
 
   return `
@@ -776,7 +804,7 @@ function renderShell() {
     </div>
     <div class="drawer-overlay${overlayOpen}" id="drawer-overlay"></div>
     <aside class="detail-drawer${drawerOpen}" id="detail-drawer">${drawerHtml}</aside>
-    ${eventModal}${fleetModal}${tentModal}${newAppModal}${galleryPhotoModal}${mapPointModal}`;
+    ${eventModal}${fleetModal}${tentModal}${newAppModal}${galleryPhotoModal}${galleryBulkModal}${mapPointModal}`;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -1595,8 +1623,17 @@ function renderContentView() {
 function renderGalleryView() {
   const gallery = Array.isArray(state.gallery) ? state.gallery : [];
   const activeCount = gallery.filter(p => p.active).length;
+  const filter = state.galleryFilter ?? 'all'; // '' — отдельный фильтр «Без категории»
+  const shown = filter === 'all' ? gallery : gallery.filter(p => (p.category || '') === filter);
 
-  const cards = gallery.length ? gallery.map(p => `
+  const countByCat = cat => gallery.filter(p => (p.category || '') === cat).length;
+  const tabs = [
+    `<button class="btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}" data-gallery-filter="all">Все (${gallery.length})</button>`,
+    ...Object.entries(GALLERY_CATS).map(([cat, label]) =>
+      `<button class="btn btn-sm ${filter === cat ? 'btn-primary' : 'btn-secondary'}" data-gallery-filter="${cat}">${label} (${countByCat(cat)})</button>`),
+  ].join(' ');
+
+  const cards = shown.length ? shown.map(p => `
     <div class="gallery-admin-card">
       <div class="gallery-admin-card__thumb">
         <img src="${esc(p.url)}" alt="${esc(p.caption)}" loading="lazy">
@@ -1605,6 +1642,7 @@ function renderGalleryView() {
         <div class="gallery-admin-card__caption">${esc(p.caption) || '<em style="color:var(--muted)">без подписи</em>'}</div>
         <div class="gallery-admin-card__meta">
           <span class="badge ${p.active ? 'badge-confirmed' : 'badge-rejected'}">${p.active ? 'Активно' : 'Скрыто'}</span>
+          ${p.category ? `<span class="badge" style="background:var(--bg);border:1px solid var(--border);color:var(--muted)">${GALLERY_CATS[p.category] || esc(p.category)}</span>` : ''}
           <span style="font-size:12px;color:var(--muted)">порядок: ${p.sort_order}</span>
         </div>
         <div class="gallery-admin-card__actions">
@@ -1613,14 +1651,18 @@ function renderGalleryView() {
           <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" data-delete-photo="${p.id}">✕</button>
         </div>
       </div>
-    </div>`).join('') : '<p style="color:var(--muted);margin-top:16px">Фотографий пока нет. Добавьте первое фото.</p>';
+    </div>`).join('') : `<p style="color:var(--muted);margin-top:16px">${gallery.length ? 'В этой категории фотографий нет.' : 'Фотографий пока нет. Добавьте первое фото.'}</p>`;
 
   return `
     <div>
       <div class="page-header">
         <h2>Галерея <span style="font-size:14px;font-weight:400;color:var(--muted)">(${activeCount} из ${gallery.length} показываются)</span></h2>
-        <button class="btn btn-primary" id="add-photo-btn">+ Добавить фото</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" id="bulk-photo-btn">⬆ Загрузить несколько</button>
+          <button class="btn btn-primary" id="add-photo-btn">+ Добавить фото</button>
+        </div>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">${tabs}</div>
       <div class="gallery-admin-grid">${cards}</div>
     </div>`;
 }
@@ -1645,6 +1687,12 @@ function renderGalleryPhotoModal() {
             ${f.url ? `<img src="${esc(f.url)}" style="margin-top:10px;max-height:140px;border-radius:8px;object-fit:cover;display:block">` : ''}
           </div>
           <div class="field"><label>Подпись</label><input id="gf-caption" type="text" value="${esc(f.caption || '')}" placeholder="Регата 2024 — закат"></div>
+          <div class="field"><label>Категория</label>
+            <select id="gf-category">
+              ${Object.entries(GALLERY_CATS).map(([cat, label]) =>
+                `<option value="${cat}" ${(f.category || '') === cat ? 'selected' : ''}>${label}</option>`).join('')}
+            </select>
+          </div>
           <div class="fields-row">
             <div class="field"><label>Порядок сортировки</label><input id="gf-order" type="number" value="${f.sort_order ?? 0}"></div>
             <div class="field"><label>Статус</label>
@@ -1659,6 +1707,43 @@ function renderGalleryPhotoModal() {
           ${isEdit ? `<button class="btn btn-danger" id="delete-photo-btn">Удалить</button>` : ''}
           <button class="btn btn-secondary" id="cancel-gallery-modal">Отмена</button>
           <button class="btn btn-primary" id="save-gallery-photo-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderGalleryBulkModal() {
+  const f = state.galleryBulkForm;
+  const n = galleryBulkFiles.length;
+  const fileList = n
+    ? `<ul style="margin:10px 0 0;padding-left:18px;max-height:160px;overflow:auto;font-size:13px;color:var(--muted)">
+        ${galleryBulkFiles.map(file => `<li>${esc(file.name)} <span style="opacity:.7">(${(file.size / 1024 / 1024).toFixed(1)} МБ)</span></li>`).join('')}
+      </ul>`
+    : '';
+  return `
+    <div class="modal-overlay" id="bulk-modal-overlay">
+      <div class="modal">
+        <div class="modal-head"><h3>Массовая загрузка фото</h3><button class="btn-icon" id="close-bulk-modal">✕</button></div>
+        <div class="modal-body">
+          ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ''}
+          <div class="field">
+            <label>Фотографии (до 30 файлов, до 6 МБ каждый)</label>
+            <label class="btn btn-secondary" style="cursor:pointer;display:inline-block">
+              Выбрать файлы<input type="file" id="bulk-files" accept="image/*" multiple style="display:none">
+            </label>
+            <span id="bulk-count" style="margin-left:10px;font-size:13px;color:var(--muted)">${n ? `выбрано: ${n}` : 'файлы не выбраны'}</span>
+            <div id="bulk-file-list">${fileList}</div>
+          </div>
+          <div class="field"><label>Категория для всех фото</label>
+            <select id="bulk-category">
+              ${Object.entries(GALLERY_CATS).map(([cat, label]) =>
+                `<option value="${cat}" ${(f.category || '') === cat ? 'selected' : ''}>${label}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancel-bulk-modal">Отмена</button>
+          <button class="btn btn-primary" id="upload-bulk-btn" ${state.saving || !n ? 'disabled' : ''}>${state.saving ? 'Загрузка…' : `Загрузить${n ? ` (${n})` : ''}`}</button>
         </div>
       </div>
     </div>`;
@@ -2029,6 +2114,9 @@ function attachShellHandlers() {
 
   // Gallery handlers
   document.getElementById('add-photo-btn')?.addEventListener('click', () => openGalleryPhotoForm());
+  document.getElementById('bulk-photo-btn')?.addEventListener('click', () => openGalleryBulkForm());
+  root.querySelectorAll('[data-gallery-filter]').forEach(btn =>
+    btn.addEventListener('click', () => setState({ galleryFilter: btn.dataset.galleryFilter })));
   root.querySelectorAll('[data-edit-photo]').forEach(btn =>
     btn.addEventListener('click', () => {
       const ph = state.gallery.find(p => p.id === Number(btn.dataset.editPhoto));
@@ -2052,6 +2140,7 @@ function attachShellHandlers() {
     if (!state.galleryPhotoForm) return;
     state.galleryPhotoForm.url     = document.getElementById('gf-url').value.trim();
     state.galleryPhotoForm.caption = document.getElementById('gf-caption').value.trim();
+    state.galleryPhotoForm.category = document.getElementById('gf-category').value;
     state.galleryPhotoForm.sort_order = Number(document.getElementById('gf-order').value) || 0;
     state.galleryPhotoForm.active  = Number(document.getElementById('gf-active').value) === 1;
     saveGalleryPhoto();
@@ -2073,6 +2162,22 @@ function attachShellHandlers() {
       }
     } catch (err) { setState({ error: err.message }); }
   });
+
+  // Gallery bulk upload modal handlers
+  const closeBulk = () => { galleryBulkFiles = []; setState({ galleryBulkForm: null, error: null }); };
+  document.getElementById('close-bulk-modal')?.addEventListener('click', closeBulk);
+  document.getElementById('cancel-bulk-modal')?.addEventListener('click', closeBulk);
+  document.getElementById('bulk-modal-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeBulk();
+  });
+  document.getElementById('bulk-category')?.addEventListener('change', e => {
+    state.galleryBulkForm.category = e.target.value; // без setState — не перерисовываем модалку
+  });
+  document.getElementById('bulk-files')?.addEventListener('change', e => {
+    galleryBulkFiles = Array.from(e.target.files || []);
+    render(); // перерисовать список файлов и счётчик
+  });
+  document.getElementById('upload-bulk-btn')?.addEventListener('click', uploadGalleryBulk);
 
   // Content handlers
   document.getElementById('save-content-btn')?.addEventListener('click', saveContentAction);

@@ -309,6 +309,9 @@ function createAdminRouter(db) {
 
   // ── Gallery ────────────────────────────────────────────────────────────
 
+  const GALLERY_CATEGORIES = new Set(['', 'regatta', 'bonfire', 'sunset']);
+  const cleanCategory = (c) => (GALLERY_CATEGORIES.has(c) ? c : '');
+
   router.get('/api/gallery', async (req, res) => {
     try { res.json(await listPhotos(db)); }
     catch (err) { console.error('List gallery error:', err); res.status(500).json({ error: GENERIC_ERR }); }
@@ -318,13 +321,29 @@ function createAdminRouter(db) {
     try {
       if (!req.body?.url) return res.status(400).json({ error: 'URL обязателен' });
       if (!isValidUrl(req.body.url)) return res.status(400).json({ error: 'Недопустимый URL изображения' });
-      res.status(201).json(await createPhoto(db, req.body));
+      res.status(201).json(await createPhoto(db, { ...req.body, category: cleanCategory(req.body.category) }));
     } catch (err) { console.error('Create photo error:', err); res.status(500).json({ error: GENERIC_ERR }); }
   });
 
+  // Массовая загрузка: несколько файлов + одна категория на всю пачку
+  router.post('/api/gallery/bulk', upload.array('files', 30), async (req, res) => {
+    try {
+      if (!req.files?.length) return res.status(400).json({ error: 'Файлы не загружены или неверный формат' });
+      const category = cleanCategory(req.body?.category);
+      const created = [];
+      for (const f of req.files) {
+        created.push(await createPhoto(db, { url: `/images/uploads/${f.filename}`, caption: '', category }));
+      }
+      res.status(201).json(created);
+    } catch (err) { console.error('Bulk gallery upload error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
   router.patch('/api/gallery/:id', async (req, res) => {
-    try { res.json(await updatePhoto(db, Number(req.params.id), req.body || {})); }
-    catch (err) { console.error('Update photo error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+    try {
+      const patch = { ...(req.body || {}) };
+      if (patch.category !== undefined) patch.category = cleanCategory(patch.category);
+      res.json(await updatePhoto(db, Number(req.params.id), patch));
+    } catch (err) { console.error('Update photo error:', err); res.status(500).json({ error: GENERIC_ERR }); }
   });
 
   router.delete('/api/gallery/:id', async (req, res) => {

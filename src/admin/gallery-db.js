@@ -25,17 +25,17 @@ function getPhoto(db, id) {
   return get(db, 'SELECT * FROM gallery_photos WHERE id = ?', [id]);
 }
 
-async function createPhoto(db, { url, caption = '', active = true, sort_order = 0 }) {
+async function createPhoto(db, { url, caption = '', category = '', active = true, sort_order = 0 }) {
   const now = new Date().toISOString();
   const r = await run(db,
-    `INSERT INTO gallery_photos (url, caption, active, sort_order, created_at) VALUES (?, ?, ?, ?, ?)`,
-    [url, caption, active ? 1 : 0, sort_order, now]
+    `INSERT INTO gallery_photos (url, caption, category, active, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    [url, caption, category, active ? 1 : 0, sort_order, now]
   );
   return getPhoto(db, r.lastID);
 }
 
 async function updatePhoto(db, id, patch) {
-  const allowed = ['caption', 'active', 'sort_order'];
+  const allowed = ['caption', 'category', 'active', 'sort_order'];
   const sets = [], vals = [];
   for (const key of allowed) {
     if (patch[key] !== undefined) {
