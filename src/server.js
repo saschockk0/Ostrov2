@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -427,8 +428,24 @@ app.get("/api/reviews", (req, res) => {
 // SEO-файлы отдаём явно с правильным Content-Type,
 // чтобы catch-all ниже их не перекрыл
 app.get("/sitemap.xml", (req, res) => {
+  // lastmod — дата последнего изменения index.html, чтобы не обновлять руками
+  const indexPath = path.join(__dirname, "..", "public", "index.html");
+  let lastmod = new Date();
+  try {
+    lastmod = fs.statSync(indexPath).mtime;
+  } catch (_) {}
   res.setHeader("Content-Type", "application/xml; charset=utf-8");
-  res.sendFile(path.join(__dirname, "..", "public", "sitemap.xml"));
+  res.send(
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      `  <url>\n` +
+      `    <loc>https://ostrov-parusa.ru/</loc>\n` +
+      `    <lastmod>${lastmod.toISOString().slice(0, 10)}</lastmod>\n` +
+      `    <changefreq>weekly</changefreq>\n` +
+      `    <priority>1.0</priority>\n` +
+      `  </url>\n` +
+      `</urlset>\n`
+  );
 });
 
 app.get("/robots.txt", (req, res) => {
@@ -436,9 +453,16 @@ app.get("/robots.txt", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "robots.txt"));
 });
 
-// Все прочие пути → SPA
+// llms.txt — описание клуба для ИИ-поисковиков (ChatGPT, Perplexity и т.п.)
+app.get("/llms.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.sendFile(path.join(__dirname, "..", "public", "llms.txt"));
+});
+
+// Несуществующие пути → честный 404, а не главная со статусом 200
+// (иначе поисковики считают это soft-404 и понижают сайт)
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+  res.status(404).sendFile(path.join(__dirname, "..", "public", "404.html"));
 });
 
 app.listen(port, () => {
