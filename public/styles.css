@@ -4437,3 +4437,24 @@ textarea {
   color: var(--ink-500, #5a6b78);
   text-align: center;
 }
+
+/* ============================================================
+   Reassurance у кнопки отправки опросника (снятие тревоги)
+   ============================================================ */
+.wizard-reassure {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--brand-leaf-50, #eef6f0);
+  color: var(--ink-600, #44535f);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.wizard-reassure__icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--brand-leaf-700, #2f7d4f);
+}
