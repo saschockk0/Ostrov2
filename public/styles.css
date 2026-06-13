@@ -1240,11 +1240,87 @@ textarea {
 
 .footer-contacts__cards {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 240px));
+  justify-content: center;
   gap: 14px;
   width: 100%;
-  max-width: 880px;
+  max-width: 520px;
   text-align: left;
+}
+
+/* ── Каналы связи в футере: мессенджеры + соцсети ─────────────────────────── */
+.footer-channels {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 26px 48px;
+  width: 100%;
+}
+.footer-channels__group {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+.footer-channels__title {
+  color: var(--brand-sky-200);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.footer-channels__row {
+  display: flex;
+  gap: 16px;
+}
+.chan {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  width: 56px;
+  text-decoration: none;
+}
+.chan__ic {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.chan:hover .chan__ic {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.4);
+}
+.chan:focus-visible { outline: none; }
+.chan:focus-visible .chan__ic { outline: 3px solid var(--brand-sky-200); outline-offset: 3px; }
+.chan__ic svg { fill: currentColor; }
+.chan__name {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.chan--max .chan__ic  { background: linear-gradient(135deg, #4a90e2, #9b59d6); }
+.chan--vk .chan__ic   { background: #0077ff; }
+.chan--wa .chan__ic   { background: #25d366; }
+.chan--tg .chan__ic   { background: #2aabee; }
+.chan--inst .chan__ic { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.chan--wa .chan__ic svg   { width: 24px; height: 24px; }
+.chan--max .chan__ic svg  { width: 26px; height: 26px; }
+.chan--vk .chan__ic svg   { width: 29px; height: 29px; }
+.chan--tg .chan__ic svg   { width: 30px; height: 30px; }
+.chan--inst .chan__ic svg { width: 25px; height: 25px; }
+
+.footer-meta-note {
+  color: var(--brand-sky-200);
+  opacity: 0.65;
+  font-size: 11px;
+  line-height: 1.45;
+  max-width: 540px;
+  margin: -2px auto 0;
+  text-align: center;
 }
 
 .footer-logo {
@@ -4331,66 +4407,81 @@ textarea {
 /* ============================================================
    Плавающая кнопка WhatsApp (быстрый контакт, рост конверсии)
    ============================================================ */
-.wa-fab {
+/* ── Плавающий переходник на мессенджеры (MAX · VK · WA · TG) ─────────────── */
+.msgr-rail {
   position: fixed;
   right: 20px;
   bottom: 24px;
   z-index: 46; /* выше sticky-бара (45), ниже модалок/опросника (9980+) */
-  width: 58px;
-  height: 58px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msgr {
+  position: relative;
+  width: 52px;
+  height: 52px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #25d366;
   color: #fff;
   text-decoration: none;
-  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45);
+  box-shadow: 0 6px 18px rgba(15, 27, 36, 0.28);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  animation: waPulse 2.6s ease-out infinite;
 }
-.wa-fab:hover {
-  transform: scale(1.07);
-  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.55);
+.msgr:hover {
+  transform: scale(1.08);
+  box-shadow: 0 10px 24px rgba(15, 27, 36, 0.4);
 }
-.wa-fab:focus-visible {
+.msgr:focus-visible {
   outline: 3px solid #0f1b24;
   outline-offset: 3px;
 }
-.wa-fab__icon { width: 30px; height: 30px; }
-.wa-fab__label {
+.msgr svg { fill: currentColor; }
+.msgr--max { background: linear-gradient(135deg, #4a90e2, #9b59d6); }
+.msgr--vk  { background: #0077ff; }
+.msgr--wa  { background: #25d366; }
+.msgr--tg  { background: #2aabee; }
+/* Глифы в разных viewBox — нормализуем зрительный размер */
+.msgr--wa svg  { width: 26px; height: 26px; }
+.msgr--max svg { width: 28px; height: 28px; }
+.msgr--vk svg  { width: 31px; height: 31px; }
+.msgr--tg svg  { width: 33px; height: 33px; }
+
+/* Подпись справа при наведении (десктоп) */
+.msgr__label {
   position: absolute;
-  right: 70px;
+  right: 64px;
   white-space: nowrap;
   background: #0f1b24;
   color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 8px 12px;
-  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 6px 10px;
+  border-radius: 8px;
   opacity: 0;
   transform: translateX(8px);
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
-.wa-fab:hover .wa-fab__label { opacity: 1; transform: translateX(0); }
-
-@keyframes waPulse {
-  0%   { box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45), 0 0 0 0 rgba(37, 211, 102, 0.45); }
-  70%  { box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45), 0 0 0 14px rgba(37, 211, 102, 0); }
-  100% { box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45), 0 0 0 0 rgba(37, 211, 102, 0); }
-}
+.msgr:hover .msgr__label { opacity: 1; transform: translateX(0); }
 
 @media (max-width: 768px) {
-  .wa-fab { width: 52px; height: 52px; right: 16px; bottom: 16px; }
-  .wa-fab__icon { width: 27px; height: 27px; }
-  .wa-fab__label { display: none; }
-  /* Когда показывается нижний sticky-бар — приподнимаем кнопку над ним */
-  .mobile-cta.is-visible ~ .wa-fab { bottom: 84px; }
+  .msgr-rail { right: 14px; bottom: 16px; gap: 10px; }
+  .msgr { width: 46px; height: 46px; }
+  .msgr--wa svg  { width: 23px; height: 23px; }
+  .msgr--max svg { width: 25px; height: 25px; }
+  .msgr--vk svg  { width: 27px; height: 27px; }
+  .msgr--tg svg  { width: 29px; height: 29px; }
+  .msgr__label { display: none; }
+  /* Когда показывается нижний sticky-бар — приподнимаем переходник над ним */
+  .mobile-cta.is-visible ~ .msgr-rail { bottom: 84px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wa-fab { animation: none; }
+  .msgr { transition: none; }
 }
 
 /* ============================================================

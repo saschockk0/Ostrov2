@@ -1343,14 +1343,10 @@ function applyContent(content) {
     }
   }
   if (content.contact_vk) {
-    const contactVk = document.getElementById('contactVk');
-    if (contactVk) {
-      const a = contactVk.querySelector('a');
-      if (a) {
-        a.href = content.contact_vk;
-        a.textContent = content.contact_vk.replace('https://', '');
-      }
-    }
+    // VK теперь живёт в переходнике мессенджеров и в соцсетях футера — обновляем все ссылки
+    document.querySelectorAll('.msgr--vk, .chan--vk').forEach((a) => {
+      a.href = content.contact_vk;
+    });
   }
 }
 
