@@ -298,6 +298,12 @@ function showStep(stepNum) {
   if (stepNum === TOTAL_STEPS) {
     renderTurnstile();
     updateReview();
+    // Автофокус на «Имя» — экономит тап и подталкивает заполнить контакты.
+    // Задержка даёт доиграть слайд-анимации; preventScroll — без рывка.
+    const nameInput = form.elements.name;
+    if (nameInput && typeof nameInput.focus === "function") {
+      setTimeout(() => { try { nameInput.focus({ preventScroll: true }); } catch (e) {} }, 140);
+    }
   }
 
   prevBtn.classList.toggle("hidden", stepNum === 1);
