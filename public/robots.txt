@@ -43,4 +43,4 @@ User-agent: *
 Disallow: /api/
 Disallow: /ostrov-admin/
 
-Sitemap: https://ostrov-parusa.ru/sitemap.xml
+Sitemap: https://pkostrov.ru/sitemap.xml

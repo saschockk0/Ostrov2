@@ -439,7 +439,7 @@ app.get("/sitemap.xml", (req, res) => {
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
       `  <url>\n` +
-      `    <loc>https://ostrov-parusa.ru/</loc>\n` +
+      `    <loc>https://pkostrov.ru/</loc>\n` +
       `    <lastmod>${lastmod.toISOString().slice(0, 10)}</lastmod>\n` +
       `    <changefreq>weekly</changefreq>\n` +
       `    <priority>1.0</priority>\n` +
