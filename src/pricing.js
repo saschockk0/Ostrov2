@@ -95,6 +95,16 @@ function toQty(value) {
   return Math.floor(parsed);
 }
 
+// "HH:MM" -> минуты от полуночи, либо null для пустого/кривого значения.
+function parseTimeMinutes(value) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
+  if (!m) return null;
+  const hours = Number(m[1]);
+  const minutes = Number(m[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
 function calculateQuote(payload) {
   const prices = getPrices();
   const adults = toQty(payload.adults);
@@ -103,7 +113,17 @@ function calculateQuote(payload) {
   const days = dateRangeDays(payload.arrivalDate, payload.departureDate);
 
   if (!days.length || totalGuests < 1) {
-    return { isValid: false, total: 0, nights: 0, breakdown: [{ label: 'Некорректные даты или количество гостей', amount: 0 }] };
+    return { isValid: false, total: 0, nights: 0, days: 0, breakdown: [{ label: 'Некорректные даты или количество гостей', amount: 0 }] };
+  }
+
+  // Сутки пребывания считаем от времени приезда: если выезд позже времени
+  // заезда, начались новые сутки — день выезда тоже входит в расчёт.
+  const arrivalMinutes = parseTimeMinutes(payload.arrivalTime);
+  const departureMinutes = parseTimeMinutes(payload.departureTime);
+  if (arrivalMinutes != null && departureMinutes != null && departureMinutes > arrivalMinutes) {
+    const extraDay = new Date(days[days.length - 1]);
+    extraDay.setDate(extraDay.getDate() + 1);
+    days.push(extraDay);
   }
 
   const breakdown = [];
@@ -143,7 +163,7 @@ function calculateQuote(payload) {
   }
 
   return {
-    isValid: true, total, nights: days.length, guests: totalGuests, breakdown,
+    isValid: true, total, nights: days.length, days: days.length, guests: totalGuests, breakdown,
     disclaimer: 'Предварительная стоимость. Финальную сумму подтверждает менеджер.',
   };
 }

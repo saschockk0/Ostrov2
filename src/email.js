@@ -38,8 +38,10 @@ function buildMailText(appId, payload, quote) {
   lines.push("Параметры отдыха:");
   lines.push(`- Взрослые: ${payload.answers?.adults || 0}`);
   lines.push(`- Дети 7-14: ${payload.answers?.children || 0}`);
-  lines.push(`- Заезд: ${payload.answers?.arrivalDate || "-"}`);
-  lines.push(`- Выезд: ${payload.answers?.departureDate || "-"}`);
+  const arrivalTime = payload.answers?.arrivalTime;
+  const departureTime = payload.answers?.departureTime;
+  lines.push(`- Заезд: ${payload.answers?.arrivalDate || "-"}${arrivalTime ? ` в ${arrivalTime}` : ""}`);
+  lines.push(`- Выезд: ${payload.answers?.departureDate || "-"}${departureTime ? ` в ${departureTime}` : ""}`);
   lines.push("");
   if (quote && quote.isValid) {
     lines.push("Расчет:");

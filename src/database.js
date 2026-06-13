@@ -208,9 +208,9 @@ function initDb() {
 function seedTents(db) {
   const defaults = [
     { name: "Кухня малая",        price_key: "canopySmall",   capacity: "до 8 чел.",    note: "от 600 ₽/сутки",   sort_order: 1 },
-    { name: "Кухня средняя",      price_key: "canopyMedium",  capacity: "",             note: "от 1 600 ₽/сутки", sort_order: 2 },
+    { name: "Кухня средняя",      price_key: "canopyMedium",  capacity: "10–15 чел.",   note: "от 1 600 ₽/сутки", sort_order: 2 },
     { name: "Кухня большая",      price_key: "canopyLarge",   capacity: "20–25 чел.",   note: "от 3 000 ₽/сутки", sort_order: 3 },
-    { name: "Кухня-шатёр «Эверест»", price_key: "canopyEverest", capacity: "",          note: "от 4 000 ₽/сутки", sort_order: 4 },
+    { name: "Кухня-шатёр «Эверест»", price_key: "canopyEverest", capacity: "30–40 чел.", note: "от 4 000 ₽/сутки", sort_order: 4 },
   ];
   db.get("SELECT COUNT(*) AS c FROM tents", [], function onCount(err, row) {
     if (err || !row || row.c > 0) return;
@@ -222,6 +222,16 @@ function seedTents(db) {
         function () {}
       );
     });
+  });
+  // Бэкфилл для уже существующих строк: заполняем вместимость, только если она
+  // пустая, чтобы не перетирать правки из админки.
+  const capacityBackfill = { canopyMedium: "10–15 чел.", canopyEverest: "30–40 чел." };
+  Object.entries(capacityBackfill).forEach(function ([key, capacity]) {
+    db.run(
+      "UPDATE tents SET capacity = ? WHERE price_key = ? AND (capacity IS NULL OR capacity = '')",
+      [capacity, key],
+      function () {}
+    );
   });
 }
 

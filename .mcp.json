@@ -19,6 +19,18 @@
         "CLAUDE_FLOW_MEMORY_BACKEND": "hybrid"
       },
       "autoStart": false
+    },
+    "magic": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@21st-dev/magic@latest"
+      ],
+      "env": {
+        "API_KEY": "d7df996a27ed1d632f853aad13aa857821e15b1b235ab14042692a9fccdabedc"
+      }
     }
   }
 }

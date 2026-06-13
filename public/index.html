@@ -234,7 +234,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=20260612" />
     <link rel="stylesheet" href="/js/leaflet.css" />
 
     <!-- Yandex.Metrika counter -->
@@ -555,6 +555,9 @@
           <div class="calc-v2__left">
             <label>Взрослые <input type="number" min="1" name="adults" value="2" /></label>
             <label>Дети 7–14 лет <input type="number" min="0" name="children" value="0" /></label>
+            <label>Время приезда <select name="arrivalTime"></select></label>
+            <label>Время отъезда <select name="departureTime"></select></label>
+            <small class="time-hint">Сутки пребывания считаем от времени приезда</small>
             <input type="hidden" name="arrivalDate" id="qcArrival" />
             <input type="hidden" name="departureDate" id="qcDeparture" />
           </div>
@@ -562,7 +565,7 @@
             <div id="quickCalCal" class="range-cal"></div>
             <div id="quickCalCalSummary" class="range-cal__summary hidden"></div>
           </div>
-          <button class="btn btn-primary calc-v2__submit" type="submit" disabled>Выберите даты →</button>
+          <button class="btn btn-primary calc-v2__submit" type="submit">Выберите даты →</button>
         </form>
         <div id="quickCalcResult" class="result hidden"></div>
         <div id="calcLead" class="calc-lead hidden">
@@ -841,6 +844,11 @@
             <input type="hidden" name="departureDate" />
             <div id="wizardCal" class="range-cal" style="margin-top:14px"></div>
             <div id="wizardCalSummary" class="range-cal__summary hidden"></div>
+            <div class="grid grid-2" style="margin-top:12px">
+              <label>Время приезда <select name="arrivalTime"></select></label>
+              <label>Время отъезда <select name="departureTime"></select></label>
+            </div>
+            <small class="time-hint">Сутки пребывания считаем от времени приезда: если выезжаете позже, чем приехали, день отъезда тоже войдёт в расчёт.</small>
             <button type="button" class="wizard-skip-link js-skip-to-contacts">
               Не хотите считать? Просто оставьте контакт — менеджер сам подберёт →
             </button>
@@ -860,6 +868,8 @@
                 <label>Палатка 3-местная <input type="number" min="0" name="tent3" value="0" /></label>
                 <label>Спальные комплекты <input type="number" min="0" name="sleepingSet" value="0" /></label>
                 <label>Стол с табуретками <input type="number" min="0" name="tableSet" value="0" /></label>
+                <label>Плитка походная <input type="number" min="0" name="stove" value="0" /></label>
+                <label>Газовые баллончики <input type="number" min="0" name="gasCanister" value="0" /></label>
               </div>
             </div>
             <label class="canopy-toggle">
@@ -877,10 +887,7 @@
               <div class="field-label" style="margin-top:8px">Вариант шатра</div>
               <input type="hidden" name="canopyType" value="canopySmall" />
               <div id="canopyCards" class="canopy-cards"></div>
-              <div class="grid grid-2" style="margin-top:12px">
-                <label>Плитка <input type="number" min="0" name="stove" value="0" /></label>
-                <label>Газовые баллончики <input type="number" min="0" name="gasCanister" value="0" /></label>
-              </div>
+              <p class="step-hint" style="margin-top:10px">Плитка и газовый баллон уже входят в комплект шатра.</p>
             </div>
             <h4 class="step-subhead">Дополнительные услуги</h4>
             <div class="service-grid">
@@ -897,13 +904,6 @@
                   <span class="service-row__hint">300 ₽/чел., минимум 600 ₽</span>
                 </span>
                 <input type="number" name="storeTripPeople" min="0" value="0" />
-              </label>
-              <label class="service-row">
-                <span class="service-row__info">
-                  <span class="service-row__name">Участие в регате</span>
-                  <span class="service-row__hint">1 000 ₽ с экипажа</span>
-                </span>
-                <input type="number" name="regattaCrew" min="0" value="0" />
               </label>
               <label class="service-row">
                 <span class="service-row__info">
@@ -1002,8 +1002,8 @@
     </div>
 
     <script src="/js/weather.js" defer></script>
-    <script src="/landing-ui.js" defer></script>
-    <script src="/app.js" defer></script>
+    <script src="/landing-ui.js?v=20260612" defer></script>
+    <script src="/app.js?v=20260612" defer></script>
     <script src="/js/leaflet.js"></script>
     <script src="/js/island-plan-data.js"></script>
     <script src="/js/island-plan.js"></script>

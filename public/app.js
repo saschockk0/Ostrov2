@@ -126,8 +126,11 @@ class RangeCalendar {
     if (date < this.today) return;
     if (!this.start || this.end) {
       this.start = date; this.end = null; this.hover = null;
+      // Начали новый выбор — старый диапазон больше не действует
+      this.onChange(null, null);
     } else if (date.getTime() === this.start.getTime()) {
       this.start = null;
+      this.onChange(null, null);
     } else {
       const [s, e] = date < this.start ? [date, this.start] : [this.start, date];
       this.start = s; this.end = e;
@@ -427,6 +430,8 @@ function getAnswersFromForm(sourceForm) {
     children: fd.get("children"),
     arrivalDate: fd.get("arrivalDate"),
     departureDate: fd.get("departureDate"),
+    arrivalTime: fd.get("arrivalTime") || "",
+    departureTime: fd.get("departureTime") || "",
     perDay: {
       instructor: 0,
       tent1: fd.get("tent1"),
@@ -443,7 +448,6 @@ function getAnswersFromForm(sourceForm) {
       transfer: fd.get("transfer"),
     },
     fixed: {
-      regattaCrew: fd.get("regattaCrew"),
       supHour: fd.get("supHour"),
       kayakHour: fd.get("kayakHour"),
     },
@@ -526,7 +530,7 @@ async function updateReview() {
       .map((row) => `<li>${row.label}: <strong>${money(row.amount)}</strong></li>`)
       .join("");
     reviewBlock.innerHTML = `
-      <p>Ночей: <strong>${quote.nights}</strong>, гостей: <strong>${quote.guests}</strong></p>
+      <p>Суток: <strong>${quote.days || quote.nights}</strong>, гостей: <strong>${quote.guests}</strong></p>
       ${spotsLineHtml(avail)}
       <ul>${lines}</ul>
       <p><strong>Итого: ${money(quote.total)}</strong></p>
@@ -586,6 +590,21 @@ function initSteppers(container) {
 initSteppers(form);
 initSteppers(quickCalcForm);
 
+// ── Time selects: часы 00:00–23:00 для времени приезда/отъезда ────
+function fillTimeSelect(select, defaultValue) {
+  for (let h = 0; h < 24; h++) {
+    const value = `${String(h).padStart(2, "0")}:00`;
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    if (value === defaultValue) opt.selected = true;
+    select.appendChild(opt);
+  }
+}
+
+document.querySelectorAll('select[name="arrivalTime"]').forEach((s) => fillTimeSelect(s, "12:00"));
+document.querySelectorAll('select[name="departureTime"]').forEach((s) => fillTimeSelect(s, "12:00"));
+
 // ── Phone input mask: +7 (___) ___-__-__ ─────────────────────────
 function applyPhoneMask(input) {
   if (!input) return;
@@ -613,20 +632,22 @@ const wizardCal = new RangeCalendar(
   (arrival, departure) => {
     form.elements.arrivalDate.value = arrival || "";
     form.elements.departureDate.value = departure || "";
+    refreshLiveQuote();
   }
 );
 
-// Init quick-calculator calendar
+// Init quick-calculator calendar.
+// Кнопка всегда кликабельна: без выбранных дат она подсказывает, что делать,
+// вместо «мёртвой» disabled-кнопки, которая выглядит сломанной.
 const quickCalcSubmit = quickCalcForm.querySelector(".calc-v2__submit");
+quickCalcSubmit.disabled = false; // страховка от закэшированного HTML с атрибутом disabled
 const quickCalCal = new RangeCalendar(
   document.getElementById("quickCalCal"),
   document.getElementById("quickCalCalSummary"),
   (arrival, departure) => {
     document.getElementById("qcArrival").value = arrival || "";
     document.getElementById("qcDeparture").value = departure || "";
-    const ready = arrival && departure;
-    quickCalcSubmit.disabled = !ready;
-    quickCalcSubmit.textContent = ready ? "Рассчитать →" : "Выберите даты →";
+    quickCalcSubmit.textContent = arrival && departure ? "Рассчитать →" : "Выберите даты →";
   }
 );
 
@@ -674,6 +695,10 @@ if (suggestTentsBtn) suggestTentsBtn.addEventListener("click", suggestCamping);
 form.addEventListener("input", (e) => {
   if (e.target && e.target.classList) e.target.classList.remove("is-error");
 });
+
+// Любое изменение полей опросника (степперы, время, количество) обновляет
+// предварительную сумму в нижней панели
+form.addEventListener("change", () => refreshLiveQuote());
 
 // Toggle canopy block when checkbox changes (on step 3)
 form.elements.needCanopy.addEventListener("change", () => {
@@ -727,7 +752,8 @@ quickCalcForm.addEventListener("submit", async (event) => {
   const departureDate = document.getElementById("qcDeparture").value;
   if (!arrivalDate || !departureDate) {
     quickCalcResult.classList.remove("hidden");
-    quickCalcResult.textContent = "Выберите даты заезда и выезда на календаре справа.";
+    quickCalcResult.textContent = "Выберите на календаре дату заезда, а затем дату выезда.";
+    document.getElementById("quickCalCal").scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
   try {
@@ -736,14 +762,17 @@ quickCalcForm.addEventListener("submit", async (event) => {
       children: quickCalcForm.elements.children.value,
       arrivalDate,
       departureDate,
+      arrivalTime: quickCalcForm.elements.arrivalTime.value,
+      departureTime: quickCalcForm.elements.departureTime.value,
       perDay: {},
       fixed: {},
       storeTripPeople: 0,
     });
     const avail = await getAvailability(arrivalDate, departureDate);
+    const daysCount = quote.days || quote.nights;
     quickCalcResult.classList.remove("hidden");
     quickCalcResult.innerHTML = `
-      <p>Ночей: <strong>${quote.nights}</strong></p>
+      <p>Суток: <strong>${daysCount}</strong></p>
       <p>Предварительная стоимость: <strong>${money(quote.total)}</strong></p>
       ${spotsLineHtml(avail)}
       <small>${quote.disclaimer}</small>
@@ -1034,10 +1063,10 @@ loadFleet();
 // price_key в скрытый input canopyType), кнопка «Подробнее» = модалка с деталями.
 // Фоллбэк-список держит калькулятор рабочим, если /api/tents недоступен.
 const CANOPY_FALLBACK = [
-  { price_key: 'canopySmall',   name: 'Кухня малая',           capacity: 'до 8 чел.',  note: 'от 600 ₽/сутки',   length_m: '', image_url: '', images: '' },
-  { price_key: 'canopyMedium',  name: 'Кухня средняя',         capacity: '',           note: 'от 1 600 ₽/сутки', length_m: '', image_url: '', images: '' },
-  { price_key: 'canopyLarge',   name: 'Кухня большая',         capacity: '20–25 чел.', note: 'от 3 000 ₽/сутки', length_m: '', image_url: '', images: '' },
-  { price_key: 'canopyEverest', name: 'Кухня-шатёр «Эверест»', capacity: '',           note: 'от 4 000 ₽/сутки', length_m: '', image_url: '', images: '' },
+  { price_key: 'canopySmall',   name: 'Кухня малая',           capacity: 'до 8 чел.',   note: 'от 600 ₽/сутки',   length_m: '', image_url: '', images: '' },
+  { price_key: 'canopyMedium',  name: 'Кухня средняя',         capacity: '10–15 чел.',  note: 'от 1 600 ₽/сутки', length_m: '', image_url: '', images: '' },
+  { price_key: 'canopyLarge',   name: 'Кухня большая',         capacity: '20–25 чел.',  note: 'от 3 000 ₽/сутки', length_m: '', image_url: '', images: '' },
+  { price_key: 'canopyEverest', name: 'Кухня-шатёр «Эверест»', capacity: '30–40 чел.',  note: 'от 4 000 ₽/сутки', length_m: '', image_url: '', images: '' },
 ];
 
 let canopyItems = [];
@@ -1351,6 +1380,8 @@ calcLeadForm.addEventListener("submit", async (e) => {
           children: quickCalcForm.elements.children.value,
           arrivalDate: document.getElementById("qcArrival").value,
           departureDate: document.getElementById("qcDeparture").value,
+          arrivalTime: quickCalcForm.elements.arrivalTime.value,
+          departureTime: quickCalcForm.elements.departureTime.value,
           perDay: {},
           fixed: {},
           storeTripPeople: 0,
@@ -1508,6 +1539,8 @@ calcLeadForm.addEventListener("submit", async (e) => {
             children:      quickCalcForm.elements.children.value,
             arrivalDate:   document.getElementById("qcArrival").value,
             departureDate: document.getElementById("qcDeparture").value,
+            arrivalTime:   quickCalcForm.elements.arrivalTime.value,
+            departureTime: quickCalcForm.elements.departureTime.value,
             perDay: {}, fixed: {}, storeTripPeople: 0,
           },
         }),

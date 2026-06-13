@@ -957,6 +957,15 @@ textarea {
   cursor: not-allowed;
 }
 
+/* Подсказка про расчёт суток от времени приезда (калькулятор и опросник) */
+.time-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-500);
+}
+
 /* ── Lead capture form (after calculator result) ─────────────── */
 .calc-lead {
   margin-top: 16px;
