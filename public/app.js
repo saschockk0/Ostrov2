@@ -333,6 +333,7 @@ async function refreshLiveQuote() {
 let successPrepay = { appId: null, amount: 0 };
 
 function showSuccess(applicationId, quote) {
+  clearWizardConfig(); // заявка отправлена — конфигурация больше не нужна
   form.classList.add("hidden");
   wizardSuccess.classList.remove("hidden");
   successMessage.textContent = `Заявка #${applicationId} принята. Мы свяжемся с вами в ближайшее время.`;
@@ -384,6 +385,43 @@ if (prepayBtn) {
   });
 }
 
+// --- Сохранение/восстановление конфигурации поездки (без ПДн) ---
+// Случайно закрытый/перезагруженный опросник не теряет даты, гостей и
+// время. sessionStorage — живёт в пределах вкладки, поэтому даты не
+// «протухают» на дни. Имя/телефон/почту НЕ храним.
+const TRIP_KEY = "ostrov_trip_v1";
+function saveWizardConfig() {
+  try {
+    const a = form.elements.arrivalDate.value;
+    const d = form.elements.departureDate.value;
+    if (!a || !d) return; // сохраняем только осмысленную конфигурацию
+    sessionStorage.setItem(TRIP_KEY, JSON.stringify({
+      adults: form.elements.adults.value,
+      children: form.elements.children.value,
+      arrival: a, departure: d,
+      arrivalTime: form.elements.arrivalTime.value,
+      departureTime: form.elements.departureTime.value,
+    }));
+  } catch (e) {}
+}
+function restoreWizardConfig() {
+  try {
+    const raw = sessionStorage.getItem(TRIP_KEY);
+    if (!raw) return;
+    const c = JSON.parse(raw);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (!c.arrival || !c.departure || new Date(c.arrival) < today) return; // не восстанавливаем прошедшие даты
+    if (c.adults) form.elements.adults.value = c.adults;
+    if (c.children) form.elements.children.value = c.children;
+    if (c.arrivalTime) form.elements.arrivalTime.value = c.arrivalTime;
+    if (c.departureTime) form.elements.departureTime.value = c.departureTime;
+    wizardCal.setRange(c.arrival, c.departure);
+  } catch (e) {}
+}
+function clearWizardConfig() {
+  try { sessionStorage.removeItem(TRIP_KEY); } catch (e) {}
+}
+
 function openWizard() {
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
@@ -393,6 +431,7 @@ function openWizard() {
   clearFieldErrors();
   wizardCal.reset();
   showStep(1);
+  restoreWizardConfig(); // вернуть ранее выбранную конфигурацию, если есть
   document.body.style.overflow = "hidden";
   ymGoal("wizard_open");
 }
@@ -651,6 +690,7 @@ const wizardCal = new RangeCalendar(
     form.elements.arrivalDate.value = arrival || "";
     form.elements.departureDate.value = departure || "";
     refreshLiveQuote();
+    saveWizardConfig();
   }
 );
 
@@ -746,7 +786,7 @@ form.addEventListener("keydown", (e) => {
 
 // Любое изменение полей опросника (степперы, время, количество) обновляет
 // предварительную сумму в нижней панели
-form.addEventListener("change", () => refreshLiveQuote());
+form.addEventListener("change", () => { refreshLiveQuote(); saveWizardConfig(); });
 
 // Toggle canopy block when checkbox changes (on step 3)
 form.elements.needCanopy.addEventListener("change", () => {
