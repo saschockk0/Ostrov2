@@ -1587,15 +1587,22 @@ textarea {
 
 /* ── Live quote bar ──────────────────────────────────────────── */
 .live-quote {
+  /* Липнет к низу прокручиваемой модалки — предварительная цена всегда
+     на виду по мере заполнения опросника (усиление ценности). */
+  position: sticky;
+  bottom: -20px; /* -20px компенсирует нижний padding диалога → бар вплотную к низу */
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 12px;
-  padding: 8px 16px;
+  /* отрицательные поля компенсируют padding:20px диалога → бар во всю ширину */
+  margin: 12px -20px -20px;
+  padding: 12px 16px;
   background: var(--brand-sky-050);
-  border: 1px solid var(--brand-sky-200);
-  border-radius: 8px;
+  border-top: 1px solid var(--brand-sky-200);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 -6px 16px rgba(15, 27, 36, 0.08);
   font-size: 14px;
   color: var(--ink-700);
 }
