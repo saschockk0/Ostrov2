@@ -732,6 +732,18 @@ form.addEventListener("input", (e) => {
   if (e.target && e.target.classList) e.target.classList.remove("is-error");
 });
 
+// Enter в полях опросника: на промежуточных шагах = «Далее» (а не
+// преждевременная отправка формы с пустыми контактами). В textarea Enter —
+// перенос строки; на финальном шаге — обычная отправка.
+form.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  if (e.target && e.target.tagName === "TEXTAREA") return;
+  if (currentStep < TOTAL_STEPS) {
+    e.preventDefault();
+    nextBtn.click();
+  }
+});
+
 // Любое изменение полей опросника (степперы, время, количество) обновляет
 // предварительную сумму в нижней панели
 form.addEventListener("change", () => refreshLiveQuote());
