@@ -4423,3 +4423,17 @@ textarea {
 @media (max-width: 768px) {
   .hero-trust { font-size: 13px; padding: 6px 11px; }
 }
+
+/* ============================================================
+   Переход из калькулятора в опросник с предзаполнением
+   ============================================================ */
+.calc-lead__continue {
+  width: 100%;
+  margin-bottom: 12px;
+}
+.calc-lead__sep {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--ink-500, #5a6b78);
+  text-align: center;
+}

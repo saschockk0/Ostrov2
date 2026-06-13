@@ -178,6 +178,18 @@ class RangeCalendar {
     this._refresh(); this._updateSummary();
   }
 
+  // Программно задать диапазон (перенос дат из калькулятора в опросник).
+  setRange(startIso, endIso) {
+    if (!startIso || !endIso) return;
+    this.start = this.parse(startIso);
+    this.end = this.parse(endIso);
+    this.hover = null;
+    this.viewYear = this.start.getFullYear();
+    this.viewMonth = this.start.getMonth();
+    this.onChange(this.fmt(this.start), this.fmt(this.end));
+    this.render(); // render() сам зовёт _updateSummary()
+  }
+
   _prevMo() {
     if (this.viewMonth === 0) { this.viewYear--; this.viewMonth = 11; } else this.viewMonth--;
     const n = new Date();
@@ -653,6 +665,24 @@ const quickCalCal = new RangeCalendar(
 
 // Open wizard
 document.querySelectorAll(".js-open-wizard").forEach((btn) => btn.addEventListener("click", openWizard));
+
+// Тёплый переход из калькулятора в полный опросник с предзаполненными
+// датами/людьми/временем — без повторного ввода (рост конверсии).
+const calcToWizardBtn = document.getElementById("calcToWizard");
+if (calcToWizardBtn) {
+  calcToWizardBtn.addEventListener("click", () => {
+    const qc = quickCalcForm.elements;
+    const arrival = document.getElementById("qcArrival").value;
+    const departure = document.getElementById("qcDeparture").value;
+    openWizard(); // сбрасывает календарь и шаги — поэтому заполняем после.
+    form.elements.adults.value = qc.adults.value || "2";
+    form.elements.children.value = qc.children.value || "0";
+    if (qc.arrivalTime.value) form.elements.arrivalTime.value = qc.arrivalTime.value;
+    if (qc.departureTime.value) form.elements.departureTime.value = qc.departureTime.value;
+    if (arrival && departure) wizardCal.setRange(arrival, departure);
+    ymGoal("calc_to_wizard");
+  });
+}
 
 // Close buttons
 document.getElementById("closeWizard").addEventListener("click", closeWizard);
