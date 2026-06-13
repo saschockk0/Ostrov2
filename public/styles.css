@@ -4320,3 +4320,68 @@ textarea {
   border-color: #f0c2b2;
 }
 .calc-spots--low strong { color: var(--accent-buoy, #d9633b); }
+
+/* ============================================================
+   Плавающая кнопка WhatsApp (быстрый контакт, рост конверсии)
+   ============================================================ */
+.wa-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  z-index: 46; /* выше sticky-бара (45), ниже модалок/опросника (9980+) */
+  width: 58px;
+  height: 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #25d366;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: waPulse 2.6s ease-out infinite;
+}
+.wa-fab:hover {
+  transform: scale(1.07);
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.55);
+}
+.wa-fab:focus-visible {
+  outline: 3px solid #0f1b24;
+  outline-offset: 3px;
+}
+.wa-fab__icon { width: 30px; height: 30px; }
+.wa-fab__label {
+  position: absolute;
+  right: 70px;
+  white-space: nowrap;
+  background: #0f1b24;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 10px;
+  opacity: 0;
+  transform: translateX(8px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.wa-fab:hover .wa-fab__label { opacity: 1; transform: translateX(0); }
+
+@keyframes waPulse {
+  0%   { box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45), 0 0 0 0 rgba(37, 211, 102, 0.45); }
+  70%  { box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45), 0 0 0 14px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45), 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+@media (max-width: 768px) {
+  .wa-fab { width: 52px; height: 52px; right: 16px; bottom: 16px; }
+  .wa-fab__icon { width: 27px; height: 27px; }
+  .wa-fab__label { display: none; }
+  /* Когда показывается нижний sticky-бар — приподнимаем кнопку над ним */
+  .mobile-cta.is-visible ~ .wa-fab { bottom: 84px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-fab { animation: none; }
+}
