@@ -263,16 +263,39 @@
   update();
 })();
 
-/* ─── prefers-reduced-motion: не автозапускаем hero-видео ──────────
-   Пользователь с непереносимостью движения видит постер; включить
-   видео можно вручную кнопкой play. */
+/* ─── Hero-видео: автозапуск только на десктопе с нормальной сетью ──
+   Мобильные, экономия трафика (Save-Data), медленная сеть и
+   prefers-reduced-motion видят постер (~170 КБ) вместо загрузки 17 МБ
+   видео при заходе. Видео стартует по кнопке play. Экономит мобильный
+   трафик и ускоряет загрузку — самый конверсионно-важный сегмент. */
 (function () {
-  if (!window.matchMedia) return;
-  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  document.querySelectorAll("video.js-hero-video, .hero-video").forEach((v) => {
-    try {
-      v.removeAttribute("autoplay");
-      v.pause();
-    } catch (e) {}
-  });
+  const video = document.querySelector("video.js-hero-video");
+  if (!video) return;
+
+  const mm = window.matchMedia ? (q) => window.matchMedia(q).matches : null;
+  const reduced = mm ? mm("(prefers-reduced-motion: reduce)") : false;
+  const isMobile = mm ? mm("(max-width: 768px)") : window.innerWidth <= 768;
+  const conn = navigator.connection || {};
+  const saveData = !!conn.saveData;
+  const slow = /(^|-)2g$/.test(conn.effectiveType || "");
+
+  if (reduced || isMobile || saveData || slow) {
+    // Постер остаётся видимым, 17 МБ не качаем; запуск — кнопкой play.
+    video.removeAttribute("autoplay");
+    try { video.pause(); } catch (e) {}
+    return;
+  }
+
+  // Десктоп с нормальной сетью: подгружаем и запускаем как раньше.
+  // preload="none" → данных ещё нет, поэтому пробуем play() сразу (на случай
+  // кэша) и повторяем по canplay, когда видео готово к воспроизведению.
+  const tryPlay = () => {
+    const p = video.play();
+    if (p && p.catch) p.catch(() => {});
+  };
+  try {
+    video.preload = "auto";
+    tryPlay();
+    video.addEventListener("canplay", tryPlay, { once: true });
+  } catch (e) {}
 })();
