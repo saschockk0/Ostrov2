@@ -299,3 +299,265 @@
     video.addEventListener("canplay", tryPlay, { once: true });
   } catch (e) {}
 })();
+
+/* ─── Плавное появление блоков при прокрутке (scroll-reveal) ───────
+   Прогрессивное улучшение: если нет IntersectionObserver или включён
+   reduce-motion — ничего не делаем, контент остаётся видимым. Иначе
+   ставим .reveal-on на <html>, прячем блоки ниже первого экрана и
+   плавно показываем их при попадании во вьюпорт, со стаггером внутри
+   групп (карточки в сетке появляются друг за другом). */
+(function () {
+  "use strict";
+
+  if (!("IntersectionObserver" in window)) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var docEl = document.documentElement;
+
+  // Блоки-кандидаты на анимацию появления (только презентационные).
+  var INCLUDE = [
+    ".section > h2",
+    ".section > p",
+    ".section > .eyebrow",
+    ".section__title",
+    ".section-title",
+    ".section-subtitle",
+    ".section-head",
+    ".va-fleet__head",
+    ".fleet-scene",
+    "#about .card",
+    ".table-wrap",
+    ".pricing-cta",
+    ".faq-layout .eyebrow",
+    ".faq details",
+    ".events-grid",
+    ".events-timeline",
+    ".gallery-filters",
+    ".testimonials-stat",
+    ".yandex-reviews-wrap",
+    ".editorial__quote",
+    ".editorial__text",
+    ".editorial__items",
+    ".editorial__actions",
+    ".weather-widget",
+    ".footer-friends__title",
+    ".friend-card"
+  ].join(",");
+
+  // Зоны, которые трогать нельзя: интерактив, sticky/абсолют, карта Leaflet,
+  // hero/хедер/навигация/модалки (важно для конверсии — видны сразу).
+  var EXCLUDE = "#calculator, #island-plan, .hero, .site-header, .va-nav, #wizardModal, .modal, .mobile-cta, .msgr-rail, #island-map";
+
+  var io = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add("is-revealed");
+          io.unobserve(e.target);
+        }
+      });
+    },
+    { rootMargin: "0px 0px -7% 0px", threshold: 0.05 }
+  );
+
+  var vh = window.innerHeight || docEl.clientHeight;
+  var nodes = Array.prototype.slice.call(document.querySelectorAll(INCLUDE));
+  var prepared = 0;
+  var lastParent = null;
+  var groupIdx = 0;
+
+  nodes.forEach(function (el) {
+    if (el.closest && el.closest(EXCLUDE)) return;
+
+    // Уже видно при загрузке → показываем сразу, без анимации (нет «мигания»
+    // и контент первого экрана появляется мгновенно).
+    var rect = el.getBoundingClientRect();
+    if (rect.top < vh * 0.9 && rect.bottom > 0) return;
+
+    // Стаггер: соседние подходящие элементы одного родителя появляются каскадом.
+    if (el.parentNode === lastParent) {
+      groupIdx++;
+    } else {
+      groupIdx = 0;
+      lastParent = el.parentNode;
+    }
+    var delay = Math.min(groupIdx * 70, 280);
+    if (delay) el.style.setProperty("--reveal-delay", delay + "ms");
+
+    el.classList.add("reveal");
+    io.observe(el);
+    prepared++;
+  });
+
+  if (prepared) docEl.classList.add("reveal-on");
+
+  // Страховка: секции «галерея», «события», «отзывы» наполняются через API
+  // уже после загрузки. Если контент дорисовался, когда пользователь проскроллил
+  // мимо (или элемент стартовал с hidden), IntersectionObserver не сработает и
+  // блок останется невидимым. Поэтому периодически показываем всё, что уже
+  // попало в зону видимости или выше неё. Контент ниже первого экрана это не
+  // затрагивает — он по-прежнему появляется плавно при прокрутке.
+  function safetySweep() {
+    var vhNow = window.innerHeight || docEl.clientHeight;
+    var rest = document.querySelectorAll(".reveal:not(.is-revealed)");
+    for (var i = 0; i < rest.length; i++) {
+      var r = rest[i].getBoundingClientRect();
+      if (r.top < vhNow) {
+        rest[i].classList.add("is-revealed");
+        io.unobserve(rest[i]);
+      }
+    }
+  }
+
+  window.addEventListener("load", function () { setTimeout(safetySweep, 300); });
+  // догрузка API-секций: добиваем отложенными проходами
+  setTimeout(safetySweep, 1800);
+  setTimeout(safetySweep, 4500);
+})();
+
+/* ─── Тень у липкого хедера при прокрутке ─────────────────────────
+   Мягко отделяем шапку от контента, когда страница прокручена.
+   Работает и при reduce-motion (там просто без анимации тени). */
+(function () {
+  "use strict";
+  var header = document.querySelector(".site-header");
+  if (!header) return;
+
+  var ticking = false;
+  function apply() {
+    header.classList.toggle("is-scrolled", window.scrollY > 8);
+    ticking = false;
+  }
+  function onScroll() {
+    if (!ticking) {
+      ticking = true;
+      window.requestAnimationFrame(apply);
+    }
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  apply();
+})();
+
+/* ─── Scroll-spy: подсветка активного раздела в навигации ──────────
+   Активен последний раздел, чей верх выше «линии чтения» (~30% экрана
+   под хедером). Позиционный расчёт надёжнее ratio и не путает короткие
+   секции с длинными. rAF-throttled, passive. */
+(function () {
+  "use strict";
+  var nav = document.getElementById("mainNav");
+  if (!nav) return;
+
+  var entries = [];
+  Array.prototype.forEach.call(nav.querySelectorAll('a[href^="#"]'), function (a) {
+    var id = (a.getAttribute("href") || "").slice(1);
+    var sec = id && document.getElementById(id);
+    if (sec) entries.push({ id: id, link: a, sec: sec });
+  });
+  if (!entries.length) return;
+
+  // Сортируем по порядку в DOM (а не по offsetTop: у скрытых секций он 0 и
+  // ломает порядок). DOM-порядок = визуальный для обычного потока.
+  entries.sort(function (x, y) {
+    var p = x.sec.compareDocumentPosition(y.sec);
+    if (p & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+    if (p & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+    return 0;
+  });
+
+  // Видима ли секция (не display:none). У скрытых offsetParent === null.
+  function visible(sec) {
+    return sec.offsetParent !== null || sec.getClientRects().length > 0;
+  }
+
+  var current = null;
+  function setActive(id) {
+    if (id === current) return;
+    current = id;
+    for (var i = 0; i < entries.length; i++) {
+      entries[i].link.classList.toggle("is-active", entries[i].id === id);
+    }
+  }
+
+  var ticking = false;
+  function update() {
+    ticking = false;
+    var line = (window.innerHeight || 0) * 0.3 + 80;
+    var activeId = null;
+    for (var i = 0; i < entries.length; i++) {
+      if (!visible(entries[i].sec)) continue; // скрытые (напр. пустая галерея) пропускаем
+      var top = entries[i].sec.getBoundingClientRect().top;
+      if (activeId === null) activeId = entries[i].id; // дефолт — первый видимый раздел
+      if (top <= line) activeId = entries[i].id;
+      else break;
+    }
+    // У самого низа страницы — последний видимый раздел (контакты).
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) {
+      for (var j = entries.length - 1; j >= 0; j--) {
+        if (visible(entries[j].sec)) { activeId = entries[j].id; break; }
+      }
+    }
+    if (activeId) setActive(activeId);
+  }
+  function onScroll() {
+    if (!ticking) {
+      ticking = true;
+      window.requestAnimationFrame(update);
+    }
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+  update();
+})();
+
+/* ─── Плавное раскрытие/сворачивание FAQ ──────────────────────────
+   Нативный <details> показывает ответ мгновенно. Анимируем высоту
+   через Web Animations API (контент клипуется по overflow:hidden,
+   который уже задан в .faq details). При reduce-motion или без WAAPI —
+   обычное мгновенное поведение. */
+(function () {
+  "use strict";
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var items = document.querySelectorAll(".faq details");
+  if (!items.length) return;
+
+  Array.prototype.forEach.call(items, function (d) {
+    var summary = d.querySelector("summary");
+    if (!summary || typeof d.animate !== "function") return;
+
+    var anim = null;
+
+    function clear() {
+      d.style.height = "";
+      anim = null;
+    }
+
+    summary.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (anim) { anim.cancel(); anim = null; }
+
+      var summaryH = summary.offsetHeight;
+
+      if (!d.open) {
+        // Открытие: ставим open, меряем полную высоту, анимируем от свёрнутой
+        d.open = true;
+        var fullH = d.offsetHeight;
+        anim = d.animate(
+          [{ height: summaryH + "px" }, { height: fullH + "px" }],
+          { duration: 300, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)" }
+        );
+        anim.onfinish = clear;
+        anim.oncancel = clear;
+      } else {
+        // Закрытие: анимируем до высоты заголовка, потом снимаем open
+        var startH = d.offsetHeight;
+        anim = d.animate(
+          [{ height: startH + "px" }, { height: summaryH + "px" }],
+          { duration: 240, easing: "cubic-bezier(0.4, 0, 0.2, 1)" }
+        );
+        anim.onfinish = function () { d.open = false; clear(); };
+        anim.oncancel = clear;
+      }
+    });
+  });
+})();

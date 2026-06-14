@@ -77,6 +77,7 @@ body {
 /* Отступ при переходе по якорям, чтобы sticky-хедер не перекрывал заголовок секции */
 html {
   scroll-padding-top: 96px;
+  scroll-behavior: smooth; /* плавная прокрутка по якорям; гасится при reduce-motion ниже */
 }
 
 @media (max-width: 768px) {
@@ -104,6 +105,14 @@ body {
   background: #ffffff;
   border-bottom: 1px solid var(--ink-200);
   backdrop-filter: blur(8px);
+  transition: box-shadow 0.28s ease, background-color 0.28s ease,
+              border-color 0.28s ease;
+}
+/* При прокрутке хедер мягко «отрывается» от контента — тень вместо жёсткой линии */
+.site-header.is-scrolled {
+  border-bottom-color: transparent;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 22px rgba(15, 27, 36, 0.09);
 }
 
 .header-inner {
@@ -132,6 +141,42 @@ body {
   color: var(--ink-700);
   font-size: 16px;
   font-weight: 600;
+}
+
+/* Анимированное подчёркивание навигации + подсветка активного раздела (scroll-spy) */
+.main-nav a {
+  position: relative;
+  padding-bottom: 3px;
+  transition: color 0.2s ease;
+}
+.main-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--brand-sky-700);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.main-nav a:hover {
+  color: var(--brand-sky-900);
+}
+.main-nav a:hover::after,
+.main-nav a.is-active::after {
+  transform: scaleX(1);
+}
+.main-nav a.is-active {
+  color: var(--brand-sky-900);
+}
+.phone-link {
+  transition: color 0.2s ease;
+}
+.phone-link:hover {
+  color: var(--brand-sky-700);
 }
 
 .header-actions {
@@ -793,6 +838,23 @@ th {
   align-items: center;
   justify-content: center;
   min-height: 44px;
+  transition: background-color 0.2s ease, color 0.2s ease,
+              transform 0.12s ease, box-shadow 0.25s ease;
+}
+
+/* Лёгкий подъём при наведении (только на устройствах с курсором, без «залипания» на тач)
+   и тактильное «нажатие» — делают главный CTA отзывчивым и приятным. */
+@media (hover: hover) {
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+}
+.btn:active {
+  transform: translateY(0) scale(0.985);
+}
+.btn:focus-visible {
+  outline: 3px solid var(--brand-sky-200);
+  outline-offset: 3px;
 }
 
 .btn-primary {
@@ -802,6 +864,10 @@ th {
 
 .btn-primary:hover {
   background: var(--primary-hover);
+  box-shadow: 0 6px 18px rgba(27, 79, 114, 0.28);
+}
+.btn-primary:active {
+  box-shadow: 0 2px 8px rgba(27, 79, 114, 0.22);
 }
 
 .btn-primary.js-open-wizard {
@@ -3896,6 +3962,14 @@ textarea {
     justify-content: flex-start;
   }
 
+  /* В мобильном drawer подчёркивание не нужно — есть разделители строк */
+  .main-nav a::after {
+    display: none;
+  }
+  .main-nav a.is-active {
+    color: var(--brand-sky-700);
+  }
+
   .main-nav a:last-child {
     border-bottom: none;
   }
@@ -4555,4 +4629,64 @@ textarea {
   flex: 0 0 auto;
   margin-top: 1px;
   color: var(--brand-leaf-700, #2f7d4f);
+}
+
+/* ============================================================
+   Плавное появление блоков при прокрутке (scroll-reveal)
+   Класс .reveal-on на <html> ставится из JS только если движение
+   разрешено (не reduce-motion) и есть IntersectionObserver.
+   Без JS / у краулеров / при reduce-motion — контент виден сразу
+   (классы не добавляются), поэтому SEO и доступность не страдают.
+   ============================================================ */
+.reveal-on .reveal {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition: opacity 0.7s cubic-bezier(0.22, 0.61, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.reveal-on .reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Подстраховка: даже если класс как-то попадёт в DOM — без анимации и сдвига */
+  .reveal-on .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* Кнопки: без «прыжка» при наведении/нажатии */
+  .btn:hover,
+  .btn:active {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+   Одноразовое мягкое появление контента hero при загрузке.
+   Чистый CSS, без JS. h1 НЕ трогаем — это LCP-элемент, он виден
+   сразу. При reduce-motion блок не применяется (контент виден).
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__content > *:not(h1) {
+    animation: heroIntro 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  .hero__content > .eyebrow { animation-delay: 0.04s; }
+  .hero__content > p { animation-delay: 0.12s; }
+  .hero__content > .hero-actions { animation-delay: 0.2s; }
+  .hero__content > .hero-trust { animation-delay: 0.28s; }
+  .hero__content > .hero-stats { animation-delay: 0.36s; }
+}
+@keyframes heroIntro {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
