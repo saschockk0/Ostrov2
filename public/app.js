@@ -422,7 +422,7 @@ function clearWizardConfig() {
   try { sessionStorage.removeItem(TRIP_KEY); } catch (e) {}
 }
 
-function openWizard() {
+function openWizard(prefill) {
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
   form.classList.remove("hidden");
@@ -432,6 +432,17 @@ function openWizard() {
   wizardCal.reset();
   showStep(1);
   restoreWizardConfig(); // вернуть ранее выбранную конфигурацию, если есть
+  // Предзаполнение из микро-интерактива (отдельно от restoreWizardConfig, т.к. тот гейтится датами)
+  if (prefill && typeof prefill === "object") {
+    if (prefill.adults != null) form.elements.adults.value = prefill.adults;
+    if (prefill.children != null) form.elements.children.value = prefill.children;
+    if (prefill.camping === "rent") {
+      suggestCamping(); // авто-подбор палаток по числу гостей
+    } else if (prefill.camping === "tent") {
+      form.elements.needCanopy.checked = true;
+      form.elements.needCanopy.dispatchEvent(new Event("change")); // раскрыть выбор шатра
+    }
+  }
   document.body.style.overflow = "hidden";
   ymGoal("wizard_open");
 }
@@ -792,6 +803,31 @@ form.addEventListener("change", () => { refreshLiveQuote(); saveWizardConfig(); 
 form.elements.needCanopy.addEventListener("change", () => {
   canopyBlock.classList.toggle("hidden", !form.elements.needCanopy.checked);
 });
+
+// --- Микро-интерактив перед калькулятором: открывает опросник с предзаполнением ---
+(function initQuickStart() {
+  const go = document.getElementById("qsGo");
+  const chips = document.getElementById("qsCamping");
+  if (!go || !chips) return;
+
+  let camping = "own";
+  chips.querySelectorAll(".quick-start__chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      chips.querySelectorAll(".quick-start__chip").forEach((c) => {
+        const active = c === chip;
+        c.classList.toggle("is-active", active);
+        c.setAttribute("aria-checked", active ? "true" : "false");
+      });
+      camping = chip.dataset.camping;
+    });
+  });
+
+  go.addEventListener("click", () => {
+    const adults = Math.max(1, parseInt(document.getElementById("qsAdults").value, 10) || 1);
+    const children = Math.max(0, parseInt(document.getElementById("qsChildren").value, 10) || 0);
+    openWizard({ adults, children, camping });
+  });
+})();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -1852,6 +1888,59 @@ const Lightbox = (function () {
         filters.appendChild(btn);
       });
       filters.hidden = false;
+    })
+    .catch(() => { section.hidden = true; });
+})();
+
+(function initVideos() {
+  const section = document.getElementById('videos');
+  const grid = document.getElementById('videoGrid');
+  if (!section || !grid) return;
+
+  fetch('/api/video')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(videos => {
+      if (!videos.length) { section.hidden = true; return; }
+      grid.innerHTML = '';
+      videos.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'video-card';
+
+        const video = document.createElement('video');
+        video.src = v.url;
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.preload = 'none';
+        if (v.poster) video.poster = v.poster;
+        card.appendChild(video);
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'video-card__play';
+        btn.setAttribute('aria-label', 'Воспроизвести видео');
+        card.appendChild(btn);
+
+        const toggle = () => {
+          if (video.paused) {
+            video.play();
+            card.classList.add('is-playing');
+          } else {
+            video.pause();
+            card.classList.remove('is-playing');
+          }
+        };
+        card.addEventListener('click', toggle);
+
+        if (v.caption) {
+          const cap = document.createElement('span');
+          cap.className = 'video-card__caption';
+          cap.textContent = v.caption;
+          card.appendChild(cap);
+        }
+        grid.appendChild(card);
+      });
+      section.hidden = false;
     })
     .catch(() => { section.hidden = true; });
 })();

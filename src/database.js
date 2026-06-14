@@ -121,6 +121,17 @@ function initDb() {
   // Категория фото: '' (без категории), regatta, bonfire, sunset
   db.run("ALTER TABLE gallery_photos ADD COLUMN category VARCHAR(50) NOT NULL DEFAULT ''", [], function (err) {});
   db.run(`
+    CREATE TABLE IF NOT EXISTS videos (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      url VARCHAR(500) NOT NULL,
+      poster VARCHAR(500),
+      caption VARCHAR(500),
+      active INT NOT NULL DEFAULT 1,
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at VARCHAR(30) NOT NULL
+    )
+  `);
+  db.run(`
     CREATE TABLE IF NOT EXISTS map_points (
       id INT PRIMARY KEY AUTO_INCREMENT,
       num INT NOT NULL DEFAULT 0,

@@ -320,38 +320,6 @@
         </div>
       </section>
 
-      <div class="hero-ticker container">
-        <div class="hero-ticker__inner" aria-hidden="true">
-          <span class="hero-ticker__item">Паруса</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Закаты над Волгой</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Сосны</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Гитара у костра</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Регаты</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Катамараны</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Шум волн</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Паруса</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Закаты над Волгой</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Сосны</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Гитара у костра</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Регаты</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Катамараны</span>
-          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
-          <span class="hero-ticker__item">Шум волн</span>
-        </div>
-      </div>
-
       <section class="section container" id="about">
         <h2>О лагере</h2>
         <p data-content-html="about_text">
@@ -382,6 +350,21 @@
             <p>Рейтинг 5,0 на Яндекс Картах. Регаты «Спасательный круг» и «Осенние ветры», парусная школа.</p>
           </article>
         </div>
+      </section>
+
+      <!-- Фотогалерея (загружается из /api/gallery) -->
+      <section class="section container gallery-section" id="gallery">
+        <p class="eyebrow">Фотогалерея</p>
+        <h2 class="section__title" style="margin-top:8px">Фото с острова</h2>
+        <div class="filter-tabs gallery-filters" id="galleryFilters" role="tablist" hidden></div>
+        <div class="gallery-grid" id="galleryGrid"></div>
+      </section>
+
+      <!-- Видео с острова (загружается из /api/video) -->
+      <section class="section container video-section" id="videos" hidden>
+        <p class="eyebrow">Видео</p>
+        <h2 class="section__title" style="margin-top:8px">Остров в движении</h2>
+        <div class="video-grid" id="videoGrid"></div>
       </section>
 
       <section class="section container" id="fleet">
@@ -529,6 +512,44 @@
         </div>
       </section>
 
+      <section class="section container" id="reviews">
+        <p class="eyebrow">Отзывы</p>
+        <div style="display:flex;align-items:flex-end;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:16px">
+          <div class="testimonials-stat">
+            <span class="testimonials-stat__num">5</span>
+            <span class="testimonials-stat__caption">Рейтинг на Яндекс Картах. Реальные отзывы гостей:</span>
+          </div>
+        </div>
+
+        <!-- Фото из отзывов (загружаются через /api/reviews) -->
+        <div class="review-photos" id="reviewPhotos" hidden>
+          <div class="review-photos__grid" id="reviewPhotosGrid"></div>
+          <a
+            href="https://yandex.ru/maps/org/parusny_klub_ostrov/107818186926/reviews/"
+            target="_blank"
+            rel="noopener"
+            class="review-photos__more"
+          >Все отзывы на Яндекс Картах →</a>
+        </div>
+
+        <!-- Полный виджет отзывов -->
+        <div class="yandex-reviews-wrap">
+          <iframe
+            class="yandex-reviews-iframe"
+            data-src="https://yandex.ru/maps-reviews-widget/107818186926?comments"
+            frameborder="0"
+            allow="fullscreen"
+            loading="lazy"
+          ></iframe>
+          <a
+            href="https://yandex.ru/maps/org/parusny_klub_ostrov/107818186926/"
+            target="_blank"
+            rel="noopener"
+            class="yandex-reviews-link"
+          >Парусный клуб Остров на Яндекс Картах</a>
+        </div>
+      </section>
+
       <section class="section container section--sky" id="pricing">
         <h2>Мини-прайс</h2>
         <div class="table-wrap">
@@ -550,6 +571,31 @@
         <small>Выходные дни в расчетах: пятница, суббота, воскресенье.</small>
         <div class="pricing-cta">
           <button class="btn btn-cream js-open-wizard">Оставить заявку</button>
+        </div>
+      </section>
+
+      <section class="section container" id="quickStart">
+        <div class="quick-start">
+          <p class="eyebrow">За 10 секунд</p>
+          <h2 class="quick-start__title">Подберём поездку под вас</h2>
+          <div class="quick-start__row">
+            <div class="quick-start__field">
+              <span class="quick-start__label">Сколько вас?</span>
+              <div class="quick-start__counters">
+                <label>Взрослые <input type="number" id="qsAdults" min="1" value="2" /></label>
+                <label>Дети 7–14 <input type="number" id="qsChildren" min="0" value="0" /></label>
+              </div>
+            </div>
+            <div class="quick-start__field">
+              <span class="quick-start__label">Где разместитесь?</span>
+              <div class="quick-start__chips" id="qsCamping" role="radiogroup" aria-label="Размещение">
+                <button type="button" class="quick-start__chip is-active" data-camping="own" role="radio" aria-checked="true">Своя палатка</button>
+                <button type="button" class="quick-start__chip" data-camping="rent" role="radio" aria-checked="false">Наша палатка</button>
+                <button type="button" class="quick-start__chip" data-camping="tent" role="radio" aria-checked="false">Кухня-шатёр</button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary quick-start__go" id="qsGo">Рассчитать поездку →</button>
         </div>
       </section>
 
@@ -655,6 +701,19 @@
           <p class="faq-contact">
             Не нашли ответ — напишите в VK или на&nbsp;<a href="mailto:ostrov133km@mail.ru">ostrov133km@mail.ru</a>, ответим в рабочие часы.
           </p>
+          <div class="faq-cta">
+            <p class="faq-cta__title">Остались вопросы? Напишите — ответим быстро</p>
+            <div class="faq-cta__row">
+              <a class="chan chan--tg" href="https://t.me/+79037334243" target="_blank" rel="noopener" aria-label="Написать в Telegram">
+                <span class="chan__ic"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M57.94 126.65c37.32-16.26 62.2-26.98 74.64-32.16 35.56-14.78 42.94-17.35 47.76-17.44 1.06-.02 3.42.25 4.96 1.49 1.28 1.05 1.64 2.47 1.82 3.47.16 1 .38 3.27.2 5.04-1.92 20.24-10.26 69.36-14.5 92.02-1.78 9.6-5.32 12.81-8.74 13.13-7.44.68-13.08-4.92-20.28-9.63-11.26-7.39-17.62-11.99-28.56-19.19-12.64-8.33-4.44-12.91 2.76-20.39 1.88-1.96 34.64-31.74 35.26-34.45.08-.34.16-1.6-.6-2.26-.74-.67-1.84-.44-2.64-.26-1.14.26-19.12 12.16-54 35.69-5.1 3.51-9.72 5.22-13.88 5.13-4.56-.1-13.36-2.58-19.9-4.71-8-2.6-14.38-3.98-13.82-8.41.28-2.3 3.46-4.66 9.52-7.07z"/></svg></span>
+                <span class="chan__name">Telegram</span>
+              </a>
+              <a class="chan chan--wa" href="https://wa.me/79037334243?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20%D1%83%D0%B7%D0%BD%D0%B0%D1%82%D1%8C%20%D0%BF%D1%80%D0%BE%20%D0%BE%D1%82%D0%B4%D1%8B%D1%85%20%D0%BD%D0%B0%20%D0%BE%D1%81%D1%82%D1%80%D0%BE%D0%B2%D0%B5" target="_blank" rel="noopener" aria-label="Написать в WhatsApp">
+                <span class="chan__ic"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 .4C7.4.4.5 7.3.5 15.9c0 2.8.7 5.4 2 7.8L.4 31.6l8.1-2.1c2.3 1.3 4.9 1.9 7.5 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.4 16 .4zm0 28.3c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.8 1.3 1.3-4.7-.3-.5a12.7 12.7 0 0 1-2-6.8C2.3 8.3 8.4 2.3 16 2.3s13.7 6 13.7 13.6S23.6 28.7 16 28.7zm7.5-9.9c-.4-.2-2.4-1.2-2.8-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.3 1.6-.2.3-.5.3-.9.1-.4-.2-1.7-.6-3.3-2-1.2-1.1-2-2.4-2.3-2.8-.2-.4 0-.6.2-.8l.6-.7c.2-.2.3-.4.4-.6.1-.3 0-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.8-.6-.7-.9-.7h-.7c-.2 0-.6.1-1 .5-.3.4-1.3 1.3-1.3 3.1s1.4 3.6 1.5 3.9c.2.3 2.6 4 6.3 5.6.9.4 1.6.6 2.1.8.9.3 1.7.2 2.3.1.7-.1 2.4-1 2.7-1.9.3-.9.3-1.7.2-1.9-.1-.2-.4-.3-.8-.5z"/></svg></span>
+                <span class="chan__name">WhatsApp</span>
+              </a>
+            </div>
+          </div>
           </div>
         </div>
       </section>
@@ -688,52 +747,6 @@
         </div>
       </section>
 
-      <!-- Фотогалерея (загружается из /api/gallery) -->
-      <section class="section container gallery-section" id="gallery">
-        <p class="eyebrow">Фотогалерея</p>
-        <h2 class="section__title" style="margin-top:8px">Фото с острова</h2>
-        <div class="filter-tabs gallery-filters" id="galleryFilters" role="tablist" hidden></div>
-        <div class="gallery-grid" id="galleryGrid"></div>
-      </section>
-
-      <section class="section container" id="reviews">
-        <p class="eyebrow">Отзывы</p>
-        <div style="display:flex;align-items:flex-end;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:16px">
-          <div class="testimonials-stat">
-            <span class="testimonials-stat__num">5</span>
-            <span class="testimonials-stat__caption">Рейтинг на Яндекс Картах. Реальные отзывы гостей:</span>
-          </div>
-        </div>
-
-        <!-- Фото из отзывов (загружаются через /api/reviews) -->
-        <div class="review-photos" id="reviewPhotos" hidden>
-          <div class="review-photos__grid" id="reviewPhotosGrid"></div>
-          <a
-            href="https://yandex.ru/maps/org/parusny_klub_ostrov/107818186926/reviews/"
-            target="_blank"
-            rel="noopener"
-            class="review-photos__more"
-          >Все отзывы на Яндекс Картах →</a>
-        </div>
-
-        <!-- Полный виджет отзывов -->
-        <div class="yandex-reviews-wrap">
-          <iframe
-            class="yandex-reviews-iframe"
-            data-src="https://yandex.ru/maps-reviews-widget/107818186926?comments"
-            frameborder="0"
-            allow="fullscreen"
-            loading="lazy"
-          ></iframe>
-          <a
-            href="https://yandex.ru/maps/org/parusny_klub_ostrov/107818186926/"
-            target="_blank"
-            rel="noopener"
-            class="yandex-reviews-link"
-          >Парусный клуб Остров на Яндекс Картах</a>
-        </div>
-      </section>
-
       <section class="editorial" id="about-island">
         <img class="editorial__photo" src="/assets/sunset.jpg" alt="Закат на Иваньковском водохранилище" loading="lazy" />
         <div class="editorial__wash-left"></div>
@@ -758,6 +771,38 @@
           </div>
         </div>
       </section>
+
+      <div class="hero-ticker container">
+        <div class="hero-ticker__inner" aria-hidden="true">
+          <span class="hero-ticker__item">Паруса</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Закаты над Волгой</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Сосны</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Гитара у костра</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Регаты</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Катамараны</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Шум волн</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Паруса</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Закаты над Волгой</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Сосны</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Гитара у костра</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Регаты</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Катамараны</span>
+          <span class="hero-ticker__item hero-ticker__item--dot">✦</span>
+          <span class="hero-ticker__item">Шум волн</span>
+        </div>
+      </div>
 
     </main>
 

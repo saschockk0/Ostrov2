@@ -48,6 +48,7 @@ let state = {
   prices: null, pricesDirty: false,
   content: null, contentLabels: null, contentDirty: false,
   gallery: [], galleryPhotoForm: null, galleryFilter: 'all', galleryBulkForm: null,
+  videos: [], videoForm: null,
   mapPoints: [], mapPointForm: null,
   availability: null, inventory: [], blocks: [], availFrom: '', availTo: '', invDirty: false,
   dashAvail: null,
@@ -177,6 +178,14 @@ async function loadGallery() {
     setState({ gallery: Array.isArray(data) ? data : [], view: 'gallery', error: null });
   }
   catch (err) { setState({ error: err.message, view: 'gallery', gallery: [] }); }
+}
+
+async function loadVideos() {
+  try {
+    const data = await api('GET', '/api/video');
+    setState({ videos: Array.isArray(data) ? data : [], view: 'videos', error: null });
+  }
+  catch (err) { setState({ error: err.message, view: 'videos', videos: [] }); }
 }
 
 async function loadMapPoints() {
@@ -597,6 +606,58 @@ async function deleteGalleryPhoto(id) {
   } catch (err) { setState({ error: err.message }); }
 }
 
+// ── Videos ────────────────────────────────────────────────────────────────
+
+async function uploadVideoFile(file) {
+  const fd = new FormData(); fd.append('file', file);
+  const res = await fetch(BASE + '/api/upload-video', { method: 'POST', body: fd, credentials: 'same-origin' });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Upload failed');
+  return data.url;
+}
+
+function openVideoForm(video = null) {
+  setState({
+    videoForm: video
+      ? { ...video }
+      : { url: '', poster: '', caption: '', active: true, sort_order: 0 },
+    error: null,
+  });
+}
+
+async function saveVideo() {
+  const f = state.videoForm;
+  if (!f?.url) { setState({ error: 'Загрузите видео или укажите URL' }); return; }
+  setState({ saving: true });
+  try {
+    let video;
+    if (f.id) video = await api('PATCH', `/api/video/${f.id}`, f);
+    else      video = await api('POST', '/api/video', f);
+    const current = Array.isArray(state.videos) ? state.videos : [];
+    const videos = f.id
+      ? current.map(v => v.id === f.id ? video : v)
+      : [video, ...current];
+    setState({ videos, videoForm: null, saving: false, error: null });
+  } catch (err) { setState({ saving: false, error: err.message }); }
+}
+
+async function toggleVideoActive(id, active) {
+  try {
+    const video = await api('PATCH', `/api/video/${id}`, { active });
+    const current = Array.isArray(state.videos) ? state.videos : [];
+    setState({ videos: current.map(v => v.id === id ? video : v) });
+  } catch (err) { setState({ error: err.message }); }
+}
+
+async function deleteVideo(id) {
+  if (!confirm('Удалить видео?')) return;
+  try {
+    await api('DELETE', `/api/video/${id}`);
+    const current = Array.isArray(state.videos) ? state.videos : [];
+    setState({ videos: current.filter(v => v.id !== id), videoForm: null });
+  } catch (err) { setState({ error: err.message }); }
+}
+
 // ── Map points (план острова) ───────────────────────────────────────────────
 
 function fmtCoord(lat, lng) {
@@ -763,6 +824,7 @@ function renderShell() {
   else if (view === 'prices')       content = renderPricesView();
   else if (view === 'content')      content = renderContentView();
   else if (view === 'gallery')      content = renderGalleryView();
+  else if (view === 'videos')       content = renderVideosView();
   else if (view === 'map')          content = renderMapView();
 
   const drawerHtml   = state.selectedApp ? renderAppDrawer(state.selectedApp) : '';
@@ -774,6 +836,7 @@ function renderShell() {
   const newAppModal       = state.showNewAppModal  ? renderNewAppModal()      : '';
   const galleryPhotoModal = state.galleryPhotoForm ? renderGalleryPhotoModal() : '';
   const galleryBulkModal  = state.galleryBulkForm  ? renderGalleryBulkModal()  : '';
+  const videoModal        = state.videoForm        ? renderVideoModal()        : '';
   const mapPointModal     = state.mapPointForm     ? renderMapPointModal()     : '';
 
   return `
@@ -793,6 +856,7 @@ function renderShell() {
           ${navItem('prices',       'Цены')}
           ${navItem('content',      'Контент')}
           ${navItem('gallery',      'Галерея')}
+          ${navItem('videos',       'Видео')}
           ${navItem('map',          'План острова')}
         </nav>
         <main class="content" id="content-area">
@@ -804,7 +868,7 @@ function renderShell() {
     </div>
     <div class="drawer-overlay${overlayOpen}" id="drawer-overlay"></div>
     <aside class="detail-drawer${drawerOpen}" id="detail-drawer">${drawerHtml}</aside>
-    ${eventModal}${fleetModal}${tentModal}${newAppModal}${galleryPhotoModal}${galleryBulkModal}${mapPointModal}`;
+    ${eventModal}${fleetModal}${tentModal}${newAppModal}${galleryPhotoModal}${galleryBulkModal}${videoModal}${mapPointModal}`;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -1749,6 +1813,91 @@ function renderGalleryBulkModal() {
     </div>`;
 }
 
+// ── Videos (рендер) ─────────────────────────────────────────────────────────
+
+function renderVideosView() {
+  const videos = Array.isArray(state.videos) ? state.videos : [];
+  const activeCount = videos.filter(v => v.active).length;
+
+  const cards = videos.length ? videos.map(v => `
+    <div class="gallery-admin-card">
+      <div class="gallery-admin-card__thumb" style="aspect-ratio:9/16;background:#000">
+        ${v.poster
+          ? `<img src="${esc(v.poster)}" alt="${esc(v.caption)}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`
+          : `<video src="${esc(v.url)}#t=0.1" muted preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>`}
+      </div>
+      <div class="gallery-admin-card__body">
+        <div class="gallery-admin-card__caption">${esc(v.caption) || '<em style="color:var(--muted)">без подписи</em>'}</div>
+        <div class="gallery-admin-card__meta">
+          <span class="badge ${v.active ? 'badge-confirmed' : 'badge-rejected'}">${v.active ? 'Активно' : 'Скрыто'}</span>
+          <span style="font-size:12px;color:var(--muted)">порядок: ${v.sort_order}</span>
+        </div>
+        <div class="gallery-admin-card__actions">
+          <button class="btn btn-sm btn-secondary" data-edit-video="${v.id}">Изменить</button>
+          <button class="btn btn-sm" style="background:var(--bg);border:1px solid var(--border)" data-toggle-video="${v.id}" data-video-active="${v.active ? 0 : 1}">${v.active ? 'Скрыть' : 'Показать'}</button>
+          <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" data-delete-video="${v.id}">✕</button>
+        </div>
+      </div>
+    </div>`).join('') : `<p style="color:var(--muted);margin-top:16px">Видео пока нет. Добавьте первый ролик.</p>`;
+
+  return `
+    <div>
+      <div class="page-header">
+        <h2>Видео <span style="font-size:14px;font-weight:400;color:var(--muted)">(${activeCount} из ${videos.length} показываются)</span></h2>
+        <button class="btn btn-primary" id="add-video-btn">+ Добавить видео</button>
+      </div>
+      <div class="gallery-admin-grid">${cards}</div>
+    </div>`;
+}
+
+function renderVideoModal() {
+  const f = state.videoForm;
+  const isEdit = !!f.id;
+  return `
+    <div class="modal-overlay" id="video-modal-overlay">
+      <div class="modal">
+        <div class="modal-head"><h3>${isEdit ? 'Редактировать видео' : 'Добавить видео'}</h3><button class="btn-icon" id="close-video-modal">✕</button></div>
+        <div class="modal-body">
+          ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ''}
+          <div class="field">
+            <label>Видео (mp4/webm, до 60 МБ)</label>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <input id="vf-url" type="text" value="${esc(f.url || '')}" placeholder="/images/uploads/clip.mp4" style="flex:1">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap">
+                Загрузить<input type="file" id="vf-file" accept="video/*" style="display:none">
+              </label>
+            </div>
+            ${f.url ? `<video src="${esc(f.url)}" controls muted style="margin-top:10px;max-height:200px;border-radius:8px;display:block"></video>` : ''}
+          </div>
+          <div class="field">
+            <label>Постер (картинка-превью, необязательно)</label>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <input id="vf-poster" type="text" value="${esc(f.poster || '')}" placeholder="/images/uploads/poster.jpg" style="flex:1">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap">
+                Загрузить<input type="file" id="vf-poster-file" accept="image/*" style="display:none">
+              </label>
+            </div>
+          </div>
+          <div class="field"><label>Подпись</label><input id="vf-caption" type="text" value="${esc(f.caption || '')}" placeholder="Закат под парусом"></div>
+          <div class="fields-row">
+            <div class="field"><label>Порядок сортировки</label><input id="vf-order" type="number" value="${f.sort_order ?? 0}"></div>
+            <div class="field"><label>Статус</label>
+              <select id="vf-active">
+                <option value="1" ${f.active ? 'selected' : ''}>Показывать</option>
+                <option value="0" ${!f.active ? 'selected' : ''}>Скрыть</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          ${isEdit ? `<button class="btn btn-danger" id="delete-video-btn">Удалить</button>` : ''}
+          <button class="btn btn-secondary" id="cancel-video-modal">Отмена</button>
+          <button class="btn btn-primary" id="save-video-btn" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Сохранение...' : 'Сохранить'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ── Map points (план острова) ───────────────────────────────────────────────
 
 function renderMapView() {
@@ -1901,6 +2050,7 @@ function attachShellHandlers() {
       else if (v === 'prices')       { setState({ view: 'prices' }); loadPrices(); }
       else if (v === 'content')      { setState({ view: 'content' }); loadContent(); }
       else if (v === 'gallery')      { setState({ view: 'gallery', galleryPhotoForm: null }); loadGallery(); }
+      else if (v === 'videos')       { setState({ view: 'videos', videoForm: null }); loadVideos(); }
       else if (v === 'map')          { setState({ view: 'map', mapPointForm: null }); loadMapPoints(); }
       else if (v === 'dashboard')    { setState({ view: 'dashboard', selectedApp: null }); loadStats(); }
     });
@@ -2160,6 +2310,53 @@ function attachShellHandlers() {
         img.style.cssText = 'margin-top:10px;max-height:140px;border-radius:8px;object-fit:cover;display:block';
         wrap.appendChild(img);
       }
+    } catch (err) { setState({ error: err.message }); }
+  });
+
+  // Video handlers
+  document.getElementById('add-video-btn')?.addEventListener('click', () => openVideoForm());
+  root.querySelectorAll('[data-edit-video]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const v = state.videos.find(x => x.id === Number(btn.dataset.editVideo));
+      if (v) openVideoForm(v);
+    }));
+  root.querySelectorAll('[data-toggle-video]').forEach(btn =>
+    btn.addEventListener('click', () => toggleVideoActive(Number(btn.dataset.toggleVideo), Number(btn.dataset.videoActive) === 1)));
+  root.querySelectorAll('[data-delete-video]').forEach(btn =>
+    btn.addEventListener('click', () => deleteVideo(Number(btn.dataset.deleteVideo))));
+  document.getElementById('close-video-modal')?.addEventListener('click', () => setState({ videoForm: null, error: null }));
+  document.getElementById('cancel-video-modal')?.addEventListener('click', () => setState({ videoForm: null, error: null }));
+  document.getElementById('video-modal-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) setState({ videoForm: null, error: null });
+  });
+  document.getElementById('delete-video-btn')?.addEventListener('click', () => {
+    if (state.videoForm?.id) deleteVideo(state.videoForm.id);
+  });
+  document.getElementById('save-video-btn')?.addEventListener('click', () => {
+    if (!state.videoForm) return;
+    state.videoForm.url        = document.getElementById('vf-url').value.trim();
+    state.videoForm.poster     = document.getElementById('vf-poster').value.trim();
+    state.videoForm.caption    = document.getElementById('vf-caption').value.trim();
+    state.videoForm.sort_order = Number(document.getElementById('vf-order').value) || 0;
+    state.videoForm.active     = Number(document.getElementById('vf-active').value) === 1;
+    saveVideo();
+  });
+  document.getElementById('vf-file')?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadVideoFile(file);
+      document.getElementById('vf-url').value = url;
+      state.videoForm.url = url;
+    } catch (err) { setState({ error: err.message }); }
+  });
+  document.getElementById('vf-poster-file')?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      document.getElementById('vf-poster').value = url;
+      state.videoForm.poster = url;
     } catch (err) { setState({ error: err.message }); }
   });
 

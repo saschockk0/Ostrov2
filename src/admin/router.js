@@ -13,6 +13,7 @@ const {
 const { listEvents, getEvent, createEvent, updateEvent, deleteEvent } = require('./events-db');
 const { getAllContent, setManyContent, CONTENT_LABELS } = require('./content-db');
 const { listPhotos, getPhoto, createPhoto, updatePhoto, deletePhoto } = require('./gallery-db');
+const { listVideos, createVideo, updateVideo, deleteVideo } = require('./video-db');
 const { listFleet, getFleetItem, createFleetItem, updateFleetItem, deleteFleetItem } = require('./fleet-db');
 const { listTents, createTentItem, updateTentItem, deleteTentItem } = require('./tents-db');
 const { listMapPoints, createMapPoint, updateMapPoint, deleteMapPoint } = require('./map-points-db');
@@ -82,6 +83,23 @@ const upload = multer({
   limits: { fileSize: 6 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     cb(null, /image\/(jpeg|png|webp|gif)/.test(file.mimetype));
+  },
+});
+
+// Загрузка видео-роликов: тяжелее картинок, отдельный лимит и mime-фильтр.
+// Поле `file` — видео, `poster` — постер-картинка (опционально).
+const uploadVideo = multer({
+  storage: multer.diskStorage({
+    destination: UPLOADS_DIR,
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 7)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 60 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === 'poster') return cb(null, /image\/(jpeg|png|webp)/.test(file.mimetype));
+    cb(null, /video\/(mp4|webm|quicktime)/.test(file.mimetype));
   },
 });
 
@@ -349,6 +367,42 @@ function createAdminRouter(db) {
   router.delete('/api/gallery/:id', async (req, res) => {
     try { await deletePhoto(db, Number(req.params.id)); res.json({ ok: true }); }
     catch (err) { console.error('Delete photo error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  // ── Videos ─────────────────────────────────────────────────────────────
+
+  router.get('/api/video', async (req, res) => {
+    try { res.json(await listVideos(db)); }
+    catch (err) { console.error('List video error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  // Загрузка видео-файла → возвращает URL (как /api/upload для картинок, но с видео-лимитом).
+  router.post('/api/upload-video', uploadVideo.single('file'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Файл не загружен или неверный формат' });
+    res.json({ url: `/images/uploads/${req.file.filename}` });
+  });
+
+  router.post('/api/video', async (req, res) => {
+    try {
+      if (!req.body?.url) return res.status(400).json({ error: 'Загрузите видео или укажите URL' });
+      if (!isValidUrl(req.body.url)) return res.status(400).json({ error: 'Недопустимый URL видео' });
+      if (req.body.poster && !isValidUrl(req.body.poster)) return res.status(400).json({ error: 'Недопустимый URL постера' });
+      res.status(201).json(await createVideo(db, {
+        url: req.body.url, poster: req.body.poster || '', caption: req.body.caption || '',
+        active: req.body.active !== undefined ? req.body.active : true,
+        sort_order: req.body.sort_order || 0,
+      }));
+    } catch (err) { console.error('Create video error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.patch('/api/video/:id', async (req, res) => {
+    try { res.json(await updateVideo(db, Number(req.params.id), req.body || {})); }
+    catch (err) { console.error('Update video error:', err); res.status(500).json({ error: GENERIC_ERR }); }
+  });
+
+  router.delete('/api/video/:id', async (req, res) => {
+    try { await deleteVideo(db, Number(req.params.id)); res.json({ ok: true }); }
+    catch (err) { console.error('Delete video error:', err); res.status(500).json({ error: GENERIC_ERR }); }
   });
 
   // ── Fleet ──────────────────────────────────────────────────────────────

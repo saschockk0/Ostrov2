@@ -21,6 +21,7 @@ const { createAdminRouter } = require("./admin/router");
 const { listEvents } = require("./admin/events-db");
 const { getAllContent, DEFAULT_CONTENT } = require("./admin/content-db");
 const { listPhotos } = require("./admin/gallery-db");
+const { listVideos } = require("./admin/video-db");
 const { listFleet } = require("./admin/fleet-db");
 const { listTents } = require("./admin/tents-db");
 const { listMapPoints, ensureMapPoints } = require("./admin/map-points-db");
@@ -98,6 +99,11 @@ app.get("/api/content", async (req, res) => {
 app.get("/api/gallery", async (req, res) => {
   try { res.json(await listPhotos(db, true)); }
   catch (err) { console.error("GET /api/gallery error:", err); res.status(500).json({ error: GENERIC_ERR }); }
+});
+
+app.get("/api/video", async (req, res) => {
+  try { res.json(await listVideos(db, true)); }
+  catch (err) { console.error("GET /api/video error:", err); res.status(500).json({ error: GENERIC_ERR }); }
 });
 
 app.get("/api/fleet", async (req, res) => {

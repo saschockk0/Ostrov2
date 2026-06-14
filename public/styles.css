@@ -952,6 +952,74 @@ textarea {
   border-radius: 14px;
 }
 
+/* Микро-интерактив перед калькулятором */
+.quick-start {
+  max-width: 680px;
+  margin-inline: auto;
+  padding: 24px;
+  background: var(--ink-050);
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+  text-align: center;
+}
+.quick-start__title {
+  margin: 6px 0 18px;
+}
+.quick-start__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  text-align: left;
+}
+.quick-start__label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.quick-start__counters {
+  display: flex;
+  gap: 12px;
+}
+.quick-start__counters label {
+  flex: 1;
+  font-size: 13px;
+}
+.quick-start__counters input {
+  width: 100%;
+  margin-top: 4px;
+}
+.quick-start__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.quick-start__chip {
+  padding: 9px 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.quick-start__chip:hover {
+  border-color: var(--brand-sky-700, #2aabee);
+}
+.quick-start__chip.is-active {
+  background: var(--brand-sky-700, #2aabee);
+  border-color: var(--brand-sky-700, #2aabee);
+  color: #fff;
+}
+.quick-start__go {
+  margin-top: 22px;
+}
+@media (max-width: 640px) {
+  .quick-start { padding: 16px; }
+  .quick-start__row { grid-template-columns: 1fr; gap: 18px; }
+}
+
 /* Center the calculator composition so the right side reads as intentional space */
 #calculator h2 { text-align: center; }
 
@@ -1378,6 +1446,33 @@ textarea {
 .chan--vk .chan__ic svg   { width: 29px; height: 29px; }
 .chan--tg .chan__ic svg   { width: 30px; height: 30px; }
 .chan--inst .chan__ic svg { width: 25px; height: 25px; }
+
+/* FAQ contact CTA (light background — переопределяем белый цвет подписи) */
+.faq-cta {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--brand-sky-200, #d4e6f5);
+}
+.faq-cta__title {
+  margin: 0 0 14px;
+  font-weight: 600;
+  color: var(--ink-900, #1a2b3c);
+}
+.faq-cta__row {
+  display: flex;
+  gap: 24px;
+}
+.faq-cta .chan {
+  width: auto;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 10px;
+}
+.faq-cta .chan__name {
+  color: var(--ink-900, #1a2b3c);
+  font-size: 14px;
+  letter-spacing: 0;
+}
 
 .footer-meta-note {
   color: var(--brand-sky-200);
@@ -3197,6 +3292,77 @@ textarea {
 
 .gallery-item:hover .gallery-item__caption {
   opacity: 1;
+}
+
+/* ============================================================
+   Видео-лента (reels-style)
+   ============================================================ */
+.video-grid {
+  display: flex;
+  gap: 14px;
+  margin-top: 32px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.video-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 260px;
+  aspect-ratio: 9 / 16;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--ink-100);
+  scroll-snap-align: start;
+}
+.video-card video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.video-card__play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.video-card__play::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 54%;
+  transform: translate(-50%, -50%);
+  border-style: solid;
+  border-width: 11px 0 11px 18px;
+  border-color: transparent transparent transparent #fff;
+}
+.video-card:hover .video-card__play {
+  transform: scale(1.08);
+}
+.video-card.is-playing .video-card__play {
+  opacity: 0;
+  pointer-events: none;
+}
+.video-card__caption {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 26px 12px 12px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .video-card { width: 70vw; max-width: 280px; }
 }
 
 /* ============================================================
