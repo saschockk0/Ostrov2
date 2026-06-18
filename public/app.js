@@ -810,6 +810,17 @@ form.elements.needCanopy.addEventListener("change", () => {
   const chips = document.getElementById("qsCamping");
   if (!go || !chips) return;
 
+  document.querySelectorAll(".qs-stepper__btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      const min = parseInt(input.min, 10);
+      const step = parseInt(btn.dataset.step, 10) || 0;
+      const next = (parseInt(input.value, 10) || 0) + step;
+      input.value = Number.isNaN(min) ? next : Math.max(min, next);
+    });
+  });
+
   let camping = "own";
   chips.querySelectorAll(".quick-start__chip").forEach((chip) => {
     chip.addEventListener("click", () => {

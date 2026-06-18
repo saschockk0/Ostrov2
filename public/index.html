@@ -49,7 +49,7 @@
           "name": "Парусный клуб «Остров»",
           "alternateName": ["ПК Остров", "Ostrov Parusa", "Паруса острова"],
           "url": "https://pkostrov.ru",
-          "logo": "https://pkostrov.ru/assets/logo-mark.svg",
+          "logo": "https://pkostrov.ru/assets/logo/ostrov-mark-color.svg",
           "image": "https://pkostrov.ru/assets/sunset.jpg",
           "telephone": "+79037334243",
           "email": "ostrov133km@mail.ru",
@@ -246,7 +246,7 @@
     <header class="site-header">
       <div class="container header-inner">
         <a class="brand" href="#top">
-          <img src="/assets/ostrov-logo.png" alt="Парусный клуб Остров" />
+          <img src="/assets/ostrov-logo.svg" alt="Парусный клуб Остров" />
         </a>
         <nav class="main-nav" id="mainNav">
           <a href="#about">О лагере</a>
@@ -582,12 +582,27 @@
             <div class="quick-start__field">
               <span class="quick-start__label">Сколько вас?</span>
               <div class="quick-start__counters">
-                <label>Взрослые <input type="number" id="qsAdults" min="1" value="2" /></label>
-                <label>Дети 7–14 <input type="number" id="qsChildren" min="0" value="0" /></label>
+                <label class="qs-counter">
+                  <span class="quick-start__sublabel">Взрослые</span>
+                  <div class="qs-stepper">
+                    <button type="button" class="qs-stepper__btn" data-target="qsAdults" data-step="-1" aria-label="Меньше взрослых">−</button>
+                    <input type="number" id="qsAdults" min="1" value="2" inputmode="numeric" />
+                    <button type="button" class="qs-stepper__btn" data-target="qsAdults" data-step="1" aria-label="Больше взрослых">+</button>
+                  </div>
+                </label>
+                <label class="qs-counter">
+                  <span class="quick-start__sublabel">Дети 7–14</span>
+                  <div class="qs-stepper">
+                    <button type="button" class="qs-stepper__btn" data-target="qsChildren" data-step="-1" aria-label="Меньше детей">−</button>
+                    <input type="number" id="qsChildren" min="0" value="0" inputmode="numeric" />
+                    <button type="button" class="qs-stepper__btn" data-target="qsChildren" data-step="1" aria-label="Больше детей">+</button>
+                  </div>
+                </label>
               </div>
             </div>
             <div class="quick-start__field">
               <span class="quick-start__label">Где разместитесь?</span>
+              <span class="quick-start__sublabel" aria-hidden="true">&nbsp;</span>
               <div class="quick-start__chips" id="qsCamping" role="radiogroup" aria-label="Размещение">
                 <button type="button" class="quick-start__chip is-active" data-camping="own" role="radio" aria-checked="true">Своя палатка</button>
                 <button type="button" class="quick-start__chip" data-camping="rent" role="radio" aria-checked="false">Аренда палатки</button>
@@ -833,7 +848,7 @@
       </div>
       <div class="footer-top footer-top--simple">
         <div class="footer-contacts">
-          <img src="/assets/logo-light.svg" alt="Парусный клуб Остров" class="footer-logo" />
+          <img src="/assets/logo/ostrov-logo-white.svg" alt="Парусный клуб Остров" class="footer-logo" />
           <div class="footer-channels">
             <div class="footer-channels__group">
               <span class="footer-channels__title">Пишите в мессенджеры</span>

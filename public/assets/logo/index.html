@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Логотип — Парусный клуб «Остров»</title>
+  <style>
+    :root{
+      --sky-900:#0e2f46; --sky-700:#1b4f72; --sky-500:#3e7ba8; --sky-200:#b8d8ec;
+      --leaf-700:#256b29; --leaf-500:#5ba058;
+      --ink-900:#0f1b24; --ink-500:#4f5f6d; --ink-300:#9aa7b3; --ink-200:#d6dee5; --ink-050:#f6f8fb;
+      --paper:#fff;
+      --font:'Montserrat','Segoe UI',system-ui,sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--font);color:var(--ink-900);background:var(--ink-050);line-height:1.5}
+    .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 96px}
+    header h1{font-size:30px;margin:0 0 6px}
+    header p{color:var(--ink-500);margin:0 0 8px;max-width:60ch}
+    h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-300);margin:48px 0 16px;font-weight:700}
+    .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+    .card{border:1px solid var(--ink-200);border-radius:16px;overflow:hidden;background:var(--paper);box-shadow:0 2px 8px rgba(15,27,36,.05)}
+    .stage{display:flex;align-items:center;justify-content:center;padding:34px;min-height:180px}
+    .stage img{display:block;width:100%;max-width:230px;height:auto}
+    .stage.mark img{max-width:120px}
+    .bg-light{background:#fff}
+    .bg-soft{background:var(--ink-050)}
+    .bg-navy{background:var(--sky-900)}
+    .bg-blue{background:var(--sky-700)}
+    .bg-photo{background:#234 url('../hero-ostrov.jpg') center/cover}
+    .bg-grad{background:linear-gradient(135deg,var(--sky-700),var(--leaf-700))}
+    .meta{border-top:1px solid var(--ink-200);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}
+    .meta b{font-weight:600}
+    .meta a{color:var(--sky-700);text-decoration:none;font-size:12px}
+    .meta a:hover{text-decoration:underline}
+    .tag{font-size:11px;color:var(--ink-500);background:var(--ink-050);border:1px solid var(--ink-200);border-radius:999px;padding:2px 9px;white-space:nowrap}
+    /* демонстрация mono — задаётся через CSS color */
+    .mono-navy{color:var(--sky-900)} .mono-blue{color:var(--sky-700)} .mono-leaf{color:var(--leaf-700)}
+    .scenarios{display:grid;gap:14px;grid-template-columns:1fr;margin-top:8px}
+    table{border-collapse:collapse;width:100%;font-size:14px;background:#fff;border:1px solid var(--ink-200);border-radius:12px;overflow:hidden}
+    th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--ink-200);vertical-align:top}
+    th{background:var(--ink-050);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-500)}
+    tr:last-child td{border-bottom:0}
+    code{font-family:ui-monospace,'Courier New',monospace;font-size:12.5px;background:var(--ink-050);border:1px solid var(--ink-200);border-radius:6px;padding:1px 6px}
+    .swatches{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+    .sw{display:flex;align-items:center;gap:10px;border:1px solid var(--ink-200);border-radius:10px;padding:8px 12px;background:#fff;font-size:13px}
+    .dot{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.08)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Логотип «Остров»</h1>
+      <p>Единый набор фирменного знака парусного клуба. Все файлы — векторные SVG со встроенными
+      шрифтами (рукописный «Остров» + Montserrat), поэтому отображаются одинаково в любом окружении.
+      Полный логотип — для основного использования, знак — для тесных мест и иконок.</p>
+    </header>
+
+    <h2>Полный логотип</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="stage bg-light"><img src="ostrov-logo-color.svg" alt="Логотип в цвете"></div>
+        <div class="meta"><b>Цветной</b><span class="tag">светлый фон</span><a href="ostrov-logo-color.svg" download>SVG</a></div>
+      </div>
+      <div class="card">
+        <div class="stage bg-navy"><img src="ostrov-logo-white.svg" alt="Логотип выворотка"></div>
+        <div class="meta"><b>Выворотка (белый)</b><span class="tag">тёмный фон</span><a href="ostrov-logo-white.svg" download>SVG</a></div>
+      </div>
+      <div class="card">
+        <div class="stage bg-photo"><img src="ostrov-logo-white.svg" alt="Логотип на фото"></div>
+        <div class="meta"><b>Выворотка на фото</b><span class="tag">hero / медиа</span><a href="ostrov-logo-white.svg" download>SVG</a></div>
+      </div>
+      <div class="card">
+        <div class="stage bg-light mono-navy"><img data-inline src="ostrov-logo-mono.svg" alt="Логотип одноцветный"></div>
+        <div class="meta"><b>Одноцветный</b><span class="tag">currentColor</span><a href="ostrov-logo-mono.svg" download>SVG</a></div>
+      </div>
+    </div>
+
+    <h2>Знак (без текста)</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="stage mark bg-light"><img src="ostrov-mark-color.svg" alt="Знак в цвете"></div>
+        <div class="meta"><b>Цветной</b><span class="tag">фавикон / соцсети</span><a href="ostrov-mark-color.svg" download>SVG</a></div>
+      </div>
+      <div class="card">
+        <div class="stage mark bg-blue"><img src="ostrov-mark-white.svg" alt="Знак белый"></div>
+        <div class="meta"><b>Белый</b><span class="tag">тёмный фон</span><a href="ostrov-mark-white.svg" download>SVG</a></div>
+      </div>
+      <div class="card">
+        <div class="stage mark bg-light mono-leaf"><img data-inline src="ostrov-mark-mono.svg" alt="Знак одноцветный"></div>
+        <div class="meta"><b>Одноцветный</b><span class="tag">currentColor</span><a href="ostrov-mark-mono.svg" download>SVG</a></div>
+      </div>
+    </div>
+
+    <h2>Где что использовать</h2>
+    <table>
+      <thead><tr><th>Сценарий</th><th>Файл</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Шапка сайта (белый фон)</td><td><code>ostrov-logo-color.svg</code></td><td>основной фирменный вид</td></tr>
+        <tr><td>Подвал, hero, тёмные секции</td><td><code>ostrov-logo-white.svg</code></td><td>читается на тёмном/фото</td></tr>
+        <tr><td>Печать, ч/б, водяной знак, штамп</td><td><code>ostrov-logo-mono.svg</code></td><td>один цвет через CSS <code>color</code></td></tr>
+        <tr><td>Фавикон, аватар, превью в соцсетях</td><td><code>ostrov-mark-color.svg</code></td><td>знак читается в малом размере</td></tr>
+        <tr><td>Иконка на тёмном фоне</td><td><code>ostrov-mark-white.svg</code></td><td>выворотка знака</td></tr>
+        <tr><td>Кнопки, бейджи, акценты</td><td><code>ostrov-mark-mono.svg</code></td><td>наследует цвет родителя</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Цвета</h2>
+    <div class="swatches">
+      <div class="sw"><span class="dot" style="background:#5B92BD"></span>Паруса · <code>#5B92BD</code></div>
+      <div class="sw"><span class="dot" style="background:#5BA13D"></span>Корпус / «Остров» · <code>#5BA13D</code></div>
+      <div class="sw"><span class="dot" style="background:#5f6c78"></span>Подпись · <code>#5f6c78</code></div>
+      <div class="sw"><span class="dot" style="background:#0e2f46"></span>Mono по умолчанию · <code>#0e2f46</code></div>
+    </div>
+
+    <h2>Подсказка по mono</h2>
+    <p style="color:var(--ink-500);max-width:62ch">Одноцветные файлы используют <code>fill="currentColor"</code>.
+    Если вставить SVG инлайн или задать ему CSS <code>color</code>, логотип примет нужный оттенок —
+    один файл закрывает все одноцветные сценарии.</p>
+    <div class="grid" style="margin-top:14px">
+      <div class="card"><div class="stage bg-light mono-navy"><img data-inline src="ostrov-mark-mono.svg" alt="mono navy"></div><div class="meta"><b>color: navy</b></div></div>
+      <div class="card"><div class="stage bg-light mono-blue"><img data-inline src="ostrov-mark-mono.svg" alt="mono blue"></div><div class="meta"><b>color: sky-700</b></div></div>
+      <div class="card"><div class="stage bg-light mono-leaf"><img data-inline src="ostrov-mark-mono.svg" alt="mono leaf"></div><div class="meta"><b>color: leaf-700</b></div></div>
+    </div>
+  </div>
+  <script src="board.js"></script>
+</body>
+</html>
