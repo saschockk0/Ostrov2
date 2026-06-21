@@ -745,6 +745,81 @@ body {
   margin-top: 24px;
 }
 
+/* Open air на Острове — баннер-воронка в Telegram-бот @Ostrave_bot */
+.party { text-align: center; }
+
+.party__card {
+  background: linear-gradient(160deg, var(--brand-sky-900), var(--brand-sky-700));
+  color: #fff;
+  border-radius: 24px;
+  padding: 48px clamp(20px, 4vw, 56px);
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.party__eyebrow { color: var(--accent-sand); letter-spacing: 0.08em; }
+.party__title { color: #fff; margin: 8px 0 0; }
+
+.party__lead {
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 52ch;
+  margin: 14px auto 0;
+  line-height: 1.65;
+}
+
+.party__perks {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 24px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 15px;
+}
+
+.party__perks li { white-space: nowrap; }
+
+.party__tickets {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 28px 0 0;
+}
+
+.party__ticket {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 14px 22px;
+  min-width: 150px;
+}
+
+.party__ticket-name {
+  display: block;
+  font-size: 13px;
+  color: var(--accent-sand);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.party__ticket-price {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.party__cta { margin-top: 28px; }
+
+.party__note {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .table-wrap {
   overflow: auto;
   border-radius: 14px;
@@ -1498,7 +1573,9 @@ textarea {
 .chan--wa .chan__ic   { background: #25d366; }
 .chan--tg .chan__ic   { background: #2aabee; }
 .chan--inst .chan__ic { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.chan--mail .chan__ic { background: var(--brand-sky-700); }
 .chan--wa .chan__ic svg   { width: 24px; height: 24px; }
+.chan--mail .chan__ic svg { width: 26px; height: 26px; }
 .chan--max .chan__ic svg  { width: 26px; height: 26px; }
 .chan--vk .chan__ic svg   { width: 29px; height: 29px; }
 .chan--tg .chan__ic svg   { width: 30px; height: 30px; }
@@ -1545,6 +1622,7 @@ textarea {
   max-width: 280px;
   width: 100%;
   margin-bottom: 12px;
+  filter: brightness(0) invert(1);
 }
 
 .contact-card {

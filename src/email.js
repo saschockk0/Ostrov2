@@ -151,4 +151,5 @@ module.exports = {
   sendApplicationEmail,
   sendPaymentLink,
   sendPaymentSucceeded,
+  buildMailText,
 };

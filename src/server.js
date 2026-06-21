@@ -8,7 +8,8 @@ const rateLimit = require("express-rate-limit");
 
 const { calculateQuote, getPrices } = require("./pricing");
 const { initDb, insertApplication } = require("./database");
-const { sendToGoogleSheets } = require("./googleSheets");
+const { sendToVk } = require("./vk");
+const { sendToTelegram } = require("./telegram");
 const { sendApplicationEmail, sendPaymentSucceeded } = require("./email");
 const yookassa = require("./payments/yookassa");
 const {
@@ -231,11 +232,13 @@ app.post("/api/applications", submitLimiter, async (req, res) => {
       console.error("Email send error (async):", err.message)
     );
 
-    sendToGoogleSheets(payload, quote).catch((err) =>
-      console.error("Google Sheets error (async):", err.message)
+    sendToVk(appId, payload, quote).catch((err) =>
+      console.error("VK send error (async):", err.message)
     );
 
-    // TODO: add Telegram bot delivery in next iteration.
+    sendToTelegram(appId, payload, quote).catch((err) =>
+      console.error("Telegram send error (async):", err.message)
+    );
     return res.status(201).json({
       ok: true,
       applicationId: appId,
